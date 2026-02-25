@@ -4,43 +4,47 @@ import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import '../config/translations.dart';
 
+/// Version counter to force state updates
+class _PreferencesState {
+  final PreferencesService prefs;
+  final int version;
+
+  _PreferencesState(this.prefs, this.version);
+
+  _PreferencesState increment() => _PreferencesState(prefs, version + 1);
+}
+
 /// Preferences Notifier
 /// Manages app preferences like selected translation
-class PreferencesNotifier extends StateNotifier<PreferencesService> {
-  PreferencesNotifier() : super(PreferencesService.instance);
+class PreferencesNotifier extends StateNotifier<_PreferencesState> {
+  PreferencesNotifier() : super(_PreferencesState(PreferencesService.instance, 0));
+
+  PreferencesService get _prefs => state.prefs;
+
+  /// Force rebuild by incrementing version
+  void _notify() {
+    state = state.increment();
+  }
 
   /// Set the selected translation
   Future<void> setTranslation(Translation translation) async {
-    await state.setTranslationId(translation.id);
-    state = PreferencesService.instance;
+    await _prefs.setTranslationId(translation.id);
+    _notify();
   }
 
   /// Refresh the preferences state
   void refresh() {
-    state = PreferencesService.instance;
-  }
-
-  /// Toggle dark mode
-  Future<void> toggleDarkMode() async {
-    final currentMode = state.isDarkMode();
-    await state.setDarkMode(!currentMode);
-    state = PreferencesService.instance;
-  }
-
-  /// Set dark mode
-  Future<void> setDarkMode(bool enabled) async {
-    await state.setDarkMode(enabled);
-    state = PreferencesService.instance;
+    _notify();
   }
 
   /// Toggle daily notification
   Future<void> toggleDailyNotification() async {
-    final currentEnabled = state.isDailyNotificationEnabled();
-    await state.setDailyNotificationEnabled(!currentEnabled);
+    final currentEnabled = _prefs.isDailyNotificationEnabled();
+    await _prefs.setDailyNotificationEnabled(!currentEnabled);
 
     if (!currentEnabled) {
       // Enable notification - schedule it
-      final (hour, minute) = state.getNotificationTime();
+      final (hour, minute) = _prefs.getNotificationTime();
       await NotificationService.instance.scheduleDailyNotification(
         TimeOfDay(hour: hour, minute: minute),
       );
@@ -49,15 +53,15 @@ class PreferencesNotifier extends StateNotifier<PreferencesService> {
       await NotificationService.instance.cancelAll();
     }
 
-    state = PreferencesService.instance;
+    _notify();
   }
 
   /// Set daily notification enabled
   Future<void> setDailyNotificationEnabled(bool enabled) async {
-    await state.setDailyNotificationEnabled(enabled);
+    await _prefs.setDailyNotificationEnabled(enabled);
 
     if (enabled) {
-      final (hour, minute) = state.getNotificationTime();
+      final (hour, minute) = _prefs.getNotificationTime();
       await NotificationService.instance.scheduleDailyNotification(
         TimeOfDay(hour: hour, minute: minute),
       );
@@ -65,31 +69,31 @@ class PreferencesNotifier extends StateNotifier<PreferencesService> {
       await NotificationService.instance.cancelAll();
     }
 
-    state = PreferencesService.instance;
+    _notify();
   }
 
   /// Set notification time
   Future<void> setNotificationTime(TimeOfDay time) async {
-    await state.setNotificationTime(time.hour, time.minute);
+    await _prefs.setNotificationTime(time.hour, time.minute);
 
     // Reschedule if notification is enabled
-    if (state.isDailyNotificationEnabled()) {
+    if (_prefs.isDailyNotificationEnabled()) {
       await NotificationService.instance.scheduleDailyNotification(time);
     }
 
-    state = PreferencesService.instance;
+    _notify();
   }
 
   /// Set Arabic font size multiplier
   Future<void> setArabicFontSize(double multiplier) async {
-    await state.setArabicFontSizeMultiplier(multiplier);
-    state = PreferencesService.instance;
+    await _prefs.setArabicFontSizeMultiplier(multiplier);
+    _notify();
   }
 
   /// Set English font size multiplier
   Future<void> setEnglishFontSize(double multiplier) async {
-    await state.setEnglishFontSizeMultiplier(multiplier);
-    state = PreferencesService.instance;
+    await _prefs.setEnglishFontSizeMultiplier(multiplier);
+    _notify();
   }
 }
 
@@ -100,37 +104,32 @@ final preferencesServiceProvider = Provider<PreferencesService>((ref) {
 
 /// Preferences Notifier Provider
 final preferencesNotifierProvider =
-    StateNotifierProvider<PreferencesNotifier, PreferencesService>((ref) {
+    StateNotifierProvider<PreferencesNotifier, _PreferencesState>((ref) {
   return PreferencesNotifier();
 });
 
 /// Selected Translation Provider
 final selectedTranslationProvider = Provider<Translation>((ref) {
-  return ref.watch(preferencesNotifierProvider).getSelectedTranslation();
-});
-
-/// Dark Mode Provider
-final darkModeProvider = Provider<bool>((ref) {
-  return ref.watch(preferencesNotifierProvider).isDarkMode();
+  return ref.watch(preferencesNotifierProvider).prefs.getSelectedTranslation();
 });
 
 /// Daily Notification Enabled Provider
 final dailyNotificationEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(preferencesNotifierProvider).isDailyNotificationEnabled();
+  return ref.watch(preferencesNotifierProvider).prefs.isDailyNotificationEnabled();
 });
 
 /// Notification Time Provider
 final notificationTimeProvider = Provider<TimeOfDay>((ref) {
-  final (hour, minute) = ref.watch(preferencesNotifierProvider).getNotificationTime();
+  final (hour, minute) = ref.watch(preferencesNotifierProvider).prefs.getNotificationTime();
   return TimeOfDay(hour: hour, minute: minute);
 });
 
 /// Arabic Font Size Multiplier Provider
 final arabicFontSizeProvider = Provider<double>((ref) {
-  return ref.watch(preferencesNotifierProvider).getArabicFontSizeMultiplier();
+  return ref.watch(preferencesNotifierProvider).prefs.getArabicFontSizeMultiplier();
 });
 
 /// English Font Size Multiplier Provider
 final englishFontSizeProvider = Provider<double>((ref) {
-  return ref.watch(preferencesNotifierProvider).getEnglishFontSizeMultiplier();
+  return ref.watch(preferencesNotifierProvider).prefs.getEnglishFontSizeMultiplier();
 });

@@ -92,11 +92,9 @@ ${verse.surahName} (${verse.surahReference})
   @override
   Widget build(BuildContext context) {
     final jarState = ref.watch(jarNotifierProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
-    final errorColor = isDark ? AppColors.darkError : AppColors.error;
+    final primaryColor = AppColors.sageGreen;
+    final bgColor = AppColors.cream;
+    final errorColor = AppColors.error;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -264,65 +262,80 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
     final currentMode = ref.watch(
       preferencesServiceProvider.select((prefs) => prefs.getVerseSelectionMode()),
     );
-    final isDarkMode = ref.watch(darkModeProvider);
     final isNotificationEnabled = ref.watch(dailyNotificationEnabledProvider);
     final notificationTime = ref.watch(notificationTimeProvider);
     final arabicFontSize = ref.watch(arabicFontSizeProvider);
     final englishFontSize = ref.watch(englishFontSizeProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
+    final primaryColor = AppColors.sageGreen;
+    final bgColor = AppColors.cream;
 
-    return AlertDialog(
+    // Get screen height for responsive sizing
+    final screenHeight = MediaQuery.of(context).size.height;
+    final dialogMaxHeight = screenHeight * 0.75;
+
+    return Dialog(
       backgroundColor: bgColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(
-        'Settings',
-        style: AppTextStyles.loraHeading(),
-      ),
-      content: SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: dialogMaxHeight,
+          maxWidth: 400,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dark Mode Toggle
-            _SettingsToggle(
-              icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
-              title: 'Dark Mode',
-              value: isDarkMode,
-              onChanged: (value) {
-                ref.read(preferencesNotifierProvider.notifier).setDarkMode(value);
-              },
-              primaryColor: primaryColor,
-            ),
-
-            const SizedBox(height: 12),
-
-            // Daily Notification Toggle
-            _SettingsToggle(
-              icon: Icons.notifications_outlined,
-              title: 'Daily Notification',
-              value: isNotificationEnabled,
-              onChanged: (value) async {
-                await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
-              },
-              primaryColor: primaryColor,
-            ),
-
-            // Notification Time Picker (only show when enabled)
-            if (isNotificationEnabled) ...[
-              const SizedBox(height: 8),
-              _NotificationTimePicker(
-                time: notificationTime,
-                onTimeChanged: (time) async {
-                  await ref.read(preferencesNotifierProvider.notifier).setNotificationTime(time);
-                },
-                primaryColor: primaryColor,
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Text(
+                    'Settings',
+                    style: AppTextStyles.loraHeading(),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(Icons.close, color: primaryColor),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
-            ],
+            ),
+            const Divider(height: 1),
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Daily Notification Toggle
+                    _SettingsToggle(
+                      icon: Icons.notifications_outlined,
+                      title: 'Daily Notification',
+                      value: isNotificationEnabled,
+                      onChanged: (value) async {
+                        await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
+                      },
+                      primaryColor: primaryColor,
+                    ),
 
-            const SizedBox(height: 24),
+                    // Notification Time Picker (only show when enabled)
+                    if (isNotificationEnabled) ...[
+                      const SizedBox(height: 8),
+                      _NotificationTimePicker(
+                        time: notificationTime,
+                        onTimeChanged: (time) async {
+                          await ref.read(preferencesNotifierProvider.notifier).setNotificationTime(time);
+                        },
+                        primaryColor: primaryColor,
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
 
             // Font Size Section
             Text(
@@ -413,20 +426,13 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
               },
               primaryColor: primaryColor,
             ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            'Close',
-            style: AppTextStyles.loraBodyMedium().copyWith(
-              color: primaryColor,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -546,7 +552,7 @@ class _ModeOption extends StatelessWidget {
 
 /// Settings Toggle Widget
 /// Used for toggle switches in settings
-class _SettingsToggle extends StatelessWidget {
+class _SettingsToggle extends ConsumerWidget {
   final IconData icon;
   final String title;
   final bool value;
@@ -562,7 +568,7 @@ class _SettingsToggle extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -573,11 +579,12 @@ class _SettingsToggle extends StatelessWidget {
             color: primaryColor,
           ),
           const SizedBox(width: 16),
-          Text(
-            title,
-            style: AppTextStyles.loraBodyMedium(),
+          Expanded(
+            child: Text(
+              title,
+              style: AppTextStyles.loraBodyMedium(),
+            ),
           ),
-          const Spacer(),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -626,24 +633,28 @@ class _NotificationTimePicker extends StatelessWidget {
               color: primaryColor.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 16),
-            Text(
-              'Notification Time',
-              style: AppTextStyles.loraBodyMedium().copyWith(
-                color: primaryColor.withValues(alpha: 0.8),
+            Expanded(
+              child: Text(
+                'Notification Time',
+                style: AppTextStyles.loraBodyMedium().copyWith(
+                  color: primaryColor.withValues(alpha: 0.8),
+                ),
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                _formatTime(time),
-                style: AppTextStyles.loraBodyMedium().copyWith(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w600,
+              child: FittedBox(
+                child: Text(
+                  _formatTime(time),
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -656,13 +667,13 @@ class _NotificationTimePicker extends StatelessWidget {
   String _formatTime(TimeOfDay time) {
     final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
+    return '${hour}:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
 
 /// Font Size Slider Widget
 /// Allows user to adjust font size for Arabic and English text
-class _FontSizeSlider extends StatelessWidget {
+class _FontSizeSlider extends ConsumerWidget {
   final IconData icon;
   final String title;
   final double value;
@@ -682,7 +693,7 @@ class _FontSizeSlider extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Convert to percentage (80-150%)
     final percentage = (value * 100).round();
 
@@ -699,13 +710,14 @@ class _FontSizeSlider extends StatelessWidget {
                 color: primaryColor.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: AppTextStyles.loraBodyMedium().copyWith(
-                  color: primaryColor.withValues(alpha: 0.8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.loraBodyMedium().copyWith(
+                    color: primaryColor.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(

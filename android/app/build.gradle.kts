@@ -6,12 +6,11 @@ plugins {
 }
 
 dependencies {
-    // Glance for App Widgets
-    implementation("androidx.glance:glance-appwidget:1.0.0")
-    implementation("androidx.glance:glance-material3:1.0.0")
-
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
 android {
@@ -22,6 +21,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {

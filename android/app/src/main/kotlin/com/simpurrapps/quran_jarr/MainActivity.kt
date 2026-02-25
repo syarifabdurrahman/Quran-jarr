@@ -1,11 +1,13 @@
 package com.simpurrapps.quran_jarr
 
 import android.content.Context
-import android.content.SharedPreferences
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodCall
 
 class MainActivity : FlutterActivity() {
     private lateinit var widgetChannel: MethodChannel
@@ -13,19 +15,12 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        // Setup widget channel
         widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.simpurrapps.quran_jarr/widget")
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
-                "initialize" -> {
-                    result.success(true)
-                }
-                "updateWidget" -> {
-                    updateWidget(call, result)
-                }
-                else -> {
-                    result.notImplemented()
-                }
+                "initialize" -> result.success(true)
+                "updateWidget" -> updateWidget(call, result)
+                else -> result.notImplemented()
             }
         }
     }
@@ -38,7 +33,6 @@ class MainActivity : FlutterActivity() {
             val surahNumber = call.argument<Int>("surahNumber") ?: 1
             val ayahNumber = call.argument<Int>("ayahNumber") ?: 1
 
-            // Save to preferences for widget to read
             val prefs = getSharedPreferences("QuranJarrWidget", Context.MODE_PRIVATE)
             prefs.edit().apply {
                 putString("arabic_text", arabicText)
@@ -49,7 +43,19 @@ class MainActivity : FlutterActivity() {
             }.apply()
 
             // Trigger widget update
-            com.simpurrapps.quran_jarr.widget.QuranWidget().updateAll(applicationContext)
+            val appWidgetManager = AppWidgetManager.getInstance(this)
+            val widgetIds = appWidgetManager.getAppWidgetIds(
+                ComponentName(this, com.simpurrapps.quran_jarr.widget.QuranWidgetReceiver::class.java)
+            )
+
+            // Only update if widget exists
+            if (widgetIds.isNotEmpty()) {
+                com.simpurrapps.quran_jarr.widget.QuranWidgetReceiver.updateAppWidget(
+                    this,
+                    appWidgetManager,
+                    widgetIds[0]
+                )
+            }
 
             result.success(true)
         } catch (e: Exception) {

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#FFF5F0E8">
+
+    <TextView
+        android:id="@+id/widget_surah_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Al-Fatiha (1:1)"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FF7CB342"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/widget_arabic_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+        android:textSize="18sp"
+        android:textAlignment="textEnd"
+        android:layout_marginBottom="12dp"
+        android:textColor="#FF5D4E37" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#FF7CB342"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/widget_translation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="In the name of Allah, the Most Gracious, the Most Merciful"
+        android:textSize="14sp"
+        android:textAlignment="center"
+        android:textColor="#FF5D4E37" />
+
+</LinearLayout>

@@ -31,13 +31,10 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   @override
   Widget build(BuildContext context) {
     final verse = widget.verse;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final terracottaColor = isDark ? AppColors.darkTerracotta : AppColors.terracotta;
-    final glassBorder = isDark
-        ? AppColors.darkGlassBorder
-        : AppColors.glassBorder;
+    final cardColor = AppColors.softSand;
+    final primaryColor = AppColors.sageGreen;
+    final terracottaColor = AppColors.terracotta;
+    final glassBorder = AppColors.glassBorder;
 
     // Font size multipliers
     final arabicFontMultiplier = ref.watch(arabicFontSizeProvider);
@@ -218,13 +215,10 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
 
     if (verse == null || !verse.hasTafsir) return;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final glassBorder = isDark
-        ? AppColors.darkGlassBorder
-        : AppColors.glassBorder;
-    final tafsirTextColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+    final cardColor = AppColors.softSand;
+    final primaryColor = AppColors.sageGreen;
+    final glassBorder = AppColors.glassBorder;
+    final tafsirTextColor = AppColors.deepUmber;
 
     // Font size multipliers
     final englishFontMultiplier = ref.read(englishFontSizeProvider);

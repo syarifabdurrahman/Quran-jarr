@@ -30,10 +30,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   }
 
   void _deleteVerse(Verse verse) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final errorColor = isDark ? AppColors.darkError : AppColors.error;
+    final bgColor = AppColors.softSand;
+    final primaryColor = AppColors.sageGreen;
+    final errorColor = AppColors.error;
 
     showDialog(
       context: context,
@@ -77,11 +76,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   @override
   Widget build(BuildContext context) {
     final archiveState = ref.watch(archiveNotifierProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final searchFillColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
-    final errorColor = isDark ? AppColors.darkError : AppColors.error;
+    final bgColor = AppColors.cream;
+    final primaryColor = AppColors.sageGreen;
+    final searchFillColor = AppColors.softSand;
+    final errorColor = AppColors.error;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -187,9 +185,8 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   }
 
   Widget _buildContent(ArchiveState state) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final errorColor = isDark ? AppColors.darkError : AppColors.error;
+    final primaryColor = AppColors.sageGreen;
+    final errorColor = AppColors.error;
 
     if (state.isLoading) {
       return Center(
@@ -297,10 +294,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   }
 
   void _showClearDialog(ArchiveState state) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final errorColor = isDark ? AppColors.darkError : AppColors.error;
+    final bgColor = AppColors.softSand;
+    final primaryColor = AppColors.sageGreen;
+    final errorColor = AppColors.error;
 
     showDialog(
       context: context,

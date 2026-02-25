@@ -11,11 +11,10 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
-    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
-    final cardColor = isDark ? AppColors.darkSoftSand : Colors.white;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final bgColor = AppColors.cream;
+    final primaryColor = AppColors.sageGreen;
+    final cardColor = Colors.white;
+    final textSecondary = AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -89,9 +88,7 @@ class AboutScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: isDark
-                          ? AppColors.darkGlassBorder
-                          : AppColors.deepUmber.withValues(alpha: 0.05),
+                      color: AppColors.deepUmber.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

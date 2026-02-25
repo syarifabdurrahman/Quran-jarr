@@ -76,18 +76,6 @@ class PreferencesService {
     return AvailableTranslations.allTranslations;
   }
 
-  // ==================== Theme Preferences ====================
-
-  /// Check if dark mode is enabled
-  bool isDarkMode() {
-    return _prefsBox.get('dark_mode', defaultValue: false) as bool;
-  }
-
-  /// Set dark mode
-  Future<void> setDarkMode(bool enabled) async {
-    await _prefsBox.put('dark_mode', enabled);
-  }
-
   // ==================== Notification Preferences ====================
 
   /// Check if daily notification is enabled
