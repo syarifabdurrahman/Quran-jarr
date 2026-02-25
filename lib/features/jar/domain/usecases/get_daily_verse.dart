@@ -1,0 +1,21 @@
+import 'package:dartz/dartz.dart';
+import 'package:quran_jarr/core/network/api_exception.dart';
+import '../entities/verse.dart';
+import '../repositories/verse_repository.dart';
+
+/// Get Daily Verse Use Case
+/// Following Single Responsibility Principle - handles only verse retrieval
+class GetDailyVerseUseCase {
+  final VerseRepository _repository;
+
+  GetDailyVerseUseCase(this._repository);
+
+  /// Execute the use case
+  /// Returns a verse (cached or new)
+  Future<Either<ApiException, Verse>> call({
+    String translationId = '131', // Default to Sahih International
+  }) async {
+    // Return cached verse if available, or get a new one
+    return await _repository.getDailyVerse(translationId: translationId);
+  }
+}
