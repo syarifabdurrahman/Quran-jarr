@@ -134,7 +134,10 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           // Audio player (if available)
           if (verse.hasAudio) ...[
             const SizedBox(height: 16),
-            AudioPlayerWidget(audioUrl: verse.audioUrl!),
+            AudioPlayerWidget(
+              audioUrl: verse.audioUrl!,
+              verseKey: verse.verseKey,
+            ),
           ],
           // Tafsir button at bottom
           const SizedBox(height: 16),

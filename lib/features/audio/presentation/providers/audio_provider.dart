@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:quran_jarr/features/audio/data/datasources/audio_download_service.dart';
 
 /// Audio Player State
 class AudioPlayerState {
@@ -10,6 +11,10 @@ class AudioPlayerState {
   final Duration position;
   final Duration? duration;
   final String? errorMessage;
+  final String? currentVerseKey;
+  final bool isAudioDownloaded;
+  final bool isDownloading;
+  final double downloadProgress;
 
   const AudioPlayerState({
     this.currentUrl,
@@ -18,6 +23,10 @@ class AudioPlayerState {
     this.position = Duration.zero,
     this.duration,
     this.errorMessage,
+    this.currentVerseKey,
+    this.isAudioDownloaded = false,
+    this.isDownloading = false,
+    this.downloadProgress = 0.0,
   });
 
   AudioPlayerState copyWith({
@@ -27,6 +36,10 @@ class AudioPlayerState {
     Duration? position,
     Duration? duration,
     String? errorMessage,
+    String? currentVerseKey,
+    bool? isAudioDownloaded,
+    bool? isDownloading,
+    double? downloadProgress,
   }) {
     return AudioPlayerState(
       currentUrl: currentUrl ?? this.currentUrl,
@@ -35,6 +48,10 @@ class AudioPlayerState {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       errorMessage: errorMessage,
+      currentVerseKey: currentVerseKey ?? this.currentVerseKey,
+      isAudioDownloaded: isAudioDownloaded ?? this.isAudioDownloaded,
+      isDownloading: isDownloading ?? this.isDownloading,
+      downloadProgress: downloadProgress ?? this.downloadProgress,
     );
   }
 }
@@ -88,21 +105,39 @@ class AudioPlayerNotifier extends StateNotifier<AudioPlayerState> {
     }
   }
 
-  /// Play audio from URL
-  Future<void> play(String url) async {
+  /// Play audio from URL or local file
+  Future<void> play(String url, {String? verseKey}) async {
     try {
       state = state.copyWith(isLoading: true, errorMessage: null);
 
-      // If same URL, just resume
-      if (state.currentUrl == url && state.isPlaying == false) {
+      // Check for local file if verseKey is provided
+      String? localPath;
+      if (verseKey != null) {
+        localPath = await AudioDownloadService.instance.getLocalAudioPath(verseKey);
+        state = state.copyWith(
+          currentVerseKey: verseKey,
+          isAudioDownloaded: localPath != null,
+        );
+      }
+
+      final sourceToPlay = localPath ?? url;
+
+      // If same source, just resume
+      if (state.currentUrl == sourceToPlay && state.isPlaying == false) {
         await _player.play();
         return;
       }
 
-      // If different URL or first play, set new source
-      if (state.currentUrl != url) {
-        await _player.setUrl(url);
-        state = state.copyWith(currentUrl: url);
+      // If different source or first play, set new source
+      if (state.currentUrl != sourceToPlay) {
+        if (localPath != null) {
+          // Play from local file
+          await _player.setFilePath(localPath);
+        } else {
+          // Play from URL
+          await _player.setUrl(url);
+        }
+        state = state.copyWith(currentUrl: sourceToPlay);
       }
 
       await _player.play();
@@ -150,6 +185,51 @@ class AudioPlayerNotifier extends StateNotifier<AudioPlayerState> {
   /// Clear error message
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  /// Download audio for offline playback
+  Future<void> downloadAudio(String verseKey, String audioUrl) async {
+    try {
+      state = state.copyWith(
+        isDownloading: true,
+        downloadProgress: 0.0,
+        errorMessage: null,
+      );
+
+      final path = await AudioDownloadService.instance.downloadAudio(
+        verseKey,
+        audioUrl,
+      );
+
+      if (path != null) {
+        state = state.copyWith(
+          isDownloading: false,
+          isAudioDownloaded: true,
+          downloadProgress: 1.0,
+        );
+      } else {
+        state = state.copyWith(
+          isDownloading: false,
+          errorMessage: 'Failed to download audio',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isDownloading: false,
+        errorMessage: 'Download failed: $e',
+      );
+    }
+  }
+
+  /// Check if audio is downloaded for a verse
+  Future<bool> isAudioDownloaded(String verseKey) async {
+    return await AudioDownloadService.instance.isAudioDownloaded(verseKey);
+  }
+
+  /// Delete downloaded audio for a verse
+  Future<void> deleteAudio(String verseKey) async {
+    await AudioDownloadService.instance.deleteAudio(verseKey);
+    state = state.copyWith(isAudioDownloaded: false);
   }
 
   @override

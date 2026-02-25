@@ -4,6 +4,7 @@ import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
+import 'package:quran_jarr/features/audio/data/datasources/audio_download_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
 import 'package:quran_jarr/features/jar/data/repositories/verse_repository_impl.dart';
@@ -143,8 +144,9 @@ class JarNotifier extends StateNotifier<JarState> {
     final verse = state.currentVerse;
     if (verse == null) return;
 
+    final isSaving = !verse.isSaved;
     state = state.copyWith(
-      currentVerse: verse.copyWith(isSaved: !verse.isSaved),
+      currentVerse: verse.copyWith(isSaved: isSaving),
     );
 
     final result = await _saveVerseUseCase(verse);
@@ -154,9 +156,19 @@ class JarNotifier extends StateNotifier<JarState> {
         errorMessage: error.message,
         currentVerse: verse, // Revert on error
       ),
-      (isSaved) => state = state.copyWith(
-        currentVerse: state.currentVerse?.copyWith(isSaved: isSaved),
-      ),
+      (isSaved) async {
+        state = state.copyWith(
+          currentVerse: state.currentVerse?.copyWith(isSaved: isSaved),
+        );
+
+        // Download audio if verse is saved and has audio
+        if (isSaved && verse.hasAudio) {
+          AudioDownloadService.instance.downloadAudio(
+            verse.verseKey,
+            verse.audioUrl!,
+          );
+        }
+      },
     );
   }
 
