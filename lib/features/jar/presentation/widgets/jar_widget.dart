@@ -5,14 +5,17 @@ import 'package:quran_jarr/core/config/constants.dart';
 
 /// Jar Widget
 /// A beautiful glass jar visualization with pull interaction
+/// Features shake animation and paper slip coming out effect
 class JarWidget extends StatefulWidget {
   final VoidCallback? onTap;
   final bool isEmpty;
+  final bool isAnimating;
 
   const JarWidget({
     super.key,
     this.onTap,
     this.isEmpty = false,
+    this.isAnimating = false,
   });
 
   @override
@@ -20,23 +23,51 @@ class JarWidget extends StatefulWidget {
 }
 
 class _JarWidgetState extends State<JarWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _shakeController;
+  late AnimationController _paperController;
   bool _isPressed = false;
+  bool _showPaperSlip = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
+    );
+    _paperController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _shakeController.dispose();
+    _paperController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    if (_showPaperSlip) return; // Prevent double tap
+
+    setState(() => _showPaperSlip = true);
+
+    // Shake animation (left-right-left)
+    await _shakeController.forward();
+
+    // Paper slip comes out
+    await _paperController.forward();
+
+    // Reset after animation
+    await Future.delayed(const Duration(milliseconds: 200));
+    setState(() => _showPaperSlip = false);
+    _shakeController.reset();
+    await _paperController.reverse();
+
+    // Call the onTap callback
+    widget.onTap?.call();
   }
 
   @override
@@ -45,37 +76,186 @@ class _JarWidgetState extends State<JarWidget>
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        widget.onTap?.call();
+        _handleTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeInOut,
-        transform: Matrix4.identity()
-          ..scale(_isPressed ? 0.95 : 1.0)
-          ..rotateZ(_isPressed ? 0.02 : 0),
+      child: AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          // Create shake effect
+          double rotation = 0;
+          if (_shakeController.value > 0) {
+            final shakeCurve = Curves.easeInOut;
+            final t = shakeCurve.transform(_shakeController.value);
+            // Shake left-right-left pattern
+            if (t < 0.33) {
+              rotation = -(t / 0.33) * 0.15;
+            } else if (t < 0.66) {
+              rotation = ((t - 0.33) / 0.33) * 0.15;
+            } else {
+              rotation = -((t - 0.66) / 0.34) * 0.08;
+            }
+          }
+          return Transform.rotate(
+            angle: rotation,
+            child: child,
+          );
+        },
         child: SizedBox(
-          width: AppConstants.jarWidth,
-          height: AppConstants.jarHeight,
-          child: CustomPaint(
-            painter: _JarPainter(
-              isEmpty: widget.isEmpty,
-              ripple: _controller.value,
-            ),
+          width: AppConstants.jarWidth + 60, // Extra space for paper slip
+          height: AppConstants.jarHeight + 80,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Jar (centered with offset)
+              Positioned(
+                left: 30,
+                top: 40,
+                child: AnimatedScale(
+                  scale: _isPressed ? 0.95 : 1.0,
+                  duration: const Duration(milliseconds: 100),
+                  curve: Curves.easeInOut,
+                  child: SizedBox(
+                    width: AppConstants.jarWidth,
+                    height: AppConstants.jarHeight,
+                    child: CustomPaint(
+                      painter: _JarPainter(
+                        isEmpty: widget.isEmpty,
+                      ),
+                    ),
+                  ),
+                ).animate().then(delay: 100.ms).fade(duration: 400.ms),
+              ),
+
+              // Paper slip that comes out
+              if (_showPaperSlip)
+                Positioned(
+                  left: AppConstants.jarWidth / 2 + 5,
+                  top: 90,
+                  child: AnimatedBuilder(
+                    animation: _paperController,
+                    builder: (context, child) {
+                      final curve = Curves.easeOutCubic;
+                      final t = curve.transform(_paperController.value);
+
+                      return Transform.translate(
+                        offset: Offset(0, -t * 120),
+                        child: Transform.rotate(
+                          angle: -0.15 + (t * 0.08),
+                          child: Opacity(
+                            opacity: t,
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                    child: _PaperSlipWidget(),
+                  ).animate().fade(duration: 150.ms),
+                ),
+            ],
           ),
         ),
-      ).animate().then(delay: 100.ms).fade(duration: 400.ms),
+      ),
+    );
+  }
+}
+
+/// Paper Slip Widget
+/// Shows a paper slip coming out of the jar
+class _PaperSlipWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 55,
+      height: 75,
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.deepUmber.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(3, 6),
+          ),
+        ],
+        border: Border.all(
+          color: AppColors.glassBorder.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Arabic text lines
+            Container(
+              height: 3,
+              width: 35,
+              decoration: BoxDecoration(
+                color: AppColors.deepUmber.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Container(
+              height: 3,
+              width: 40,
+              decoration: BoxDecoration(
+                color: AppColors.deepUmber.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Container(
+              height: 3,
+              width: 28,
+              decoration: BoxDecoration(
+                color: AppColors.deepUmber.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Translation lines
+            Container(
+              height: 2.5,
+              width: 42,
+              decoration: BoxDecoration(
+                color: AppColors.sageGreen.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              height: 2.5,
+              width: 36,
+              decoration: BoxDecoration(
+                color: AppColors.sageGreen.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              height: 2.5,
+              width: 30,
+              decoration: BoxDecoration(
+                color: AppColors.sageGreen.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _JarPainter extends CustomPainter {
   final bool isEmpty;
-  final double ripple;
 
   _JarPainter({
     required this.isEmpty,
-    required this.ripple,
   });
 
   @override
@@ -84,11 +264,11 @@ class _JarPainter extends CustomPainter {
 
     // Jar body - glass effect
     final jarPaint = Paint()
-      ..color = AppColors.sageGreen.withOpacity(0.3)
+      ..color = AppColors.sageGreen.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final jarStrokePaint = Paint()
-      ..color = AppColors.sageGreen.withOpacity(0.6)
+      ..color = AppColors.sageGreen.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
@@ -107,7 +287,7 @@ class _JarPainter extends CustomPainter {
 
     // Jar neck
     final neckPaint = Paint()
-      ..color = AppColors.sageGreen.withOpacity(0.2)
+      ..color = AppColors.sageGreen.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
 
     final neckRect = RRect.fromRectAndRadius(
@@ -140,7 +320,7 @@ class _JarPainter extends CustomPainter {
 
     // Glass shine effect
     final shinePaint = Paint()
-      ..color = AppColors.glassWhite.withOpacity(0.3)
+      ..color = AppColors.glassWhite.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final shinePath = Path()
@@ -156,20 +336,6 @@ class _JarPainter extends CustomPainter {
     if (!isEmpty) {
       _drawPaperSlips(canvas, center, size);
     }
-
-    // Ripple effect on tap
-    if (ripple > 0) {
-      final ripplePaint = Paint()
-        ..color = AppColors.sageGreen.withOpacity(0.3 * (1 - ripple))
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(
-        center,
-        size.width * 0.5 * ripple,
-        ripplePaint,
-      );
-    }
   }
 
   void _drawPaperSlips(Canvas canvas, Offset center, Size size) {
@@ -178,11 +344,11 @@ class _JarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final slipStrokePaint = Paint()
-      ..color = AppColors.glassBorder.withOpacity(0.3)
+      ..color = AppColors.glassBorder.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Draw a few paper slips
+    // Draw a few paper slips inside the jar
     for (int i = 0; i < 3; i++) {
       final slipY = center.dy - size.height * 0.1 + (i * 15.0);
       final slipX = center.dx - size.width * 0.15 + (i * 5.0);
@@ -203,6 +369,6 @@ class _JarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _JarPainter oldDelegate) {
-    return oldDelegate.isEmpty != isEmpty || oldDelegate.ripple != ripple;
+    return oldDelegate.isEmpty != isEmpty;
   }
 }

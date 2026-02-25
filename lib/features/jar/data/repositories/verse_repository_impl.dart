@@ -22,9 +22,13 @@ class VerseRepositoryImpl implements VerseRepository {
 
   @override
   Future<Either<ApiException, Verse>> getRandomVerse({
-    String translationId = '131', // Default to Sahih International
+    String translationId = 'english', // Default translation
+    List<int>? surahNumbers, // Optional list of surah numbers for curated mode
   }) async {
-    final result = await _apiService.getRandomVerse(translationId: translationId);
+    final result = await _apiService.getRandomVerse(
+      translationId: translationId,
+      surahNumbers: surahNumbers,
+    );
     return result.fold(
       (error) => Left(error),
       (model) => Right(model.toEntity()),
@@ -34,18 +38,36 @@ class VerseRepositoryImpl implements VerseRepository {
   @override
   Future<Either<ApiException, Verse>> getVerseByKey(
     String verseKey, {
-    String translationId = '131', // Default to Sahih International
+    String translationId = 'english', // Default translation
   }) async {
-    final result = await _apiService.getVerseByKey(verseKey, translationId: translationId);
-    return result.fold(
-      (error) => Left(error),
-      (model) => Right(model.toEntity()),
-    );
+    // Parse verse key (format: "surah:ayah" e.g., "2:255")
+    final parts = verseKey.split(':');
+    if (parts.length != 2) {
+      return Left(ApiException('Invalid verse key format: $verseKey'));
+    }
+
+    try {
+      final surahNo = int.parse(parts[0]);
+      final ayahNo = int.parse(parts[1]);
+
+      final result = await _apiService.getVerseBySurahAyah(
+        surahNo,
+        ayahNo,
+        translationId: translationId,
+      );
+      return result.fold(
+        (error) => Left(error),
+        (model) => Right(model.toEntity()),
+      );
+    } catch (e) {
+      return Left(ApiException('Failed to parse verse key: $e'));
+    }
   }
 
   @override
   Future<Either<ApiException, Verse>> getDailyVerse({
-    String translationId = '131', // Default to Sahih International
+    String translationId = 'english', // Default translation
+    List<int>? surahNumbers, // Optional list of surah numbers for curated mode
   }) async {
     // Try to get cached today's verse first
     final cachedVerse = await _localStorage.getTodayVerse();
@@ -53,16 +75,27 @@ class VerseRepositoryImpl implements VerseRepository {
       return Right(cachedVerse.toEntity());
     }
 
-    // If no cached verse, get a random one
-    final result = await _apiService.getRandomVerse(translationId: translationId);
-    return result.fold(
-      (error) => Left(error),
-      (model) async {
-        // Cache as today's verse
-        await _localStorage.saveTodayVerse(model);
-        return Right(model.toEntity());
-      },
+    // If no cached verse, get a random one (respecting curated mode)
+    final result = await _apiService.getRandomVerse(
+      translationId: translationId,
+      surahNumbers: surahNumbers,
     );
+
+    // Cache the verse if successful
+    if (result.isRight()) {
+      final model = result.getOrElse(() => VerseModel(
+            surahNumber: 1,
+            ayahNumber: 1,
+            arabicText: '',
+            translation: '',
+            surahName: '',
+            verseKey: '1:1',
+          ));
+      await _localStorage.saveTodayVerse(model);
+      return Right(model.toEntity());
+    }
+
+    return Left(result.swap().getOrElse(() => ApiException('Unknown error')));
   }
 
   @override
@@ -105,5 +138,13 @@ class VerseRepositoryImpl implements VerseRepository {
     } catch (e) {
       return Left(ApiException('Failed to check if verse is saved: $e'));
     }
+  }
+
+  @override
+  Future<Either<ApiException, String>> getTafsir(
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    return await _apiService.getTafsir(surahNumber, ayahNumber);
   }
 }

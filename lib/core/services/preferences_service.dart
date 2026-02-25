@@ -18,6 +18,39 @@ class PreferencesService {
     _prefsBox = await Hive.openBox('preferences');
   }
 
+  // ==================== Onboarding Preferences ====================
+
+  /// Check if onboarding is completed
+  bool isOnboardingCompleted() {
+    return _prefsBox.get(AppConstants.keyOnboardingCompleted, defaultValue: false) as bool;
+  }
+
+  /// Set onboarding as completed
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _prefsBox.put(AppConstants.keyOnboardingCompleted, completed);
+  }
+
+  /// Check if internet requirement is accepted
+  bool isInternetAccepted() {
+    return _prefsBox.get(AppConstants.keyInternetAccepted, defaultValue: false) as bool;
+  }
+
+  /// Set internet requirement acceptance
+  Future<void> setInternetAccepted(bool accepted) async {
+    await _prefsBox.put(AppConstants.keyInternetAccepted, accepted);
+  }
+
+  /// Get verse selection mode
+  VerseSelectionMode getVerseSelectionMode() {
+    final value = _prefsBox.get(AppConstants.keyVerseSelectionMode, defaultValue: VerseSelectionMode.random.value) as String;
+    return VerseSelectionMode.fromValue(value);
+  }
+
+  /// Set verse selection mode
+  Future<void> setVerseSelectionMode(VerseSelectionMode mode) async {
+    await _prefsBox.put(AppConstants.keyVerseSelectionMode, mode.value);
+  }
+
   // ==================== Translation Preferences ====================
 
   /// Get the selected translation ID
@@ -40,7 +73,7 @@ class PreferencesService {
 
   /// Get all available translations
   List<Translation> getAvailableTranslations() {
-    return AvailableTranslations.englishTranslations;
+    return AvailableTranslations.allTranslations;
   }
 
   // ==================== Clear Preferences ====================

@@ -29,7 +29,9 @@ class LocalStorageService {
   Future<VerseModel?> getTodayVerse() async {
     final json = _appDataBox.get(AppConstants.keyTodayVerse);
     if (json == null) return null;
-    return VerseModel.fromJson(json as Map<String, dynamic>);
+    // Convert Map<dynamic, dynamic> to Map<String, dynamic>
+    final map = Map<String, dynamic>.from(json as Map);
+    return VerseModel.fromJson(map);
   }
 
   /// Save a verse to archive
@@ -54,7 +56,9 @@ class LocalStorageService {
     for (final key in keys) {
       final json = _versesBox.get(key);
       if (json != null) {
-        verses.add(VerseModel.fromJson(json as Map<String, dynamic>));
+        // Convert Map<dynamic, dynamic> to Map<String, dynamic>
+        final map = Map<String, dynamic>.from(json as Map);
+        verses.add(VerseModel.fromJson(map));
       }
     }
 

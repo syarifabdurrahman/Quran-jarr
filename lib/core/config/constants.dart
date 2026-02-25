@@ -12,6 +12,8 @@ class AppConstants {
   static const String keyTodayVerse = 'today_verse';
   static const String keyOnboardingCompleted = 'onboarding_completed';
   static const String keySelectedTranslation = 'selected_translation';
+  static const String keyVerseSelectionMode = 'verse_selection_mode';
+  static const String keyInternetAccepted = 'internet_accepted';
 
   // Duration
   static const int dailyPullHours = 24;
@@ -34,4 +36,20 @@ class AppConstants {
   static const double jarWidth = 200;
   static const double jarHeight = 280;
   static const double jarBorderRadius = 20;
+}
+
+/// Verse Selection Mode
+enum VerseSelectionMode {
+  curated('curated'),
+  random('random');
+
+  final String value;
+  const VerseSelectionMode(this.value);
+
+  static VerseSelectionMode fromValue(String value) {
+    return VerseSelectionMode.values.firstWhere(
+      (mode) => mode.value == value,
+      orElse: () => VerseSelectionMode.random,
+    );
+  }
 }

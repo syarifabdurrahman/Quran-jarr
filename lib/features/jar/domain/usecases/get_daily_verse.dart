@@ -12,10 +12,15 @@ class GetDailyVerseUseCase {
 
   /// Execute the use case
   /// Returns a verse (cached or new)
+  /// Optional surahNumbers parameter for curated mode
   Future<Either<ApiException, Verse>> call({
-    String translationId = '131', // Default to Sahih International
+    String translationId = 'english', // Default translation
+    List<int>? surahNumbers, // Optional list of surah numbers for curated mode
   }) async {
     // Return cached verse if available, or get a new one
-    return await _repository.getDailyVerse(translationId: translationId);
+    return await _repository.getDailyVerse(
+      translationId: translationId,
+      surahNumbers: surahNumbers,
+    );
   }
 }

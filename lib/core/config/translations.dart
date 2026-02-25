@@ -13,41 +13,31 @@ class Translation {
   });
 }
 
-/// Available English Translations
+/// Available Translations from Quran API
 class AvailableTranslations {
   AvailableTranslations._();
 
-  static const List<Translation> englishTranslations = [
+  static const List<Translation> allTranslations = [
+    // English
     Translation(
-      id: '131',
-      name: 'Sahih International',
-      author: 'Sahih International',
+      id: 'english',
+      name: 'English',
+      author: 'Quran API',
       language: 'en',
     ),
+    // Indonesian
     Translation(
-      id: '161',
-      name: 'Mustafa Khattab',
-      author: 'Mustafa Khattab',
-      language: 'en',
-    ),
-    Translation(
-      id: '20',
-      name: 'Wahiduddin Khan (Indonesian)',
-      author: 'Wahiduddin Khan',
+      id: 'indonesian',
+      name: 'Indonesian',
+      author: 'Kemenag RI',
       language: 'id',
-    ),
-    Translation(
-      id: '131',
-      name: 'Dr. Mustafa Khattab (The Clear Quran)',
-      author: 'Dr. Mustafa Khattab',
-      language: 'en',
     ),
   ];
 
-  static Translation get defaultTranslation => englishTranslations.first;
+  static Translation get defaultTranslation => allTranslations.first;
 
   static Translation getById(String id) {
-    return englishTranslations.firstWhere(
+    return allTranslations.firstWhere(
       (t) => t.id == id,
       orElse: () => defaultTranslation,
     );

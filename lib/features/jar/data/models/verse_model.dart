@@ -18,7 +18,9 @@ class VerseModel with _$VerseModel {
     required String surahName,
     @Default('') String surahNameTranslation,
     required String verseKey,
+    @Default('english') String translationId, // Translation language ID
     String? audioUrl,
+    String? tafsir,
     @Default(false) bool isSaved,
     DateTime? savedAt,
   }) = _VerseModel;
@@ -35,7 +37,9 @@ class VerseModel with _$VerseModel {
         surahName: surahName,
         surahNameTranslation: surahNameTranslation,
         verseKey: verseKey,
+        translationId: translationId,
         audioUrl: audioUrl,
+        tafsir: tafsir,
         isSaved: isSaved,
         savedAt: savedAt,
       );
@@ -49,7 +53,9 @@ class VerseModel with _$VerseModel {
         surahName: verse.surahName,
         surahNameTranslation: verse.surahNameTranslation,
         verseKey: verse.verseKey,
+        translationId: verse.translationId,
         audioUrl: verse.audioUrl,
+        tafsir: verse.tafsir,
         isSaved: verse.isSaved,
         savedAt: verse.savedAt,
       );

@@ -27,7 +27,11 @@ mixin _$Verse {
   String get surahName => throw _privateConstructorUsedError;
   String get surahNameTranslation => throw _privateConstructorUsedError;
   String get verseKey => throw _privateConstructorUsedError; // e.g., "2:255"
+  String get translationId =>
+      throw _privateConstructorUsedError; // Translation language ID
   String? get audioUrl => throw _privateConstructorUsedError;
+  String? get tafsir =>
+      throw _privateConstructorUsedError; // Tafsir/interpretation text
   bool get isSaved => throw _privateConstructorUsedError;
   DateTime? get savedAt => throw _privateConstructorUsedError;
 
@@ -49,7 +53,9 @@ abstract class $VerseCopyWith<$Res> {
       String surahName,
       String surahNameTranslation,
       String verseKey,
+      String translationId,
       String? audioUrl,
+      String? tafsir,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -74,7 +80,9 @@ class _$VerseCopyWithImpl<$Res, $Val extends Verse>
     Object? surahName = null,
     Object? surahNameTranslation = null,
     Object? verseKey = null,
+    Object? translationId = null,
     Object? audioUrl = freezed,
+    Object? tafsir = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -107,9 +115,17 @@ class _$VerseCopyWithImpl<$Res, $Val extends Verse>
           ? _value.verseKey
           : verseKey // ignore: cast_nullable_to_non_nullable
               as String,
+      translationId: null == translationId
+          ? _value.translationId
+          : translationId // ignore: cast_nullable_to_non_nullable
+              as String,
       audioUrl: freezed == audioUrl
           ? _value.audioUrl
           : audioUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tafsir: freezed == tafsir
+          ? _value.tafsir
+          : tafsir // ignore: cast_nullable_to_non_nullable
               as String?,
       isSaved: null == isSaved
           ? _value.isSaved
@@ -138,7 +154,9 @@ abstract class _$$VerseImplCopyWith<$Res> implements $VerseCopyWith<$Res> {
       String surahName,
       String surahNameTranslation,
       String verseKey,
+      String translationId,
       String? audioUrl,
+      String? tafsir,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -161,7 +179,9 @@ class __$$VerseImplCopyWithImpl<$Res>
     Object? surahName = null,
     Object? surahNameTranslation = null,
     Object? verseKey = null,
+    Object? translationId = null,
     Object? audioUrl = freezed,
+    Object? tafsir = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -194,9 +214,17 @@ class __$$VerseImplCopyWithImpl<$Res>
           ? _value.verseKey
           : verseKey // ignore: cast_nullable_to_non_nullable
               as String,
+      translationId: null == translationId
+          ? _value.translationId
+          : translationId // ignore: cast_nullable_to_non_nullable
+              as String,
       audioUrl: freezed == audioUrl
           ? _value.audioUrl
           : audioUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tafsir: freezed == tafsir
+          ? _value.tafsir
+          : tafsir // ignore: cast_nullable_to_non_nullable
               as String?,
       isSaved: null == isSaved
           ? _value.isSaved
@@ -221,7 +249,9 @@ class _$VerseImpl extends _Verse {
       required this.surahName,
       required this.surahNameTranslation,
       required this.verseKey,
+      this.translationId = 'english',
       this.audioUrl,
+      this.tafsir,
       this.isSaved = false,
       this.savedAt})
       : super._();
@@ -245,7 +275,14 @@ class _$VerseImpl extends _Verse {
   final String verseKey;
 // e.g., "2:255"
   @override
+  @JsonKey()
+  final String translationId;
+// Translation language ID
+  @override
   final String? audioUrl;
+  @override
+  final String? tafsir;
+// Tafsir/interpretation text
   @override
   @JsonKey()
   final bool isSaved;
@@ -254,7 +291,7 @@ class _$VerseImpl extends _Verse {
 
   @override
   String toString() {
-    return 'Verse(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, audioUrl: $audioUrl, isSaved: $isSaved, savedAt: $savedAt)';
+    return 'Verse(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsir: $tafsir, isSaved: $isSaved, savedAt: $savedAt)';
   }
 
   @override
@@ -276,8 +313,11 @@ class _$VerseImpl extends _Verse {
                 other.surahNameTranslation == surahNameTranslation) &&
             (identical(other.verseKey, verseKey) ||
                 other.verseKey == verseKey) &&
+            (identical(other.translationId, translationId) ||
+                other.translationId == translationId) &&
             (identical(other.audioUrl, audioUrl) ||
                 other.audioUrl == audioUrl) &&
+            (identical(other.tafsir, tafsir) || other.tafsir == tafsir) &&
             (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
             (identical(other.savedAt, savedAt) || other.savedAt == savedAt));
   }
@@ -293,7 +333,9 @@ class _$VerseImpl extends _Verse {
       surahName,
       surahNameTranslation,
       verseKey,
+      translationId,
       audioUrl,
+      tafsir,
       isSaved,
       savedAt);
 
@@ -320,7 +362,9 @@ abstract class _Verse extends Verse {
       required final String surahName,
       required final String surahNameTranslation,
       required final String verseKey,
+      final String translationId,
       final String? audioUrl,
+      final String? tafsir,
       final bool isSaved,
       final DateTime? savedAt}) = _$VerseImpl;
   const _Verse._() : super._();
@@ -342,8 +386,12 @@ abstract class _Verse extends Verse {
   @override
   String get verseKey;
   @override // e.g., "2:255"
+  String get translationId;
+  @override // Translation language ID
   String? get audioUrl;
   @override
+  String? get tafsir;
+  @override // Tafsir/interpretation text
   bool get isSaved;
   @override
   DateTime? get savedAt;

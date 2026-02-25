@@ -14,7 +14,9 @@ _$VerseImpl _$$VerseImplFromJson(Map<String, dynamic> json) => _$VerseImpl(
       surahName: json['surahName'] as String,
       surahNameTranslation: json['surahNameTranslation'] as String,
       verseKey: json['verseKey'] as String,
+      translationId: json['translationId'] as String? ?? 'english',
       audioUrl: json['audioUrl'] as String?,
+      tafsir: json['tafsir'] as String?,
       isSaved: json['isSaved'] as bool? ?? false,
       savedAt: json['savedAt'] == null
           ? null
@@ -30,7 +32,9 @@ Map<String, dynamic> _$$VerseImplToJson(_$VerseImpl instance) =>
       'surahName': instance.surahName,
       'surahNameTranslation': instance.surahNameTranslation,
       'verseKey': instance.verseKey,
+      'translationId': instance.translationId,
       'audioUrl': instance.audioUrl,
+      'tafsir': instance.tafsir,
       'isSaved': instance.isSaved,
       'savedAt': instance.savedAt?.toIso8601String(),
     };

@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
 import 'package:quran_jarr/features/jar/data/repositories/verse_repository_impl.dart';
@@ -39,14 +42,17 @@ class JarNotifier extends StateNotifier<JarState> {
   final GetDailyVerseUseCase _getDailyVerseUseCase;
   final PullRandomVerseUseCase _pullRandomVerseUseCase;
   final SaveVerseUseCase _saveVerseUseCase;
+  final Ref _ref;
 
   JarNotifier({
     required GetDailyVerseUseCase getDailyVerseUseCase,
     required PullRandomVerseUseCase pullRandomVerseUseCase,
     required SaveVerseUseCase saveVerseUseCase,
+    required Ref ref,
   })  : _getDailyVerseUseCase = getDailyVerseUseCase,
         _pullRandomVerseUseCase = pullRandomVerseUseCase,
         _saveVerseUseCase = saveVerseUseCase,
+        _ref = ref,
         super(const JarState()) {
     _initialize();
   }
@@ -60,7 +66,20 @@ class JarNotifier extends StateNotifier<JarState> {
   Future<void> loadDailyVerse() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    final result = await _getDailyVerseUseCase();
+    // Get selected translation ID
+    final translationId = _ref.read(selectedTranslationProvider).id;
+
+    // Get curated surah numbers if in curated mode
+    final prefs = _ref.read(preferencesServiceProvider);
+    final mode = prefs.getVerseSelectionMode();
+    final surahNumbers = mode == VerseSelectionMode.curated
+        ? CuratedSurahs.surahNumbers
+        : null;
+
+    final result = await _getDailyVerseUseCase(
+      translationId: translationId,
+      surahNumbers: surahNumbers,
+    );
 
     result.fold(
       (error) => state = state.copyWith(
@@ -78,7 +97,20 @@ class JarNotifier extends StateNotifier<JarState> {
   Future<void> pullRandomVerse() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    final result = await _pullRandomVerseUseCase();
+    // Get selected translation ID
+    final translationId = _ref.read(selectedTranslationProvider).id;
+
+    // Get curated surah numbers if in curated mode
+    final prefs = _ref.read(preferencesServiceProvider);
+    final mode = prefs.getVerseSelectionMode();
+    final surahNumbers = mode == VerseSelectionMode.curated
+        ? CuratedSurahs.surahNumbers
+        : null;
+
+    final result = await _pullRandomVerseUseCase(
+      translationId: translationId,
+      surahNumbers: surahNumbers,
+    );
 
     result.fold(
       (error) => state = state.copyWith(
@@ -118,6 +150,57 @@ class JarNotifier extends StateNotifier<JarState> {
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }
+
+  /// Load tafsir for the current verse
+  Future<void> loadTafsir() async {
+    final verse = state.currentVerse;
+    if (verse == null) return;
+
+    // If tafsir is already loaded, do nothing
+    if (verse.tafsir != null && verse.tafsir!.isNotEmpty) return;
+
+    final result = await _ref.read(verseRepositoryProvider).getTafsir(
+          verse.surahNumber,
+          verse.ayahNumber,
+        );
+
+    result.fold(
+      (error) => state = state.copyWith(
+        errorMessage: error.message,
+      ),
+      (tafsirText) => state = state.copyWith(
+        currentVerse: verse.copyWith(tafsir: tafsirText),
+      ),
+    );
+  }
+
+  /// Reload the current verse with a different translation
+  Future<void> reloadVerseWithTranslation(String translationId) async {
+    final verse = state.currentVerse;
+    if (verse == null) return;
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    // Fetch the same verse with new translation
+    final result = await _ref.read(verseRepositoryProvider).getVerseByKey(
+          verse.verseKey,
+          translationId: translationId,
+        );
+
+    result.fold(
+      (error) => state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.message,
+      ),
+      (newVerse) => state = state.copyWith(
+        currentVerse: newVerse.copyWith(
+          isSaved: verse.isSaved,
+          tafsir: verse.tafsir,
+        ),
+        isLoading: false,
+      ),
+    );
+  }
 }
 
 /// Providers
@@ -127,14 +210,14 @@ final localStorageServiceProvider = Provider<LocalStorageService>((ref) {
   return LocalStorageService.instance;
 });
 
-// Dio Client Provider
+// Dio Client Provider (no longer needed but kept for potential future use)
 final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient.instance..initialize();
 });
 
 // Quran API Service Provider
 final quranApiServiceProvider = Provider<QuranApiService>((ref) {
-  return QuranApiService(ref.watch(dioClientProvider));
+  return QuranApiService();
 });
 
 // Verse Repository Provider
@@ -166,5 +249,6 @@ final jarNotifierProvider = StateNotifierProvider<JarNotifier, JarState>((ref) {
     getDailyVerseUseCase: ref.watch(getDailyVerseUseCaseProvider),
     pullRandomVerseUseCase: ref.watch(pullRandomVerseUseCaseProvider),
     saveVerseUseCase: ref.watch(saveVerseUseCaseProvider),
+    ref: ref,
   );
 });

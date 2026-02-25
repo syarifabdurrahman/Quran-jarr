@@ -8,15 +8,23 @@ import '../entities/verse.dart';
 abstract class VerseRepository {
   /// Get a random verse from Quran
   /// Returns Right(Verse) on success, Left(ApiException) on failure
-  Future<Either<ApiException, Verse>> getRandomVerse();
+  /// Optional surahNumbers parameter for curated mode
+  Future<Either<ApiException, Verse>> getRandomVerse({
+    String translationId,
+    List<int>? surahNumbers,
+  });
 
   /// Get a verse by its key (e.g., "2:255")
   /// Returns Right(Verse) on success, Left(ApiException) on failure
-  Future<Either<ApiException, Verse>> getVerseByKey(String verseKey);
+  Future<Either<ApiException, Verse>> getVerseByKey(String verseKey, {String translationId});
 
   /// Get today's verse (cached or new if 24h passed)
   /// Returns Right(Verse) on success, Left(ApiException) on failure
-  Future<Either<ApiException, Verse>> getDailyVerse();
+  /// Optional surahNumbers parameter for curated mode
+  Future<Either<ApiException, Verse>> getDailyVerse({
+    String translationId,
+    List<int>? surahNumbers,
+  });
 
   /// Save a verse to archive
   /// Returns Right(void) on success, Left(ApiException) on failure
@@ -33,4 +41,8 @@ abstract class VerseRepository {
   /// Check if a verse is saved
   /// Returns Right(bool) on success, Left(ApiException) on failure
   Future<Either<ApiException, bool>> isVerseSaved(String verseKey);
+
+  /// Get tafsir for a specific verse
+  /// Returns Right(String) with tafsir text on success, Left(ApiException) on failure
+  Future<Either<ApiException, String>> getTafsir(int surahNumber, int ayahNumber);
 }

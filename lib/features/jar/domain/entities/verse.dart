@@ -17,7 +17,9 @@ class Verse with _$Verse {
     required String surahName,
     required String surahNameTranslation,
     required String verseKey, // e.g., "2:255"
+    @Default('english') String translationId, // Translation language ID
     String? audioUrl,
+    String? tafsir, // Tafsir/interpretation text
     @Default(false) bool isSaved,
     DateTime? savedAt,
   }) = _Verse;
@@ -29,4 +31,7 @@ class Verse with _$Verse {
 
   /// Check if verse has audio available
   bool get hasAudio => audioUrl != null && audioUrl!.isNotEmpty;
+
+  /// Check if verse has tafsir available
+  bool get hasTafsir => tafsir != null && tafsir!.isNotEmpty;
 }

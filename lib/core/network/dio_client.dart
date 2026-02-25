@@ -37,8 +37,7 @@ class DioClient {
     _dio!.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Add default parameters
-          options.queryParameters.addAll(ApiConfig.defaultParams);
+          // No default parameters needed for new API
           return handler.next(options);
         },
         onResponse: (response, handler) {
