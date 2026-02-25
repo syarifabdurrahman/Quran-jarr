@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
+  // ==================== Light Mode Colors ====================
   // Primary Colors
   static const Color cream = Color(0xFFF9F7F2);
   static const Color sageGreen = Color(0xFF8C927D);
@@ -32,4 +33,30 @@ class AppColors {
   static const Color textPrimary = Color(0xFF4A4238);
   static const Color textSecondary = Color(0xFF7A7268);
   static const Color textOnDark = Color(0xFFF9F7F2);
+
+  // ==================== Dark Mode Colors ====================
+  // Primary Colors (Dark)
+  static const Color darkCream = Color(0xFF1A1915);
+  static const Color darkSageGreen = Color(0xFF9BA88F);
+  static const Color darkDeepUmber = Color(0xFFE8E4DD);
+  static const Color darkTerracotta = Color(0xFFE0B895);
+
+  // Secondary Colors (Dark)
+  static const Color darkSoftSand = Color(0xFF2A2822);
+  static const Color darkMutedGold = Color(0xFFD4BC76);
+  static const Color darkDarkEarth = Color(0xFF151410);
+
+  // Semantic Colors (Dark)
+  static const Color darkSuccess = Color(0xFF8BC34A);
+  static const Color darkError = Color(0xFFE57373);
+  static const Color darkWarning = Color(0xFFFFD54F);
+
+  // Glassmorphism (Dark)
+  static const Color darkGlassWhite = Color(0xFF2A2822);
+  static const Color darkGlassBorder = Color(0x33FFFFFF);
+
+  // Text Colors (Dark)
+  static const Color darkTextPrimary = Color(0xFFE8E4DD);
+  static const Color darkTextSecondary = Color(0xFFB0A898);
+  static const Color darkTextOnDark = Color(0xFF1A1915);
 }

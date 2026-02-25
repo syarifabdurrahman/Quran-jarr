@@ -20,15 +20,30 @@ class LocalStorageService {
     _appDataBox = await Hive.openBox('app_data');
   }
 
-  /// Save today's verse
+  /// Save today's verse with timestamp
   Future<void> saveTodayVerse(VerseModel verse) async {
     await _appDataBox.put(AppConstants.keyTodayVerse, verse.toJson());
+    await _appDataBox.put('${AppConstants.keyTodayVerse}_timestamp', DateTime.now().toIso8601String());
   }
 
-  /// Get today's verse
+  /// Get today's verse (only if less than 24 hours old)
   Future<VerseModel?> getTodayVerse() async {
     final json = _appDataBox.get(AppConstants.keyTodayVerse);
     if (json == null) return null;
+
+    // Check timestamp
+    final timestampStr = _appDataBox.get('${AppConstants.keyTodayVerse}_timestamp');
+    if (timestampStr != null) {
+      final timestamp = DateTime.parse(timestampStr as String);
+      final now = DateTime.now();
+      final hoursPassed = now.difference(timestamp).inHours;
+
+      // If more than 24 hours have passed, return null to force refresh
+      if (hoursPassed >= 24) {
+        return null;
+      }
+    }
+
     // Convert Map<dynamic, dynamic> to Map<String, dynamic>
     final map = Map<String, dynamic>.from(json as Map);
     return VerseModel.fromJson(map);

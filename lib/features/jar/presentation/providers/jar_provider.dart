@@ -3,6 +3,7 @@ import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
 import 'package:quran_jarr/features/jar/data/repositories/verse_repository_impl.dart';
@@ -117,10 +118,23 @@ class JarNotifier extends StateNotifier<JarState> {
         isLoading: false,
         errorMessage: error.message,
       ),
-      (verse) => state = state.copyWith(
-        currentVerse: verse,
-        isLoading: false,
-      ),
+      (verse) async {
+        state = state.copyWith(
+          currentVerse: verse,
+          isLoading: false,
+        );
+
+        // Update home screen widget (Android only)
+        if (WidgetService.instance.isAvailable) {
+          await WidgetService.instance.updateWidget(
+            arabicText: verse.arabicText,
+            translation: verse.translation,
+            surahName: verse.surahName,
+            surahNumber: verse.surahNumber,
+            ayahNumber: verse.ayahNumber,
+          );
+        }
+      },
     );
   }
 

@@ -52,6 +52,10 @@ dependencies:
   just_audio: ^0.9.40
   audio_session: ^0.1.21
 
+  # Notifications
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+
   # Image Export & Sharing
   screenshot: ^3.0.0
   share_plus: ^9.0.0

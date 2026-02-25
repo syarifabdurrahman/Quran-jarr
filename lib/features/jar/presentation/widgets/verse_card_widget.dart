@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/audio/presentation/widgets/audio_player_widget.dart';
@@ -30,17 +31,28 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   @override
   Widget build(BuildContext context) {
     final verse = widget.verse;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
+    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
+    final terracottaColor = isDark ? AppColors.darkTerracotta : AppColors.terracotta;
+    final glassBorder = isDark
+        ? AppColors.darkGlassBorder
+        : AppColors.glassBorder;
+
+    // Font size multipliers
+    final arabicFontMultiplier = ref.watch(arabicFontSizeProvider);
+    final englishFontMultiplier = ref.watch(englishFontSizeProvider);
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.softSand,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.glassBorder.withOpacity(0.1),
+            color: glassBorder.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -57,12 +69,12 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withOpacity(0.2),
+                  color: primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   verse.surahReference,
-                  style: AppTextStyles.surahName,
+                  style: AppTextStyles.surahName(arabicFontMultiplier),
                 ),
               ),
               // Action buttons
@@ -77,16 +89,16 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                             ? Icons.bookmark
                             : Icons.bookmark_border_outlined,
                         color: verse.isSaved
-                            ? AppColors.terracotta
-                            : AppColors.sageGreen,
+                            ? terracottaColor
+                            : primaryColor,
                       ),
                     ),
                   if (widget.onShare != null)
                     IconButton(
                       onPressed: widget.onShare,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.share_outlined,
-                        color: AppColors.sageGreen,
+                        color: primaryColor,
                       ),
                     ),
                 ],
@@ -97,7 +109,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           // Arabic verse
           Text(
             verse.arabicText,
-            style: AppTextStyles.amiriVerseLarge,
+            style: AppTextStyles.amiriVerseLarge(arabicFontMultiplier),
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
           ),
@@ -108,9 +120,9 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.glassBorder.withOpacity(0),
-                  AppColors.glassBorder,
-                  AppColors.glassBorder.withOpacity(0),
+                  glassBorder.withValues(alpha: 0),
+                  glassBorder,
+                  glassBorder.withValues(alpha: 0),
                 ],
               ),
             ),
@@ -119,7 +131,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           // Translation
           Text(
             verse.translation,
-            style: AppTextStyles.loraBodyLarge,
+            style: AppTextStyles.loraBodyLarge(englishFontMultiplier),
             textAlign: TextAlign.center,
           ),
           // Audio player (if available)
@@ -138,20 +150,20 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.sageGreen.withOpacity(0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.sageGreen.withOpacity(0.3),
+                  color: primaryColor.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
               child: _isLoadingTafsir
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.sageGreen,
+                        color: primaryColor,
                       ),
                     )
                   : Row(
@@ -162,15 +174,15 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                               ? Icons.menu_book
                               : Icons.menu_book_outlined,
                           size: 18,
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           verse.hasTafsir
                               ? 'View Tafsir (Ibn Kathir)'
                               : 'Load Tafsir',
-                          style: AppTextStyles.loraBodyMedium.copyWith(
-                            color: AppColors.sageGreen,
+                          style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
+                            color: primaryColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -206,15 +218,26 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
 
     if (verse == null || !verse.hasTafsir) return;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkSoftSand : AppColors.softSand;
+    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
+    final glassBorder = isDark
+        ? AppColors.darkGlassBorder
+        : AppColors.glassBorder;
+    final tafsirTextColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+
+    // Font size multipliers
+    final englishFontMultiplier = ref.read(englishFontSizeProvider);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: AppColors.softSand,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -224,7 +247,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.glassBorder.withOpacity(0.3),
+                color: glassBorder.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -233,22 +256,22 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.menu_book,
-                    color: AppColors.sageGreen,
+                    color: primaryColor,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Tafsir Ibn Kathir',
-                      style: AppTextStyles.loraTitle,
+                      style: AppTextStyles.loraTitle(englishFontMultiplier),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: AppColors.sageGreen,
+                      color: primaryColor,
                     ),
                   ),
                 ],
@@ -259,7 +282,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: AppColors.glassBorder.withOpacity(0.3),
+                color: glassBorder.withValues(alpha: 0.3),
               ),
             ),
             // Tafsir content
@@ -268,8 +291,8 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   verse.tafsir!,
-                  style: AppTextStyles.loraBodyMedium.copyWith(
-                    color: AppColors.deepUmber,
+                  style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
+                    color: tafsirTextColor,
                     height: 1.8,
                   ),
                 ),

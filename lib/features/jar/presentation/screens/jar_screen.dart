@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
@@ -8,6 +9,7 @@ import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
+import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
@@ -62,12 +64,42 @@ class _JarScreenState extends ConsumerState<JarScreen>
     );
   }
 
+  void _shareVerse(Verse verse) {
+    final shareText = '''
+${verse.arabicText}
+
+"${verse.translation}"
+
+${verse.surahName} (${verse.surahReference})
+
+— Shared via Quran Jarr''';
+
+    Clipboard.setData(ClipboardData(text: shareText.trim()));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Verse copied to clipboard!',
+          style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.sageGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final jarState = ref.watch(jarNotifierProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
+    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
+    final errorColor = isDark ? AppColors.darkError : AppColors.error;
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -79,26 +111,26 @@ class _JarScreenState extends ConsumerState<JarScreen>
                 children: [
                   Text(
                     'Quran Jarr',
-                    style: AppTextStyles.loraTitle,
+                    style: AppTextStyles.loraTitle(),
                   ),
                   Row(
                     children: [
                       IconButton(
                         onPressed: () async {
-                          await ref.read(jarNotifierProvider.notifier).loadDailyVerse();
+                          await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.refresh_outlined,
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                       ),
                       IconButton(
                         onPressed: () {
                           showTranslationPicker(context);
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.translate_outlined,
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                       ),
                       IconButton(
@@ -110,18 +142,18 @@ class _JarScreenState extends ConsumerState<JarScreen>
                             ),
                           );
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.bookmark_outline_outlined,
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                       ),
                       IconButton(
                         onPressed: () {
                           _showSettingsDialog(context);
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.settings_outlined,
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                       ),
                     ],
@@ -132,73 +164,83 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
+              child: RefreshIndicator(
+                color: primaryColor,
+                backgroundColor: bgColor,
+                onRefresh: () async {
+                  await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
 
-                    // Jar Widget
-                    JarWidget(
-                      isEmpty: jarState.currentVerse == null,
-                      onTap: _handleJarTap,
-                    ).animate().scale(
-                      duration: 600.ms,
-                      curve: Curves.easeOutBack,
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Loading indicator
-                    if (jarState.isLoading)
-                      const CircularProgressIndicator(
-                        color: AppColors.sageGreen,
+                      // Jar Widget
+                      JarWidget(
+                        isEmpty: jarState.currentVerse == null,
+                        onTap: _handleJarTap,
+                      ).animate().scale(
+                        duration: 600.ms,
+                        curve: Curves.easeOutBack,
                       ),
 
-                    // Verse Card
-                    if (_showVerse && jarState.currentVerse != null)
-                      VerseCardWidget(
-                        verse: jarState.currentVerse!,
-                        onSaveToggle: () {
-                          ref.read(jarNotifierProvider.notifier).toggleSaveVerse();
-                        },
-                      ).animate().fade(duration: 400.ms).slideY(
-                        begin: 0.3,
-                        curve: Curves.easeOut,
-                      ),
+                      const SizedBox(height: 30),
 
-                    // Error message
-                    if (jarState.errorMessage != null)
-                      Container(
-                        margin: const EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                      // Loading indicator
+                      if (jarState.isLoading)
+                        CircularProgressIndicator(
+                          color: primaryColor,
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: AppColors.error,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                jarState.errorMessage!,
-                                style: AppTextStyles.loraBodySmall,
+
+                      // Verse Card
+                      if (_showVerse && jarState.currentVerse != null)
+                        VerseCardWidget(
+                          verse: jarState.currentVerse!,
+                          onSaveToggle: () {
+                            ref.read(jarNotifierProvider.notifier).toggleSaveVerse();
+                          },
+                          onShare: () {
+                            _shareVerse(jarState.currentVerse!);
+                          },
+                        ).animate().fade(duration: 400.ms).slideY(
+                          begin: 0.3,
+                          curve: Curves.easeOut,
+                        ),
+
+                      // Error message
+                      if (jarState.errorMessage != null)
+                        Container(
+                          margin: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: errorColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: errorColor,
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: () {
-                                ref.read(jarNotifierProvider.notifier).clearError();
-                              },
-                            ),
-                          ],
-                        ),
-                      ).animate().shake(),
-                  ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  jarState.errorMessage!,
+                                  style: AppTextStyles.loraBodySmall(),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 20),
+                                onPressed: () {
+                                  ref.read(jarNotifierProvider.notifier).clearError();
+                                },
+                              ),
+                            ],
+                          ),
+                        ).animate().shake(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -211,30 +253,117 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
 /// Settings Dialog
 /// Allows user to change verse selection mode and access other options
-class _SettingsDialog extends ConsumerWidget {
+class _SettingsDialog extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SettingsDialog> createState() => _SettingsDialogState();
+}
+
+class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
+  @override
+  Widget build(BuildContext context) {
     final currentMode = ref.watch(
       preferencesServiceProvider.select((prefs) => prefs.getVerseSelectionMode()),
     );
+    final isDarkMode = ref.watch(darkModeProvider);
+    final isNotificationEnabled = ref.watch(dailyNotificationEnabledProvider);
+    final notificationTime = ref.watch(notificationTimeProvider);
+    final arabicFontSize = ref.watch(arabicFontSizeProvider);
+    final englishFontSize = ref.watch(englishFontSizeProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
+    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
 
     return AlertDialog(
-      backgroundColor: AppColors.cream,
+      backgroundColor: bgColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         'Settings',
-        style: AppTextStyles.loraHeading,
+        style: AppTextStyles.loraHeading(),
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Dark Mode Toggle
+            _SettingsToggle(
+              icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              title: 'Dark Mode',
+              value: isDarkMode,
+              onChanged: (value) {
+                ref.read(preferencesNotifierProvider.notifier).setDarkMode(value);
+              },
+              primaryColor: primaryColor,
+            ),
+
+            const SizedBox(height: 12),
+
+            // Daily Notification Toggle
+            _SettingsToggle(
+              icon: Icons.notifications_outlined,
+              title: 'Daily Notification',
+              value: isNotificationEnabled,
+              onChanged: (value) async {
+                await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
+              },
+              primaryColor: primaryColor,
+            ),
+
+            // Notification Time Picker (only show when enabled)
+            if (isNotificationEnabled) ...[
+              const SizedBox(height: 8),
+              _NotificationTimePicker(
+                time: notificationTime,
+                onTimeChanged: (time) async {
+                  await ref.read(preferencesNotifierProvider.notifier).setNotificationTime(time);
+                },
+                primaryColor: primaryColor,
+              ),
+            ],
+
+            const SizedBox(height: 24),
+
+            // Font Size Section
+            Text(
+              'Font Size',
+              style: AppTextStyles.loraBodySmall().copyWith(
+                color: primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _FontSizeSlider(
+              icon: Icons.text_fields,
+              title: 'Arabic Text',
+              value: arabicFontSize,
+              min: 0.8,
+              max: 1.5,
+              onChanged: (value) {
+                ref.read(preferencesNotifierProvider.notifier).setArabicFontSize(value);
+              },
+              primaryColor: primaryColor,
+            ),
+            const SizedBox(height: 8),
+            _FontSizeSlider(
+              icon: Icons.translate,
+              title: 'Translation Text',
+              value: englishFontSize,
+              min: 0.8,
+              max: 1.5,
+              onChanged: (value) {
+                ref.read(preferencesNotifierProvider.notifier).setEnglishFontSize(value);
+              },
+              primaryColor: primaryColor,
+            ),
+
+            const SizedBox(height: 24),
+
             // Verse Selection Mode Section
             Text(
               'Verse Selection Mode',
-              style: AppTextStyles.loraBodySmall.copyWith(
-                color: AppColors.sageGreen,
+              style: AppTextStyles.loraBodySmall().copyWith(
+                color: primaryColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -251,6 +380,7 @@ class _SettingsDialog extends ConsumerWidget {
                   await ref.read(jarNotifierProvider.notifier).loadDailyVerse();
                 }
               },
+              primaryColor: primaryColor,
             ),
             const SizedBox(height: 8),
             _ModeOption(
@@ -265,6 +395,7 @@ class _SettingsDialog extends ConsumerWidget {
                   await ref.read(jarNotifierProvider.notifier).loadDailyVerse();
                 }
               },
+              primaryColor: primaryColor,
             ),
 
             const SizedBox(height: 24),
@@ -280,6 +411,7 @@ class _SettingsDialog extends ConsumerWidget {
                   MaterialPageRoute(builder: (_) => const AboutScreen()),
                 );
               },
+              primaryColor: primaryColor,
             ),
           ],
         ),
@@ -289,8 +421,8 @@ class _SettingsDialog extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             'Close',
-            style: AppTextStyles.loraBodyMedium.copyWith(
-              color: AppColors.sageGreen,
+            style: AppTextStyles.loraBodyMedium().copyWith(
+              color: primaryColor,
             ),
           ),
         ),
@@ -305,11 +437,13 @@ class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color primaryColor;
 
   const _SettingsItem({
     required this.icon,
     required this.title,
     required this.onTap,
+    required this.primaryColor,
   });
 
   @override
@@ -324,18 +458,18 @@ class _SettingsItem extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: AppColors.sageGreen,
+              color: primaryColor,
             ),
             const SizedBox(width: 16),
             Text(
               title,
-              style: AppTextStyles.loraBodyMedium,
+              style: AppTextStyles.loraBodyMedium(),
             ),
             const Spacer(),
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: AppColors.sageGreen.withValues(alpha: 0.5),
+              color: primaryColor.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -350,12 +484,14 @@ class _ModeOption extends StatelessWidget {
   final String description;
   final bool isSelected;
   final VoidCallback onTap;
+  final Color primaryColor;
 
   const _ModeOption({
     required this.title,
     required this.description,
     required this.isSelected,
     required this.onTap,
+    required this.primaryColor,
   });
 
   @override
@@ -367,12 +503,12 @@ class _ModeOption extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.sageGreen.withValues(alpha: 0.15)
+              ? primaryColor.withValues(alpha: 0.15)
               : Colors.transparent,
           border: Border.all(
             color: isSelected
-                ? AppColors.sageGreen
-                : AppColors.sageGreen.withValues(alpha: 0.3),
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -381,7 +517,7 @@ class _ModeOption extends StatelessWidget {
           children: [
             Icon(
               isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: AppColors.sageGreen,
+              color: primaryColor,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -390,19 +526,222 @@ class _ModeOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.loraBodyMedium.copyWith(
+                    style: AppTextStyles.loraBodyMedium().copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     description,
-                    style: AppTextStyles.loraBodySmall,
+                    style: AppTextStyles.loraBodySmall(),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Settings Toggle Widget
+/// Used for toggle switches in settings
+class _SettingsToggle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color primaryColor;
+
+  const _SettingsToggle({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: primaryColor,
+          ),
+          const SizedBox(width: 16),
+          Text(
+            title,
+            style: AppTextStyles.loraBodyMedium(),
+          ),
+          const Spacer(),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: primaryColor.withValues(alpha: 0.5),
+            activeThumbColor: primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Notification Time Picker Widget
+/// Allows user to pick the time for daily notification
+class _NotificationTimePicker extends StatelessWidget {
+  final TimeOfDay time;
+  final ValueChanged<TimeOfDay> onTimeChanged;
+  final Color primaryColor;
+
+  const _NotificationTimePicker({
+    required this.time,
+    required this.onTimeChanged,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: time,
+        );
+        if (picked != null) {
+          onTimeChanged(picked);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.access_time,
+              size: 20,
+              color: primaryColor.withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              'Notification Time',
+              style: AppTextStyles.loraBodyMedium().copyWith(
+                color: primaryColor.withValues(alpha: 0.8),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _formatTime(time),
+                style: AppTextStyles.loraBodyMedium().copyWith(
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
+  }
+}
+
+/// Font Size Slider Widget
+/// Allows user to adjust font size for Arabic and English text
+class _FontSizeSlider extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+  final Color primaryColor;
+
+  const _FontSizeSlider({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Convert to percentage (80-150%)
+    final percentage = (value * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: primaryColor.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: AppTextStyles.loraBodyMedium().copyWith(
+                  color: primaryColor.withValues(alpha: 0.8),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$percentage%',
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 4,
+              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8),
+              overlayShape: RoundSliderOverlayShape(overlayRadius: 16),
+              activeTrackColor: primaryColor,
+              inactiveTrackColor: primaryColor.withValues(alpha: 0.3),
+              thumbColor: primaryColor,
+              overlayColor: primaryColor.withValues(alpha: 0.2),
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: ((max - min) / 0.1).round(),
+              onChanged: onChanged,
+            ),
+          ),
+        ],
       ),
     );
   }

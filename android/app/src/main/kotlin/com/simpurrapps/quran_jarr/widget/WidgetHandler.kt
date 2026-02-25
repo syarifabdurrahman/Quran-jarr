@@ -1,21 +1,26 @@
-package com.simpurrapps.quran_jarr
+package com.simpurrapps.quran_jarr.widget
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Bundle
-import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
-    private lateinit var widgetChannel: MethodChannel
+/**
+ * Widget Handler - Handles platform channel communication from Flutter
+ */
+class WidgetHandler : FlutterPlugin {
+    private lateinit var channel: MethodChannel
+    private lateinit var context: Context
 
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
+    companion object {
+        const val CHANNEL = "com.simpurrapps.quran_jarr/widget"
+        const val PREFS_NAME = "QuranJarrWidget"
+    }
 
-        // Setup widget channel
-        widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.simpurrapps.quran_jarr/widget")
-        widgetChannel.setMethodCallHandler { call, result ->
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        context = binding.applicationContext
+        channel = MethodChannel(binding.binaryMessenger, CHANNEL)
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "initialize" -> {
                     result.success(true)
@@ -39,7 +44,7 @@ class MainActivity : FlutterActivity() {
             val ayahNumber = call.argument<Int>("ayahNumber") ?: 1
 
             // Save to preferences for widget to read
-            val prefs = getSharedPreferences("QuranJarrWidget", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             prefs.edit().apply {
                 putString("arabic_text", arabicText)
                 putString("translation", translation)
@@ -49,11 +54,15 @@ class MainActivity : FlutterActivity() {
             }.apply()
 
             // Trigger widget update
-            com.simpurrapps.quran_jarr.widget.QuranWidget().updateAll(applicationContext)
+            QuranWidget().updateAll(context)
 
             result.success(true)
         } catch (e: Exception) {
             result.error("UPDATE_ERROR", e.message, null)
         }
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
     }
 }

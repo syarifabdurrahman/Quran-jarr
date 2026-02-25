@@ -47,7 +47,7 @@ class AudioPlayerWidget extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 'Verse Recitation',
-                style: AppTextStyles.loraBodySmall.copyWith(
+                style: AppTextStyles.loraBodySmall().copyWith(
                   color: AppColors.sageGreen,
                   fontWeight: FontWeight.w600,
                 ),
@@ -69,7 +69,7 @@ class AudioPlayerWidget extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               audioState.errorMessage!,
-              style: AppTextStyles.loraBodySmall.copyWith(
+              style: AppTextStyles.loraBodySmall().copyWith(
                 color: Colors.red.shade700,
               ),
             ),
@@ -110,14 +110,14 @@ class AudioPlayerWidget extends ConsumerWidget {
                     children: [
                       Text(
                         _formatDuration(audioState.position),
-                        style: AppTextStyles.loraBodySmall.copyWith(
+                        style: AppTextStyles.loraBodySmall().copyWith(
                           color: AppColors.deepUmber.withOpacity(0.7),
                           fontSize: 11,
                         ),
                       ),
                       Text(
                         _formatDuration(audioState.duration ?? Duration.zero),
-                        style: AppTextStyles.loraBodySmall.copyWith(
+                        style: AppTextStyles.loraBodySmall().copyWith(
                           color: AppColors.deepUmber.withOpacity(0.7),
                           fontSize: 11,
                         ),

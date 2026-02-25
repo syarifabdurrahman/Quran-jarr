@@ -5,6 +5,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+dependencies {
+    // Glance for App Widgets
+    implementation("androidx.glance:glance-appwidget:1.0.0")
+    implementation("androidx.glance:glance-material3:1.0.0")
+
+    // Gson for JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
+}
+
 android {
     namespace = "com.simpurrapps.quran_jarr"
     compileSdk = flutter.compileSdkVersion
@@ -28,6 +37,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // 64-bit only architectures
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {

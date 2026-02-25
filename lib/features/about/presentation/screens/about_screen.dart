@@ -11,13 +11,19 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkCream : AppColors.cream;
+    final primaryColor = isDark ? AppColors.darkSageGreen : AppColors.sageGreen;
+    final cardColor = isDark ? AppColors.darkSoftSand : Colors.white;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('About', style: AppTextStyles.loraHeading),
-        backgroundColor: AppColors.cream,
+        title: Text('About', style: AppTextStyles.loraHeading()),
+        backgroundColor: bgColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.sageGreen),
+        iconTheme: IconThemeData(color: primaryColor),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -32,13 +38,13 @@ class AboutScreen extends StatelessWidget {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withValues(alpha: 0.15),
+                  color: primaryColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.menu_book_outlined,
                   size: 50,
-                  color: AppColors.sageGreen,
+                  color: primaryColor,
                 ),
               ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
 
@@ -47,7 +53,7 @@ class AboutScreen extends StatelessWidget {
               // App Name
               Text(
                 AppConstants.appName,
-                style: AppTextStyles.loraTitle,
+                style: AppTextStyles.loraTitle(),
                 textAlign: TextAlign.center,
               ).animate().fade(delay: 100.ms),
 
@@ -56,8 +62,8 @@ class AboutScreen extends StatelessWidget {
               // App Version
               Text(
                 'Version ${AppConstants.appVersion}',
-                style: AppTextStyles.loraBodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: textSecondary,
                 ),
               ).animate().fade(delay: 150.ms),
 
@@ -66,8 +72,8 @@ class AboutScreen extends StatelessWidget {
               // Tagline
               Text(
                 'Daily verses from the Quran',
-                style: AppTextStyles.loraBodyMedium.copyWith(
-                  color: AppColors.sageGreen,
+                style: AppTextStyles.loraBodyMedium().copyWith(
+                  color: primaryColor,
                   fontStyle: FontStyle.italic,
                 ),
                 textAlign: TextAlign.center,
@@ -79,11 +85,13 @@ class AboutScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.deepUmber.withValues(alpha: 0.05),
+                      color: isDark
+                          ? AppColors.darkGlassBorder
+                          : AppColors.deepUmber.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -94,14 +102,14 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     Text(
                       'About Quran Jarr',
-                      style: AppTextStyles.loraHeading.copyWith(
-                        color: AppColors.sageGreen,
+                      style: AppTextStyles.loraHeading().copyWith(
+                        color: primaryColor,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Quran Jarr brings you meaningful verses from the Quran every day. Like reaching into a jar of wisdom, pull a verse to find inspiration, comfort, and guidance for your daily life.',
-                      style: AppTextStyles.loraBodyMedium,
+                      style: AppTextStyles.loraBodyMedium(),
                     ),
                   ],
                 ),
@@ -112,8 +120,8 @@ class AboutScreen extends StatelessWidget {
               // Developers Section
               Text(
                 'Developers',
-                style: AppTextStyles.loraBodySmall.copyWith(
-                  color: AppColors.sageGreen,
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: primaryColor,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.0,
                 ),
@@ -126,6 +134,9 @@ class AboutScreen extends StatelessWidget {
                 name: 'Favian Hugo',
                 role: 'Developer',
                 icon: Icons.code_outlined,
+                primaryColor: primaryColor,
+                cardColor: cardColor,
+                textSecondary: textSecondary,
               ).animate().fade(delay: 350.ms).slideX(begin: -0.2),
 
               const SizedBox(height: 12),
@@ -134,6 +145,9 @@ class AboutScreen extends StatelessWidget {
                 name: 'Syarif Abdurrahman',
                 role: 'Developer',
                 icon: Icons.code_outlined,
+                primaryColor: primaryColor,
+                cardColor: cardColor,
+                textSecondary: textSecondary,
               ).animate().fade(delay: 400.ms).slideX(begin: 0.2),
 
               const SizedBox(height: 48),
@@ -141,8 +155,8 @@ class AboutScreen extends StatelessWidget {
               // Footer
               Text(
                 'Made with ❤️ for the Ummah',
-                style: AppTextStyles.loraBodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: textSecondary,
                 ),
               ).animate().fade(delay: 450.ms),
 
@@ -150,8 +164,8 @@ class AboutScreen extends StatelessWidget {
 
               Text(
                 '© 2026 Quran Jarr',
-                style: AppTextStyles.loraCaption.copyWith(
-                  color: AppColors.textSecondary,
+                style: AppTextStyles.loraCaption().copyWith(
+                  color: textSecondary,
                 ),
               ).animate().fade(delay: 500.ms),
             ],
@@ -167,11 +181,17 @@ class _DeveloperCard extends StatelessWidget {
   final String name;
   final String role;
   final IconData icon;
+  final Color primaryColor;
+  final Color cardColor;
+  final Color textSecondary;
 
   const _DeveloperCard({
     required this.name,
     required this.role,
     required this.icon,
+    required this.primaryColor,
+    required this.cardColor,
+    required this.textSecondary,
   });
 
   @override
@@ -179,15 +199,15 @@ class _DeveloperCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.sageGreen.withValues(alpha: 0.3),
+          color: primaryColor.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.deepUmber.withValues(alpha: 0.03),
+            color: primaryColor.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -200,10 +220,10 @@ class _DeveloperCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.15),
+              color: primaryColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 24, color: AppColors.sageGreen),
+            child: Icon(icon, size: 24, color: primaryColor),
           ),
 
           const SizedBox(width: 16),
@@ -215,15 +235,15 @@ class _DeveloperCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: AppTextStyles.loraBodyMedium.copyWith(
+                  style: AppTextStyles.loraBodyMedium().copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   role,
-                  style: AppTextStyles.loraBodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: textSecondary,
                   ),
                 ),
               ],

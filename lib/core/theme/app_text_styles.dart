@@ -7,86 +7,126 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
+  /// Get text style with font size multiplied
+  static TextStyle _withFontSize(TextStyle style, double multiplier) {
+    return style.copyWith(
+      fontSize: (style.fontSize ?? 14) * multiplier,
+    );
+  }
+
   // English Text Styles (Lora)
-  static TextStyle get loraBodyLarge => GoogleFonts.lora(
-        fontSize: 18,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
+  static TextStyle loraBodyLarge([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+          height: 1.5,
+        ),
+        multiplier,
       );
 
-  static TextStyle get loraBodyMedium => GoogleFonts.lora(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
+  static TextStyle loraBodyMedium([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+          height: 1.5,
+        ),
+        multiplier,
       );
 
-  static TextStyle get loraBodySmall => GoogleFonts.lora(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.4,
+  static TextStyle loraBodySmall([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textSecondary,
+          height: 1.4,
+        ),
+        multiplier,
       );
 
-  static TextStyle get loraHeading => GoogleFonts.lora(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
+  static TextStyle loraHeading([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+          height: 1.3,
+        ),
+        multiplier,
       );
 
-  static TextStyle get loraTitle => GoogleFonts.lora(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.2,
+  static TextStyle loraTitle([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          height: 1.2,
+        ),
+        multiplier,
       );
 
-  static TextStyle get loraCaption => GoogleFonts.lora(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.3,
+  static TextStyle loraCaption([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textSecondary,
+          height: 1.3,
+        ),
+        multiplier,
       );
 
   // Arabic Text Styles (Amiri)
-  static TextStyle get amiriVerseLarge => GoogleFonts.amiri(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.8,
-        letterSpacing: 0.5,
+  static TextStyle amiriVerseLarge([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.amiri(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          height: 1.8,
+          letterSpacing: 0.5,
+        ),
+        multiplier,
       );
 
-  static TextStyle get amiriVerseMedium => GoogleFonts.amiri(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.7,
-        letterSpacing: 0.3,
+  static TextStyle amiriVerseMedium([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.amiri(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          height: 1.7,
+          letterSpacing: 0.3,
+        ),
+        multiplier,
       );
 
-  static TextStyle get amiriVerseSmall => GoogleFonts.amiri(
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.6,
+  static TextStyle amiriVerseSmall([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.amiri(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          height: 1.6,
+        ),
+        multiplier,
       );
 
   // Surah Name Style
-  static TextStyle get surahName => GoogleFonts.amiri(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: AppColors.sageGreen,
-        height: 1.4,
+  static TextStyle surahName([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.amiri(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.sageGreen,
+          height: 1.4,
+        ),
+        multiplier,
       );
 
   // Button Text
-  static TextStyle get buttonText => GoogleFonts.lora(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textOnDark,
-        height: 1.2,
+  static TextStyle buttonText([double multiplier = 1.0]) => _withFontSize(
+        GoogleFonts.lora(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textOnDark,
+          height: 1.2,
+        ),
+        multiplier,
       );
 }

@@ -40,7 +40,7 @@ class TranslationPickerWidget extends ConsumerWidget {
               children: [
                 Text(
                   'Select Translation',
-                  style: AppTextStyles.loraTitle,
+                  style: AppTextStyles.loraTitle(),
                 ),
                 const Spacer(),
                 IconButton(
@@ -86,7 +86,7 @@ class TranslationPickerWidget extends ConsumerWidget {
                 ),
                 title: Text(
                   translation.name,
-                  style: AppTextStyles.loraBodyLarge.copyWith(
+                  style: AppTextStyles.loraBodyLarge().copyWith(
                     color: isSelected
                         ? AppColors.sageGreen
                         : AppColors.deepUmber,
@@ -96,7 +96,7 @@ class TranslationPickerWidget extends ConsumerWidget {
                 ),
                 subtitle: Text(
                   translation.author,
-                  style: AppTextStyles.loraBodySmall.copyWith(
+                  style: AppTextStyles.loraBodySmall().copyWith(
                     color: AppColors.deepUmber.withOpacity(0.6),
                   ),
                 ),

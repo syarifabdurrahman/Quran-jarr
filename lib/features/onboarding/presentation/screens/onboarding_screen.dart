@@ -61,7 +61,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPressed: _completeOnboarding,
                     child: Text(
                       'Skip',
-                      style: AppTextStyles.loraBodySmall.copyWith(
+                      style: AppTextStyles.loraBodySmall().copyWith(
                         color: AppColors.sageGreen,
                       ),
                     ),
@@ -147,7 +147,7 @@ class _InternetCheckPage extends StatelessWidget {
           // Title
           Text(
             'Internet Connection Required',
-            style: AppTextStyles.loraTitle.copyWith(fontSize: 24),
+            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
@@ -158,7 +158,7 @@ class _InternetCheckPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               'Quran Jarr needs an internet connection to fetch verses, translations, and audio recitations.',
-              style: AppTextStyles.loraBodyMedium,
+              style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
@@ -224,7 +224,7 @@ class _OnboardingButton extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: AppTextStyles.loraBodyMedium,
+        style: AppTextStyles.loraBodyMedium(),
       ),
     );
   }
@@ -248,7 +248,7 @@ class _ModeSelectionPage extends ConsumerWidget {
           // Title
           Text(
             'Choose Your Experience',
-            style: AppTextStyles.loraTitle.copyWith(fontSize: 24),
+            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
@@ -259,7 +259,7 @@ class _ModeSelectionPage extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               'Select how you\'d like to receive verses from the Quran.',
-              style: AppTextStyles.loraBodyMedium,
+              style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
@@ -360,7 +360,7 @@ class _ModeCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.loraHeading.copyWith(
+                    style: AppTextStyles.loraHeading().copyWith(
                       color: AppColors.sageGreen,
                       fontWeight: FontWeight.bold,
                     ),
@@ -368,7 +368,7 @@ class _ModeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTextStyles.loraBodySmall,
+                    style: AppTextStyles.loraBodySmall(),
                   ),
                 ],
               ),
