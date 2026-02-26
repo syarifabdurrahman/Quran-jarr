@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
@@ -92,6 +93,7 @@ ${verse.surahName} (${verse.surahReference})
   @override
   Widget build(BuildContext context) {
     final jarState = ref.watch(jarNotifierProvider);
+    final isConnected = ref.watch(connectivityProvider);
     final primaryColor = AppColors.sageGreen;
     final bgColor = AppColors.cream;
     final errorColor = AppColors.error;
@@ -159,6 +161,64 @@ ${verse.surahName} (${verse.surahReference})
                 ],
               ),
             ),
+
+            // Offline Warning Banner
+            if (!isConnected)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: errorColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: errorColor.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off,
+                      color: errorColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'No Internet Connection',
+                            style: AppTextStyles.loraBodyMedium().copyWith(
+                              color: errorColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Some features may not work offline',
+                            style: AppTextStyles.loraBodySmall().copyWith(
+                              color: errorColor.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        ref.read(connectivityProvider.notifier).check();
+                      },
+                      icon: Icon(
+                        Icons.refresh,
+                        color: errorColor,
+                        size: 18,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Retry',
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(duration: 300.ms),
 
             // Main Content
             Expanded(
@@ -330,6 +390,25 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         time: notificationTime,
                         onTimeChanged: (time) async {
                           await ref.read(preferencesNotifierProvider.notifier).setNotificationTime(time);
+                        },
+                        primaryColor: primaryColor,
+                      ),
+                      // Test Notification Button
+                      const SizedBox(height: 8),
+                      _SettingsItem(
+                        icon: Icons.notifications_active,
+                        title: 'Test Notification',
+                        onTap: () async {
+                          await ref.read(preferencesNotifierProvider.notifier).scheduleTestNotification();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Test notification sent!'),
+                                backgroundColor: primaryColor,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                         primaryColor: primaryColor,
                       ),

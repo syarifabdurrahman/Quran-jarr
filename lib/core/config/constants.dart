@@ -3,7 +3,7 @@ class AppConstants {
   AppConstants._();
 
   // App Info
-  static const String appName = 'Quran Jarr';
+  static const String appName = 'Quran Jar';
   static const String appVersion = '1.0.0';
 
   // Storage Keys

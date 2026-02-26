@@ -72,7 +72,7 @@ class NotificationService {
   }
 
   /// Schedule daily notification
-  Future<void> scheduleDailyNotification(TimeOfDay time) async {
+  Future<void> scheduleDailyNotification(TimeOfDay time, {bool testMode = false}) async {
     if (!_initialized) await initialize();
 
     final prefs = PreferencesService.instance;
@@ -90,6 +90,7 @@ class NotificationService {
           time,
           'Quran Jarr',
           'Tap to receive your daily verse from the Quran',
+          testMode: testMode,
         );
       },
       (verse) async {
@@ -105,6 +106,7 @@ class NotificationService {
           '$title ($reference)',
           body,
           payload: 'daily_verse_${verse.surahNumber}_${verse.ayahNumber}',
+          testMode: testMode,
         );
       },
     );
@@ -116,26 +118,33 @@ class NotificationService {
     String title,
     String body, {
     String? payload,
+    bool testMode = false,
   }) async {
     final now = tz.TZDateTime.now(tz.local);
-    final scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      time.hour,
-      time.minute,
-    );
 
-    // If the time has passed today, schedule for tomorrow
-    final scheduledTime = scheduledDate.isBefore(now)
-        ? scheduledDate.add(const Duration(days: 1))
-        : scheduledDate;
+    // For test mode, schedule every 5 minutes from now
+    final scheduledTime = testMode
+        ? now.add(const Duration(minutes: 5))
+        : tz.TZDateTime(
+            tz.local,
+            now.year,
+            now.month,
+            now.day,
+            time.hour,
+            time.minute,
+          );
+
+    // If the time has passed today (and not test mode), schedule for tomorrow
+    final scheduledDate = !testMode && scheduledTime.isBefore(now)
+        ? scheduledTime.add(const Duration(days: 1))
+        : scheduledTime;
 
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'daily_verse_channel',
-      'Daily Verse',
-      channelDescription: 'Daily verse notifications from Quran Jarr',
+      testMode ? 'test_verse_channel' : 'daily_verse_channel',
+      testMode ? 'Test Verse' : 'Daily Verse',
+      channelDescription: testMode
+          ? 'Test notifications (every 5 minutes)'
+          : 'Daily verse notifications from Quran Jarr',
       importance: Importance.high,
       priority: Priority.high,
       showWhen: false,
@@ -155,19 +164,31 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    // Schedule the notification using zoned schedule (repeating daily)
-    await _notifications.zonedSchedule(
-      0, // notification id
-      title,
-      body,
-      scheduledTime,
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+    // For test mode: show immediately
+    // For normal mode: schedule repeating daily at specific time
+    if (testMode) {
+      // Show test notification immediately
+      await _notifications.show(
+        999, // test notification id
+        title,
+        body,
+        notificationDetails,
+        payload: payload,
+      );
+    } else {
+      await _notifications.zonedSchedule(
+        0, // notification id
+        title,
+        body,
+        scheduledDate,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    }
   }
 
   /// Cancel all scheduled notifications

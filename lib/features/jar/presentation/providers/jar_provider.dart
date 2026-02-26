@@ -3,6 +3,7 @@ import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/services/connectivity_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/features/audio/data/datasources/audio_download_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
@@ -115,10 +116,14 @@ class JarNotifier extends StateNotifier<JarState> {
     );
 
     result.fold(
-      (error) => state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.message,
-      ),
+      (error) async {
+        // Check connectivity on API failure
+        await ConnectivityService.instance.verifyConnection();
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: error.message,
+        );
+      },
       (verse) async {
         state = state.copyWith(
           currentVerse: verse,
@@ -149,7 +154,27 @@ class JarNotifier extends StateNotifier<JarState> {
       currentVerse: verse.copyWith(isSaved: isSaving),
     );
 
-    final result = await _saveVerseUseCase(verse);
+    // If saving, fetch tafsir if not already loaded
+    Verse verseToSave = verse;
+    if (isSaving && (verse.tafsir == null || verse.tafsir!.isEmpty)) {
+      final tafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
+            verse.surahNumber,
+            verse.ayahNumber,
+          );
+
+      tafsirResult.fold(
+        (error) {
+          // Continue saving even if tafsir fails
+          print('Failed to fetch tafsir: ${error.message}');
+        },
+        (tafsirText) {
+          verseToSave = verse.copyWith(tafsir: tafsirText);
+          state = state.copyWith(currentVerse: verseToSave);
+        },
+      );
+    }
+
+    final result = await _saveVerseUseCase(verseToSave);
 
     result.fold(
       (error) => state = state.copyWith(
@@ -162,10 +187,10 @@ class JarNotifier extends StateNotifier<JarState> {
         );
 
         // Download audio if verse is saved and has audio
-        if (isSaved && verse.hasAudio) {
+        if (isSaved && verseToSave.hasAudio) {
           AudioDownloadService.instance.downloadAudio(
-            verse.verseKey,
-            verse.audioUrl!,
+            verseToSave.verseKey,
+            verseToSave.audioUrl!,
           );
         }
       },

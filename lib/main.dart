@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/config/theme_config.dart';
+import 'package:quran_jarr/core/providers/locale_provider.dart';
+import 'package:quran_jarr/core/services/locale_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
@@ -26,11 +30,13 @@ void main() async {
   );
 }
 
-class QuranJarrApp extends StatelessWidget {
+class QuranJarrApp extends ConsumerWidget {
   const QuranJarrApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
     return FutureBuilder<bool>(
       future: _checkOnboarding(),
       builder: (context, snapshot) {
@@ -54,6 +60,14 @@ class QuranJarrApp extends StatelessWidget {
           title: 'Quran Jarr',
           debugShowCheckedModeBanner: false,
           theme: ThemeConfig.lightTheme,
+          locale: locale,
+          supportedLocales: LocaleService.instance.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: isOnboarded ? const JarScreen() : const OnboardingScreen(),
         );
       },

@@ -95,6 +95,18 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     await _prefs.setEnglishFontSizeMultiplier(multiplier);
     _notify();
   }
+
+  /// Schedule test notification (shows immediately)
+  Future<void> scheduleTestNotification() async {
+    // Request permission first
+    await NotificationService.instance.requestPermission();
+
+    final (hour, minute) = _prefs.getNotificationTime();
+    await NotificationService.instance.scheduleDailyNotification(
+      TimeOfDay(hour: hour, minute: minute),
+      testMode: true,
+    );
+  }
 }
 
 /// Preferences Provider
