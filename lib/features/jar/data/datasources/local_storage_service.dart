@@ -73,7 +73,10 @@ class LocalStorageService {
       if (json != null) {
         // Convert Map<dynamic, dynamic> to Map<String, dynamic>
         final map = Map<String, dynamic>.from(json as Map);
-        verses.add(VerseModel.fromJson(map));
+        final verse = VerseModel.fromJson(map);
+        // Ensure all verses from archive are marked as saved
+        // This handles old data that might not have isSaved set
+        verses.add(verse.copyWith(isSaved: true));
       }
     }
 
@@ -99,6 +102,41 @@ class LocalStorageService {
 
   /// Get verse count
   int get savedVerseCount => _versesBox.length;
+
+  /// Save notification verse for later retrieval when notification is tapped
+  Future<void> saveNotificationVerse(VerseModel verse) async {
+    await _appDataBox.put('notification_verse', verse.toJson());
+    await _appDataBox.put('notification_verse_timestamp', DateTime.now().toIso8601String());
+  }
+
+  /// Get notification verse (returns null if not found or too old)
+  Future<VerseModel?> getNotificationVerse() async {
+    final json = _appDataBox.get('notification_verse');
+    if (json == null) return null;
+
+    // Check timestamp - only return if less than 24 hours old
+    final timestampStr = _appDataBox.get('notification_verse_timestamp');
+    if (timestampStr != null) {
+      final timestamp = DateTime.parse(timestampStr as String);
+      final now = DateTime.now();
+      final hoursPassed = now.difference(timestamp).inHours;
+
+      // If more than 24 hours have passed, return null
+      if (hoursPassed >= 24) {
+        return null;
+      }
+    }
+
+    // Convert Map<dynamic, dynamic> to Map<String, dynamic>
+    final map = Map<String, dynamic>.from(json as Map);
+    return VerseModel.fromJson(map);
+  }
+
+  /// Clear notification verse
+  Future<void> clearNotificationVerse() async {
+    await _appDataBox.delete('notification_verse');
+    await _appDataBox.delete('notification_verse_timestamp');
+  }
 
   /// Close all boxes
   Future<void> close() async {

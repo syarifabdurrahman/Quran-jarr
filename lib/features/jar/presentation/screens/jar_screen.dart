@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
+import 'package:quran_jarr/core/services/share_service.dart';
+import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
@@ -37,6 +38,8 @@ class _JarScreenState extends ConsumerState<JarScreen>
       vsync: this,
       duration: const Duration(milliseconds: AppConstants.jarAnimationDurationMs),
     );
+    // Initialize sound effects service
+    SoundEffectsService.instance.initialize();
   }
 
   @override
@@ -46,7 +49,36 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   Future<void> _handleJarTap() async {
-    // Pull a new verse anytime - no restrictions
+    // Check if user can tap the jar today
+    if (!ref.read(preferencesNotifierProvider.notifier).canTapJarToday()) {
+      // Show limit reached message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Alhamdulillah you reached limit today! Want more? You can change this in settings.',
+              style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.sageGreen,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Settings',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                _showSettingsDialog(context);
+              },
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Play shake sound when jar is tapped
+    SoundEffectsService.instance.playJarShake();
+    // Pull a new verse
     await _pullVerseAnimation();
   }
 
@@ -54,6 +86,13 @@ class _JarScreenState extends ConsumerState<JarScreen>
     setState(() => _showVerse = false);
     await _animationController.forward();
     await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
+    // Only increment tap count if connected to internet
+    final isConnected = ref.read(connectivityProvider);
+    if (isConnected) {
+      await ref.read(preferencesNotifierProvider.notifier).incrementJarTapCount();
+    }
+    // Play whoosh sound when verse appears
+    SoundEffectsService.instance.playWhoosh();
     setState(() => _showVerse = true);
     _animationController.reset();
   }
@@ -65,35 +104,16 @@ class _JarScreenState extends ConsumerState<JarScreen>
     );
   }
 
-  void _shareVerse(Verse verse) {
-    final shareText = '''
-${verse.arabicText}
-
-"${verse.translation}"
-
-${verse.surahName} (${verse.surahReference})
-
-— Shared via Quran Jarr''';
-
-    Clipboard.setData(ClipboardData(text: shareText.trim()));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Verse copied to clipboard!',
-          style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppColors.sageGreen,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  Future<void> _shareVerse(Verse verse) async {
+    await ShareService.instance.showShareOptions(context, verse);
   }
 
   @override
   Widget build(BuildContext context) {
     final jarState = ref.watch(jarNotifierProvider);
     final isConnected = ref.watch(connectivityProvider);
+    final remainingTaps = ref.watch(remainingJarTapsProvider);
+    final dailyLimit = ref.watch(jarTapLimitProvider);
     final primaryColor = AppColors.sageGreen;
     final bgColor = AppColors.cream;
     final errorColor = AppColors.error;
@@ -115,15 +135,6 @@ ${verse.surahName} (${verse.surahReference})
                   ),
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: () async {
-                          await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
-                        },
-                        icon: Icon(
-                          Icons.refresh_outlined,
-                          color: primaryColor,
-                        ),
-                      ),
                       IconButton(
                         onPressed: () {
                           showTranslationPicker(context);
@@ -222,83 +233,85 @@ ${verse.surahName} (${verse.surahReference})
 
             // Main Content
             Expanded(
-              child: RefreshIndicator(
-                color: primaryColor,
-                backgroundColor: bgColor,
-                onRefresh: () async {
-                  await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
 
-                      // Jar Widget
-                      JarWidget(
-                        isEmpty: jarState.currentVerse == null,
-                        onTap: _handleJarTap,
-                      ).animate().scale(
-                        duration: 600.ms,
-                        curve: Curves.easeOutBack,
+                    // Jar Widget
+                    JarWidget(
+                      isEmpty: jarState.currentVerse == null,
+                      onTap: _handleJarTap,
+                    ).animate().scale(
+                      duration: 600.ms,
+                      curve: Curves.easeOutBack,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Remaining Taps Indicator
+                    _RemainingTapsIndicator(
+                      remainingTaps: remainingTaps,
+                      dailyLimit: dailyLimit,
+                      primaryColor: primaryColor,
+                    ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
+
+                    const SizedBox(height: 20),
+
+                    // Loading indicator
+                    if (jarState.isLoading)
+                      CircularProgressIndicator(
+                        color: primaryColor,
                       ),
 
-                      const SizedBox(height: 30),
+                    // Verse Card
+                    if (_showVerse && jarState.currentVerse != null)
+                      VerseCardWidget(
+                        verse: jarState.currentVerse!,
+                        onSaveToggle: () {
+                          ref.read(jarNotifierProvider.notifier).toggleSaveVerse();
+                        },
+                        onShare: () {
+                          _shareVerse(jarState.currentVerse!);
+                        },
+                      ).animate().fade(duration: 400.ms).slideY(
+                        begin: 0.3,
+                        curve: Curves.easeOut,
+                      ),
 
-                      // Loading indicator
-                      if (jarState.isLoading)
-                        CircularProgressIndicator(
-                          color: primaryColor,
+                    // Error message
+                    if (jarState.errorMessage != null)
+                      Container(
+                        margin: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: errorColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-
-                      // Verse Card
-                      if (_showVerse && jarState.currentVerse != null)
-                        VerseCardWidget(
-                          verse: jarState.currentVerse!,
-                          onSaveToggle: () {
-                            ref.read(jarNotifierProvider.notifier).toggleSaveVerse();
-                          },
-                          onShare: () {
-                            _shareVerse(jarState.currentVerse!);
-                          },
-                        ).animate().fade(duration: 400.ms).slideY(
-                          begin: 0.3,
-                          curve: Curves.easeOut,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: errorColor,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                jarState.errorMessage!,
+                                style: AppTextStyles.loraBodySmall(),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 20),
+                              onPressed: () {
+                                ref.read(jarNotifierProvider.notifier).clearError();
+                              },
+                            ),
+                          ],
                         ),
-
-                      // Error message
-                      if (jarState.errorMessage != null)
-                        Container(
-                          margin: const EdgeInsets.all(20),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: errorColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: errorColor,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  jarState.errorMessage!,
-                                  style: AppTextStyles.loraBodySmall(),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                onPressed: () {
-                                  ref.read(jarNotifierProvider.notifier).clearError();
-                                },
-                              ),
-                            ],
-                          ),
-                        ).animate().shake(),
-                    ],
-                  ),
+                      ).animate().shake(),
+                  ],
                 ),
               ),
             ),
@@ -324,6 +337,8 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
     );
     final isNotificationEnabled = ref.watch(dailyNotificationEnabledProvider);
     final notificationTime = ref.watch(notificationTimeProvider);
+    final versesPerDay = ref.watch(versesPerDayProvider);
+    final soundEffectsEnabled = SoundEffectsService.instance.isEnabled;
     final arabicFontSize = ref.watch(arabicFontSizeProvider);
     final englishFontSize = ref.watch(englishFontSizeProvider);
     final primaryColor = AppColors.sageGreen;
@@ -383,6 +398,20 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                       primaryColor: primaryColor,
                     ),
 
+                    // Sound Effects Toggle
+                    const SizedBox(height: 8),
+                    _SettingsToggle(
+                      icon: Icons.volume_up_outlined,
+                      title: 'Sound Effects',
+                      value: soundEffectsEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          SoundEffectsService.instance.setEnabled(value);
+                        });
+                      },
+                      primaryColor: primaryColor,
+                    ),
+
                     // Notification Time Picker (only show when enabled)
                     if (isNotificationEnabled) ...[
                       const SizedBox(height: 8),
@@ -409,6 +438,15 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                               ),
                             );
                           }
+                        },
+                        primaryColor: primaryColor,
+                      ),
+                      // Verses Per Day Selector
+                      const SizedBox(height: 8),
+                      _VersesPerDaySelector(
+                        versesPerDay: versesPerDay,
+                        onValueChanged: (value) async {
+                          await ref.read(preferencesNotifierProvider.notifier).setVersesPerDay(value);
                         },
                         primaryColor: primaryColor,
                       ),
@@ -832,6 +870,204 @@ class _FontSizeSlider extends ConsumerWidget {
               onChanged: onChanged,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Verses Per Day Selector Widget
+/// Allows user to select how many jar taps allowed per day (unlimited)
+class _VersesPerDaySelector extends StatelessWidget {
+  final int versesPerDay;
+  final ValueChanged<int> onValueChanged;
+  final Color primaryColor;
+
+  const _VersesPerDaySelector({
+    required this.versesPerDay,
+    required this.onValueChanged,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.format_list_numbered_outlined,
+                size: 20,
+                color: primaryColor.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Jar Taps Per Day',
+                  style: AppTextStyles.loraBodyMedium().copyWith(
+                    color: primaryColor.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // Decrease button
+              GestureDetector(
+                onTap: () => onValueChanged(versesPerDay > 1 ? versesPerDay - 1 : 1),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.remove,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Number display
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onValueChanged(versesPerDay >= 9999 ? 1 : versesPerDay + 1),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        versesPerDay >= 9999 ? '∞' : versesPerDay.toString(),
+                        style: AppTextStyles.loraBodyLarge().copyWith(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Increase button
+              GestureDetector(
+                onTap: () => onValueChanged(versesPerDay + 1),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: AppColors.cream,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Infinity button
+              GestureDetector(
+                onTap: () => onValueChanged(versesPerDay >= 9999 ? 10 : 9999),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: versesPerDay >= 9999 ? primaryColor : primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: versesPerDay >= 9999 ? primaryColor : primaryColor.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.all_inclusive,
+                    color: versesPerDay >= 9999 ? AppColors.cream : primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Remaining Taps Indicator Widget
+/// Shows how many jar taps are remaining for today
+class _RemainingTapsIndicator extends StatelessWidget {
+  final int remainingTaps;
+  final int dailyLimit;
+  final Color primaryColor;
+
+  const _RemainingTapsIndicator({
+    required this.remainingTaps,
+    required this.dailyLimit,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // If limit is 9999 or higher, show unlimited
+    final bool isUnlimited = dailyLimit >= 9999;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: primaryColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.touch_app_outlined,
+            size: 16,
+            color: primaryColor.withValues(alpha: 0.7),
+          ),
+          const SizedBox(width: 8),
+          if (isUnlimited)
+            Text(
+              '∞ Unlimited taps',
+              style: AppTextStyles.loraBodySmall().copyWith(
+                color: primaryColor.withValues(alpha: 0.8),
+              ),
+            )
+          else
+            Text(
+              '$remainingTaps of $dailyLimit taps remaining',
+              style: AppTextStyles.loraBodySmall().copyWith(
+                color: primaryColor.withValues(alpha: 0.8),
+              ),
+            ),
         ],
       ),
     );

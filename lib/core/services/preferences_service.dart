@@ -78,6 +78,69 @@ class PreferencesService {
 
   // ==================== Notification Preferences ====================
 
+  /// Get verses per day (default 1)
+  int getVersesPerDay() {
+    return _prefsBox.get('verses_per_day', defaultValue: 1) as int;
+  }
+
+  /// Set verses per day (minimum 1, no maximum limit)
+  Future<void> setVersesPerDay(int count) async {
+    // Minimum 1, no maximum limit
+    final clamped = count < 1 ? 1 : count;
+    await _prefsBox.put('verses_per_day', clamped);
+  }
+
+  /// Get today's jar tap count
+  int getTodayJarTapCount() {
+    final lastTapDate = _prefsBox.get('last_tap_date', defaultValue: '') as String;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    // Reset count if it's a new day
+    if (lastTapDate != today) {
+      return 0;
+    }
+
+    return _prefsBox.get('today_tap_count', defaultValue: 0) as int;
+  }
+
+  /// Increment today's jar tap count
+  Future<void> incrementJarTapCount() async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final lastTapDate = _prefsBox.get('last_tap_date', defaultValue: '') as String;
+
+    int newCount;
+    if (lastTapDate != today) {
+      // New day, reset count
+      newCount = 1;
+      await _prefsBox.put('last_tap_date', today);
+    } else {
+      // Same day, increment count
+      final currentCount = _prefsBox.get('today_tap_count', defaultValue: 0) as int;
+      newCount = currentCount + 1;
+    }
+
+    await _prefsBox.put('today_tap_count', newCount);
+  }
+
+  /// Check if user can tap the jar today
+  bool canTapJarToday() {
+    final limit = getVersesPerDay();
+    // Unlimited taps (9999 or higher)
+    if (limit >= 9999) return true;
+    final todayCount = getTodayJarTapCount();
+    return todayCount < limit;
+  }
+
+  /// Get remaining jar taps for today
+  int getRemainingJarTaps() {
+    final limit = getVersesPerDay();
+    // Unlimited taps (9999 or higher)
+    if (limit >= 9999) return 9999;
+    final todayCount = getTodayJarTapCount();
+    final remaining = limit - todayCount;
+    return remaining < 0 ? 0 : remaining;
+  }
+
   /// Check if daily notification is enabled
   bool isDailyNotificationEnabled() {
     return _prefsBox.get('daily_notification_enabled', defaultValue: false) as bool;
@@ -99,6 +162,21 @@ class PreferencesService {
   Future<void> setNotificationTime(int hour, int minute) async {
     await _prefsBox.put('notification_hour', hour);
     await _prefsBox.put('notification_minute', minute);
+  }
+
+  // ==================== Pending Verse Key ====================
+
+  /// Set pending verse key from notification tap (persisted)
+  Future<void> setPendingVerseKey(String verseKey) async {
+    await _prefsBox.put('pending_verse_key', verseKey);
+  }
+
+  /// Get and clear pending verse key from storage
+  String? getAndClearPendingVerseKey() {
+    final key = _prefsBox.get('pending_verse_key', defaultValue: null) as String?;
+    // Clear immediately after reading
+    _prefsBox.delete('pending_verse_key');
+    return key;
   }
 
   // ==================== Font Size Preferences ====================

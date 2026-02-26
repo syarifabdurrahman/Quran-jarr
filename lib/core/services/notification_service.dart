@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
+import 'package:quran_jarr/core/data/surah_names.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
+import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
+import 'package:quran_jarr/features/jar/data/models/verse_model.dart';
 
 /// Notification Service
 /// Handles daily verse notifications
@@ -19,6 +23,24 @@ class NotificationService {
   final QuranApiService _apiService = QuranApiService();
 
   bool _initialized = false;
+
+  // Stream controller for notification tap events
+  final _notificationTapController = StreamController<String>.broadcast();
+
+  /// Stream of verse keys when notification is tapped
+  Stream<String> get notificationTapStream => _notificationTapController.stream;
+
+  /// Get the pending verse key (if any) from notification tap
+  /// This should be called when jar screen initializes to load the verse
+  Future<String?> getPendingVerseKey() async {
+    return PreferencesService.instance.getAndClearPendingVerseKey();
+  }
+
+  /// Get the saved notification verse from local storage
+  /// Returns null if not found or too old (24+ hours)
+  Future<VerseModel?> getNotificationVerse() async {
+    return await LocalStorageService.instance.getNotificationVerse();
+  }
 
   /// Initialize the notification service
   Future<void> initialize() async {
@@ -94,8 +116,11 @@ class NotificationService {
         );
       },
       (verse) async {
+        // Save the verse to local storage for retrieval when notification is tapped
+        await LocalStorageService.instance.saveNotificationVerse(verse);
+
         // Create notification details with verse
-        final title = verse.surahNameTranslation;
+        final title = getArabicSurahName(verse.surahNumber);
         final reference = '${verse.surahNumber}:${verse.ayahNumber}';
         final body = verse.translation.length > 100
             ? '${verse.translation.substring(0, 100)}...'
@@ -203,8 +228,25 @@ class NotificationService {
 
   /// Handle notification tap
   void _onNotificationTap(NotificationResponse response) {
-    // TODO: Navigate to specific verse when notification is tapped
-    // This would require passing the verse key as payload and navigating to it
+    // Parse verse key from payload (format: "daily_verse_surah_ayah")
+    final payload = response.payload;
+    if (payload != null && payload.startsWith('daily_verse_')) {
+      // Extract verse key from payload
+      // Format: "daily_verse_2_255" -> "2:255"
+      final parts = payload.replaceFirst('daily_verse_', '').split('_');
+      if (parts.length == 2) {
+        final verseKey = '${parts[0]}:${parts[1]}';
+        // Persist the pending verse key for retrieval after app launch
+        PreferencesService.instance.setPendingVerseKey(verseKey);
+        // Also send through stream for real-time handling
+        _notificationTapController.add(verseKey);
+      }
+    }
+  }
+
+  /// Dispose the stream controller
+  void dispose() {
+    _notificationTapController.close();
   }
 
   /// Get scheduled notifications

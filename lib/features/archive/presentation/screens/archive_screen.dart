@@ -6,6 +6,7 @@ import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/archive/presentation/providers/archive_provider.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
+import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
 
 /// Archive Screen
 /// Displays all saved/favorite verses
@@ -27,6 +28,15 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
 
   void _onSearchChanged(String query) {
     ref.read(archiveNotifierProvider.notifier).searchVerses(query);
+  }
+
+  void _showTranslationPicker() {
+    showTranslationPicker(
+      context,
+      onTranslationChanged: (translationId) {
+        return ref.read(archiveNotifierProvider.notifier).reloadVersesWithTranslation(translationId);
+      },
+    );
   }
 
   void _deleteVerse(Verse verse) {
@@ -103,6 +113,15 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                       'My Archive',
                       style: AppTextStyles.loraTitle(),
                     ),
+                  ),
+                  // Translation button
+                  IconButton(
+                    onPressed: () => _showTranslationPicker(),
+                    icon: Icon(
+                      Icons.translate_outlined,
+                      color: primaryColor,
+                    ),
+                    tooltip: 'Change translation',
                   ),
                   // Clear all button
                   if (archiveState.savedVerses.isNotEmpty)

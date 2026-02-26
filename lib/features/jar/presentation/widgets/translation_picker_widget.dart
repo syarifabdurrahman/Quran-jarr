@@ -9,7 +9,14 @@ import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart
 /// Translation Picker Widget
 /// Shows a bottom sheet with available translations
 class TranslationPickerWidget extends ConsumerWidget {
-  const TranslationPickerWidget({super.key});
+  /// Optional callback to execute after translation changes
+  /// Receives the new translation ID
+  final Future<void> Function(String translationId)? onTranslationChanged;
+
+  const TranslationPickerWidget({
+    super.key,
+    this.onTranslationChanged,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -118,10 +125,16 @@ class TranslationPickerWidget extends ConsumerWidget {
                   await ref
                       .read(preferencesNotifierProvider.notifier)
                       .setTranslation(translation);
-                  // Reload the same verse with new translation
+                  // Close the picker
                   if (context.mounted) {
                     Navigator.pop(context);
-                    await ref.read(jarNotifierProvider.notifier).reloadVerseWithTranslation(translation.id);
+                    // Call the custom callback if provided, otherwise default to jar reload
+                    final callback = onTranslationChanged;
+                    if (callback != null) {
+                      await callback(translation.id);
+                    } else {
+                      await ref.read(jarNotifierProvider.notifier).reloadVerseWithTranslation(translation.id);
+                    }
                   }
                 },
               );
@@ -135,11 +148,17 @@ class TranslationPickerWidget extends ConsumerWidget {
 }
 
 /// Show translation picker bottom sheet
-Future<void> showTranslationPicker(BuildContext context) {
+/// [onTranslationChanged] is an optional callback to execute after translation changes
+Future<void> showTranslationPicker(
+  BuildContext context, {
+  Future<void> Function(String translationId)? onTranslationChanged,
+}) {
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => const TranslationPickerWidget(),
+    builder: (context) => TranslationPickerWidget(
+      onTranslationChanged: onTranslationChanged,
+    ),
   );
 }

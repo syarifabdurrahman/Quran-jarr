@@ -8,6 +8,19 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Quran Jar</string>
+
+	<!-- Notification Permission -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- File Read/Write Permission (for audio downloads) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to save verse audio for offline listening.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app needs access to save verse audio for offline listening.</string>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +28,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>quran_jarr</string>
+	<string>Quran Jar</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

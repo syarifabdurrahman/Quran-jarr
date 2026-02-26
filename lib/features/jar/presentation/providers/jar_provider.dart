@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/connectivity_service.dart';
+import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/features/audio/data/datasources/audio_download_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
@@ -47,6 +49,8 @@ class JarNotifier extends StateNotifier<JarState> {
   final SaveVerseUseCase _saveVerseUseCase;
   final Ref _ref;
 
+  StreamSubscription<String>? _notificationTapSubscription;
+
   JarNotifier({
     required GetDailyVerseUseCase getDailyVerseUseCase,
     required PullRandomVerseUseCase pullRandomVerseUseCase,
@@ -58,11 +62,26 @@ class JarNotifier extends StateNotifier<JarState> {
         _ref = ref,
         super(const JarState()) {
     _initialize();
+    _listenToNotifications();
   }
 
   /// Initialize the jar state
   Future<void> _initialize() async {
-    await loadDailyVerse();
+    // Check if there's a pending verse key from notification tap
+    // This handles the case when app is launched from terminated state via notification
+    final pendingVerseKey = await NotificationService.instance.getPendingVerseKey();
+    if (pendingVerseKey != null) {
+      await loadVerseByKey(pendingVerseKey);
+    } else {
+      await loadDailyVerse();
+    }
+  }
+
+  /// Listen for notification taps
+  void _listenToNotifications() {
+    _notificationTapSubscription = NotificationService.instance.notificationTapStream.listen((verseKey) {
+      loadVerseByKey(verseKey);
+    });
   }
 
   /// Load a verse (cached or random)
@@ -157,9 +176,11 @@ class JarNotifier extends StateNotifier<JarState> {
     // If saving, fetch tafsir if not already loaded
     Verse verseToSave = verse;
     if (isSaving && (verse.tafsir == null || verse.tafsir!.isEmpty)) {
+      final translationId = _ref.read(selectedTranslationProvider).id;
       final tafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
             verse.surahNumber,
             verse.ayahNumber,
+            translationId: translationId,
           );
 
       tafsirResult.fold(
@@ -210,9 +231,11 @@ class JarNotifier extends StateNotifier<JarState> {
     // If tafsir is already loaded, do nothing
     if (verse.tafsir != null && verse.tafsir!.isNotEmpty) return;
 
+    final translationId = _ref.read(selectedTranslationProvider).id;
     final result = await _ref.read(verseRepositoryProvider).getTafsir(
           verse.surahNumber,
           verse.ayahNumber,
+          translationId: translationId,
         );
 
     result.fold(
@@ -246,11 +269,53 @@ class JarNotifier extends StateNotifier<JarState> {
       (newVerse) => state = state.copyWith(
         currentVerse: newVerse.copyWith(
           isSaved: verse.isSaved,
-          tafsir: verse.tafsir,
+          tafsir: null, // Clear tafsir when translation changes - it will be re-fetched in the correct language
         ),
         isLoading: false,
       ),
     );
+  }
+
+  /// Load a specific verse by its key (e.g., "2:255")
+  /// Used when user taps on a notification
+  Future<void> loadVerseByKey(String verseKey) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    // First, try to get the saved notification verse from local storage
+    final notificationVerse = await NotificationService.instance.getNotificationVerse();
+
+    // If notification verse exists and matches the requested key, use it
+    if (notificationVerse != null && notificationVerse.verseKey == verseKey) {
+      state = state.copyWith(
+        currentVerse: notificationVerse.toEntity(),
+        isLoading: false,
+      );
+      return;
+    }
+
+    // Otherwise, fetch from API
+    final translationId = _ref.read(selectedTranslationProvider).id;
+    final result = await _ref.read(verseRepositoryProvider).getVerseByKey(
+          verseKey,
+          translationId: translationId,
+        );
+
+    result.fold(
+      (error) => state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.message,
+      ),
+      (verse) => state = state.copyWith(
+        currentVerse: verse,
+        isLoading: false,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationTapSubscription?.cancel();
+    super.dispose();
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:quran_jarr/core/data/surah_names.dart';
 
 part 'verse.freezed.dart';
 part 'verse.g.dart';
@@ -26,8 +27,11 @@ class Verse with _$Verse {
 
   factory Verse.fromJson(Map<String, dynamic> json) => _$VerseFromJson(json);
 
+  /// Get Arabic surah name (e.g., "Al-Fatihah" instead of "The Opener")
+  String get arabicSurahName => getArabicSurahName(surahNumber);
+
   /// Get display text for surah reference
-  String get surahReference => '$surahName ($surahNumber:$ayahNumber)';
+  String get surahReference => '$arabicSurahName ($surahNumber:$ayahNumber)';
 
   /// Check if verse has audio available
   bool get hasAudio => audioUrl != null && audioUrl!.isNotEmpty;

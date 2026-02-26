@@ -242,6 +242,30 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                 ),
               ),
 
+              // Replay button
+              if (isCurrentAudio || _isDownloaded) ...[
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => audioNotifier.seek(Duration.zero),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.deepUmber.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.deepUmber.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.replay,
+                      color: AppColors.deepUmber.withValues(alpha: 0.7),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
               // Stop button (only show when playing this audio)
               if (isCurrentAudio) ...[
                 const SizedBox(width: 16),

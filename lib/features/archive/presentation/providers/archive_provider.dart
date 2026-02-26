@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/features/archive/data/repositories/archive_repository_impl.dart';
 import 'package:quran_jarr/features/archive/domain/usecases/archive_usecases.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
-import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart' show localStorageServiceProvider;
+import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart' show localStorageServiceProvider, verseRepositoryProvider;
 
 /// Archive State
 class ArchiveState {
@@ -45,6 +45,7 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
   final SearchVersesUseCase _searchVersesUseCase;
   final ClearArchiveUseCase _clearArchiveUseCase;
   final GetVerseCountUseCase _getVerseCountUseCase;
+  final Ref _ref;
 
   ArchiveNotifier({
     required GetSavedVersesUseCase getSavedVersesUseCase,
@@ -52,11 +53,13 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
     required SearchVersesUseCase searchVersesUseCase,
     required ClearArchiveUseCase clearArchiveUseCase,
     required GetVerseCountUseCase getVerseCountUseCase,
+    required Ref ref,
   })  : _getSavedVersesUseCase = getSavedVersesUseCase,
         _deleteVerseUseCase = deleteVerseUseCase,
         _searchVersesUseCase = searchVersesUseCase,
         _clearArchiveUseCase = clearArchiveUseCase,
         _getVerseCountUseCase = getVerseCountUseCase,
+        _ref = ref,
         super(const ArchiveState()) {
     loadSavedVerses();
     loadVerseCount();
@@ -137,6 +140,55 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }
+
+  /// Reload all saved verses with a new translation
+  Future<void> reloadVersesWithTranslation(String translationId) async {
+    final currentVerses = state.savedVerses;
+    if (currentVerses.isEmpty) return;
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // Get the verse repository to fetch verses with new translation
+      final repository = _ref.read(verseRepositoryProvider);
+
+      final List<Verse> updatedVerses = [];
+      String? firstError;
+
+      for (final verse in currentVerses) {
+        final result = await repository.getVerseByKey(
+          verse.verseKey,
+          translationId: translationId,
+        );
+
+        result.fold(
+          (error) {
+            // Keep the original verse if fetch fails, but note the error
+            updatedVerses.add(verse);
+            firstError ??= error.message;
+          },
+          (newVerse) {
+            // Preserve the isSaved status from the original verse
+            updatedVerses.add(newVerse.copyWith(
+              isSaved: verse.isSaved,
+              savedAt: verse.savedAt,
+            ));
+          },
+        );
+      }
+
+      state = state.copyWith(
+        savedVerses: updatedVerses,
+        isLoading: false,
+        errorMessage: firstError,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to reload verses: ${e.toString()}',
+      );
+    }
+  }
 }
 
 /// Providers
@@ -182,5 +234,6 @@ final archiveNotifierProvider =
     searchVersesUseCase: ref.watch(searchVersesUseCaseProvider),
     clearArchiveUseCase: ref.watch(clearArchiveUseCaseProvider),
     getVerseCountUseCase: ref.watch(getVerseCountUseCaseProvider),
+    ref: ref,
   );
 });

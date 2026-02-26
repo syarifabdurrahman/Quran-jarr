@@ -40,20 +40,23 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
   /// Toggle daily notification
   Future<void> toggleDailyNotification() async {
     final currentEnabled = _prefs.isDailyNotificationEnabled();
-    await _prefs.setDailyNotificationEnabled(!currentEnabled);
+    final newEnabled = !currentEnabled;
 
-    if (!currentEnabled) {
+    // Update state immediately for responsive UI
+    await _prefs.setDailyNotificationEnabled(newEnabled);
+    _notify();
+
+    // Schedule/cancel notification in background
+    if (newEnabled) {
       // Enable notification - schedule it
       final (hour, minute) = _prefs.getNotificationTime();
-      await NotificationService.instance.scheduleDailyNotification(
+      NotificationService.instance.scheduleDailyNotification(
         TimeOfDay(hour: hour, minute: minute),
       );
     } else {
       // Disable notification - cancel all
-      await NotificationService.instance.cancelAll();
+      NotificationService.instance.cancelAll();
     }
-
-    _notify();
   }
 
   /// Set daily notification enabled
@@ -94,6 +97,23 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
   Future<void> setEnglishFontSize(double multiplier) async {
     await _prefs.setEnglishFontSizeMultiplier(multiplier);
     _notify();
+  }
+
+  /// Set verses per day
+  Future<void> setVersesPerDay(int count) async {
+    await _prefs.setVersesPerDay(count);
+    _notify();
+  }
+
+  /// Increment jar tap count (called after successfully pulling a verse)
+  Future<void> incrementJarTapCount() async {
+    await _prefs.incrementJarTapCount();
+    _notify();
+  }
+
+  /// Check if user can tap the jar today
+  bool canTapJarToday() {
+    return _prefs.canTapJarToday();
   }
 
   /// Schedule test notification (shows immediately)
@@ -144,4 +164,19 @@ final arabicFontSizeProvider = Provider<double>((ref) {
 /// English Font Size Multiplier Provider
 final englishFontSizeProvider = Provider<double>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getEnglishFontSizeMultiplier();
+});
+
+/// Verses Per Day Provider
+final versesPerDayProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getVersesPerDay();
+});
+
+/// Remaining Jar Taps Provider
+final remainingJarTapsProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getRemainingJarTaps();
+});
+
+/// Daily Jar Tap Limit Provider (for easy access to the limit)
+final jarTapLimitProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getVersesPerDay();
 });

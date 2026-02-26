@@ -14,6 +14,9 @@ class QuranApiService {
   // Cache for Indonesian surah data to avoid repeated fetches
   final Map<int, List<dynamic>> _indoSurahCache = {};
 
+  // Cache for Indonesian tafsir data
+  final Map<int, List<dynamic>> _indoTafsirCache = {};
+
   // Dio instance for Quran API
   Dio get _quranDio => Dio(
         BaseOptions(
@@ -220,50 +223,29 @@ class QuranApiService {
   }
 
   /// Get tafsir for a specific verse
-  /// Uses the Quran API tafsir endpoint (Ibn Kathir)
+  /// For English: Uses the Quran API tafsir endpoint (Ibn Kathir)
+  /// For Indonesian: Uses equran.id API tafsir endpoint
   Future<Either<ApiException, String>> getTafsir(
     int surahNumber,
-    int ayahNumber,
-  ) async {
+    int ayahNumber, {
+    String translationId = 'english',
+  }) async {
     try {
-      final cacheKey = '$surahNumber-$ayahNumber';
+      final cacheKey = '$surahNumber-$ayahNumber-$translationId';
 
       // Check cache first
       if (_tafsirCache.containsKey(cacheKey)) {
         return Right(_tafsirCache[cacheKey]!);
       }
 
-      // Fetch tafsir from API
-      final response = await _quranDio.get('/tafsir/${surahNumber}_$ayahNumber.json');
-
-      final data = response.data as Map<String, dynamic>?;
-      if (data == null) {
-        return Left(ApiException('Tafsir not found for this verse'));
-      }
-
-      // Extract tafsirs array
-      final tafsirs = data['tafsirs'] as List?;
-      if (tafsirs == null || tafsirs.isEmpty) {
-        return Left(ApiException('No tafsir available for this verse'));
-      }
-
-      // Find Ibn Kathir tafsir
       String tafsirText = '';
-      for (final tafsir in tafsirs) {
-        final tafsirMap = tafsir as Map<String, dynamic>?;
-        if (tafsirMap == null) continue;
 
-        final author = tafsirMap['author'] as String? ?? '';
-        if (author.toLowerCase().contains('ibn kathir')) {
-          tafsirText = tafsirMap['content'] as String? ?? '';
-          break;
-        }
-      }
-
-      if (tafsirText.isEmpty) {
-        // Fallback to first tafsir if Ibn Kathir not found
-        final firstTafsir = tafsirs.first as Map<String, dynamic>?;
-        tafsirText = firstTafsir?['content'] as String? ?? '';
+      // For Indonesian translation, use equran.id API
+      if (translationId == 'indonesian' || translationId == 'id.indonesian') {
+        tafsirText = await _getIndonesianTafsir(surahNumber, ayahNumber);
+      } else {
+        // For English and others, use Quran API
+        tafsirText = await _getEnglishTafsir(surahNumber, ayahNumber);
       }
 
       if (tafsirText.isEmpty) {
@@ -278,6 +260,109 @@ class QuranApiService {
       return Left(ApiException.fromDioError(e));
     } catch (e) {
       return Left(ApiException('Failed to load tafsir: ${e.toString()}'));
+    }
+  }
+
+  /// Get English tafsir from Quran API
+  Future<String> _getEnglishTafsir(int surahNumber, int ayahNumber) async {
+    try {
+      final response = await _quranDio.get('/tafsir/${surahNumber}_$ayahNumber.json');
+
+      final data = response.data;
+      if (data == null) return '';
+
+      // API response structure:
+      // {
+      //   tafsirs: [
+      //     { author: "Ibn Kathir", groupVerse: "...", content: "..." }
+      //   ]
+      // }
+
+      String? tafsirText;
+
+      // Case 1: tafsirs array - get Ibn Kathir tafsir or first one
+      if (data is Map && data.containsKey('tafsirs')) {
+        final tafsirsList = data['tafsirs'] as List?;
+        if (tafsirsList != null && tafsirsList.isNotEmpty) {
+          // Try to find Ibn Kathir tafsir first
+          for (final tafsir in tafsirsList) {
+            if (tafsir is Map) {
+              final author = tafsir['author'] as String? ?? '';
+              if (author.toLowerCase().contains('ibn kathir')) {
+                tafsirText = tafsir['content'] as String?;
+                break;
+              }
+            }
+          }
+          // Fallback to first tafsir if Ibn Kathir not found
+          tafsirText ??= (tafsirsList.first as Map?)?['content'] as String?;
+        }
+      }
+
+      // Case 2: tafsir object (singular)
+      if (tafsirText == null && data is Map && data.containsKey('tafsir')) {
+        final tafsirData = data['tafsir'];
+        if (tafsirData is Map) {
+          tafsirText = tafsirData['content'] as String? ??
+                       tafsirData['ibn_kathir'] as String? ??
+                       tafsirData['text'] as String?;
+        } else if (tafsirData is String) {
+          tafsirText = tafsirData;
+        }
+      }
+
+      // Case 3: direct fields
+      tafsirText ??= data['content'] as String?;
+      tafsirText ??= data['text'] as String?;
+
+      return tafsirText ?? '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /// Get Indonesian tafsir from equran.id API
+  Future<String> _getIndonesianTafsir(int surahNumber, int ayahNumber) async {
+    try {
+      // Check if we already have the surah tafsir data cached
+      List<dynamic>? tafsirList;
+
+      if (_indoTafsirCache.containsKey(surahNumber)) {
+        tafsirList = _indoTafsirCache[surahNumber];
+      } else {
+        // Fetch tafsir data for the surah
+        final response = await _indoDio.get('/tafsir/$surahNumber');
+        final data = response.data as Map<String, dynamic>?;
+        if (data != null && data.containsKey('data')) {
+          final surahData = data['data'] as Map<String, dynamic>?;
+          if (surahData != null && surahData.containsKey('tafsir')) {
+            tafsirList = surahData['tafsir'] as List?;
+            if (tafsirList != null) {
+              _indoTafsirCache[surahNumber] = tafsirList;
+            }
+          }
+        }
+      }
+
+      if (tafsirList == null) return '';
+
+      // Find the specific ayah's tafsir
+      for (final item in tafsirList) {
+        final tafsirMap = item as Map<String, dynamic>?;
+        if (tafsirMap == null) continue;
+
+        final nomorAyat = tafsirMap['ayat'] as dynamic;
+        // The ayat field might be a number or a string
+        final ayatNum = nomorAyat is int ? nomorAyat : int.tryParse(nomorAyat.toString());
+
+        if (ayatNum == ayahNumber) {
+          return tafsirMap['teks'] as String? ?? '';
+        }
+      }
+
+      return '';
+    } catch (e) {
+      return '';
     }
   }
 

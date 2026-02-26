@@ -44,5 +44,5 @@ abstract class VerseRepository {
 
   /// Get tafsir for a specific verse
   /// Returns Right(String) with tafsir text on success, Left(ApiException) on failure
-  Future<Either<ApiException, String>> getTafsir(int surahNumber, int ayahNumber);
+  Future<Either<ApiException, String>> getTafsir(int surahNumber, int ayahNumber, {String translationId});
 }

@@ -143,8 +143,13 @@ class VerseRepositoryImpl implements VerseRepository {
   @override
   Future<Either<ApiException, String>> getTafsir(
     int surahNumber,
-    int ayahNumber,
-  ) async {
-    return await _apiService.getTafsir(surahNumber, ayahNumber);
+    int ayahNumber, {
+    String translationId = 'english',
+  }) async {
+    return await _apiService.getTafsir(
+      surahNumber,
+      ayahNumber,
+      translationId: translationId,
+    );
   }
 }
