@@ -234,7 +234,6 @@ class _ShareOptionsSheet extends StatelessWidget {
                   // More (general share)
                   if (cardKey != null)
                     _ShareOption(
-                      icon: 'assets/icon-more.png',
                       iconData: Icons.share,
                       title: 'Share as Image',
                       color: AppColors.sageGreen,
@@ -245,7 +244,6 @@ class _ShareOptionsSheet extends StatelessWidget {
                     ),
                   // Share as text
                   _ShareOption(
-                    icon: 'assets/icon-text.png',
                     iconData: Icons.text_snippet_outlined,
                     title: 'Share as Text',
                     color: AppColors.deepUmber,
@@ -256,7 +254,6 @@ class _ShareOptionsSheet extends StatelessWidget {
                   ),
                   // Copy to clipboard
                   _ShareOption(
-                    icon: 'assets/icon-copy.png',
                     iconData: Icons.copy,
                     title: 'Copy to Clipboard',
                     color: AppColors.terracotta,

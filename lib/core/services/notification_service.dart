@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
@@ -24,15 +25,33 @@ class NotificationService {
 
   bool _initialized = false;
 
-  // Stream controller for notification tap events
+  // Stream controller for notification tap events with cached value
+  String? _cachedVerseKey;
   final _notificationTapController = StreamController<String>.broadcast();
 
   /// Stream of verse keys when notification is tapped
-  Stream<String> get notificationTapStream => _notificationTapController.stream;
+  /// Emits the cached value immediately when a new listener subscribes
+  Stream<String> get notificationTapStream {
+    // Create a stream that starts with the cached value if it matches the requested key
+    if (_cachedVerseKey != null) {
+      return _notificationTapController.stream.startWith(_cachedVerseKey!);
+    }
+    return _notificationTapController.stream;
+  }
 
   /// Get the pending verse key (if any) from notification tap
-  /// This should be called when jar screen initializes to load the verse
+  /// This checks both storage and in-memory cache
   Future<String?> getPendingVerseKey() async {
+    print('🔔 NotificationService.getPendingVerseKey: _cachedVerseKey = $_cachedVerseKey');
+
+    // First check in-memory cache (for notification taps that happened during init)
+    if (_cachedVerseKey != null) {
+      final key = _cachedVerseKey;
+      _cachedVerseKey = null; // Clear after reading
+      return key;
+    }
+
+    // Then check storage (for notification taps from terminated state)
     return PreferencesService.instance.getAndClearPendingVerseKey();
   }
 
@@ -70,6 +89,29 @@ class NotificationService {
     );
 
     _initialized = true;
+
+    // Check if app was launched from a notification (terminated state)
+    // This MUST be called AFTER initialization and BEFORE getPendingVerseKey()
+    await _checkNotificationAppLaunch();
+  }
+
+  /// Check if app was launched from a notification when in terminated state
+  Future<void> _checkNotificationAppLaunch() async {
+    final details = await _notifications.getNotificationAppLaunchDetails();
+    print('🔔 _checkNotificationAppLaunch: details = $details');
+
+    if (details != null && details.didNotificationLaunchApp) {
+      final response = details.notificationResponse;
+      if (response != null) {
+        print('🔔 _checkNotificationAppLaunch: didNotificationLaunchApp = true');
+        print('🔔 _checkNotificationAppLaunch: payload = ${response.payload}');
+
+        // Process the notification response
+        _onNotificationTap(response);
+      }
+    } else {
+      print('🔔 _checkNotificationAppLaunch: app was not launched from notification');
+    }
   }
 
   /// Request notification permission
@@ -93,9 +135,33 @@ class NotificationService {
     return await android.areNotificationsEnabled() ?? false;
   }
 
+  /// Open app notification settings (for enabling exact alarm permission on Android 12+)
+  Future<void> openNotificationSettings() async {
+    // This requires the user to manually enable SCHEDULE_EXACT_ALARM in system settings
+    // We can't programmatically enable it, but we can guide the user
+    print('🔔 Please enable SCHEDULE_EXACT_ALARM permission in app settings');
+    print('🔔 Go to: Settings > Apps > Quran Jarr > Alarms & reminders');
+  }
+
   /// Schedule daily notification
   Future<void> scheduleDailyNotification(TimeOfDay time, {bool testMode = false}) async {
     if (!_initialized) await initialize();
+
+    // Ensure permission is granted
+    final hasPermission = await isPermissionGranted();
+    if (!hasPermission) {
+      final granted = await requestPermission();
+      if (!granted) {
+        print('🔔 Notification permission denied');
+        return;
+      }
+    }
+
+    // Cancel old daily notification (ID 0) before scheduling new one
+    // This prevents duplicate notifications when rescheduling
+    if (!testMode) {
+      await cancel(0);
+    }
 
     final prefs = PreferencesService.instance;
     final translationId = prefs.getTranslationId();
@@ -107,6 +173,7 @@ class NotificationService {
 
     await verseResult.fold(
       (error) async {
+        print('🔔 Failed to fetch verse for notification: $error');
         // If fetch fails, schedule with a default message
         await _scheduleNotification(
           time,
@@ -114,8 +181,11 @@ class NotificationService {
           'Tap to receive your daily verse from the Quran',
           testMode: testMode,
         );
+        // Debug: Print all scheduled notifications
+        await debugPrintScheduledNotifications();
       },
       (verse) async {
+        print('🔔 Fetched verse ${verse.verseKey} for notification');
         // Save the verse to local storage for retrieval when notification is tapped
         await LocalStorageService.instance.saveNotificationVerse(verse);
 
@@ -133,6 +203,10 @@ class NotificationService {
           payload: 'daily_verse_${verse.surahNumber}_${verse.ayahNumber}',
           testMode: testMode,
         );
+        print('🔔 Notification scheduled for ${time.hour}:${time.minute}');
+
+        // Debug: Print all scheduled notifications
+        await debugPrintScheduledNotifications();
       },
     );
   }
@@ -201,18 +275,21 @@ class NotificationService {
         payload: payload,
       );
     } else {
+      // Use zonedSchedule with exact time matching for daily repeat
+      // This is more reliable than periodicallyShow for specific times
       await _notifications.zonedSchedule(
         0, // notification id
         title,
         body,
         scheduledDate,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exact,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
         matchDateTimeComponents: DateTimeComponents.time,
       );
+      print('🔔 Daily notification scheduled for ${time.hour}:${time.minute}');
     }
   }
 
@@ -228,6 +305,9 @@ class NotificationService {
 
   /// Handle notification tap
   void _onNotificationTap(NotificationResponse response) {
+    print('🔔 NotificationService._onNotificationTap called');
+    print('🔔 Response payload: ${response.payload}');
+
     // Parse verse key from payload (format: "daily_verse_surah_ayah")
     final payload = response.payload;
     if (payload != null && payload.startsWith('daily_verse_')) {
@@ -236,10 +316,16 @@ class NotificationService {
       final parts = payload.replaceFirst('daily_verse_', '').split('_');
       if (parts.length == 2) {
         final verseKey = '${parts[0]}:${parts[1]}';
-        // Persist the pending verse key for retrieval after app launch
+        print('🔔 Extracted verse key: $verseKey');
+        // Store in in-memory cache for immediate retrieval
+        _cachedVerseKey = verseKey;
+        print('🔔 Cached verse key in memory');
+        // Also persist to storage for retrieval after app restart
         PreferencesService.instance.setPendingVerseKey(verseKey);
-        // Also send through stream for real-time handling
+        print('🔔 Stored pending verse key');
+        // Send through stream for real-time handling
         _notificationTapController.add(verseKey);
+        print('🔔 Added verse key to stream');
       }
     }
   }
@@ -252,6 +338,17 @@ class NotificationService {
   /// Get scheduled notifications
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     return await _notifications.pendingNotificationRequests();
+  }
+
+  /// Debug: Print all scheduled notifications
+  Future<void> debugPrintScheduledNotifications() async {
+    final pending = await getPendingNotifications();
+    print('🔔 ========== SCHEDULED NOTIFICATIONS ==========');
+    print('🔔 Total scheduled: ${pending.length}');
+    for (final n in pending) {
+      print('🔔   ID: ${n.id}, Title: ${n.title}, Body: ${n.body}, Payload: ${n.payload}');
+    }
+    print('🔔 ============================================');
   }
 
   /// Check if daily notification is scheduled

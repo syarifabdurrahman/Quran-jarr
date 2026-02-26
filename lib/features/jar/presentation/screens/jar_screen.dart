@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
@@ -29,7 +30,6 @@ class JarScreen extends ConsumerStatefulWidget {
 class _JarScreenState extends ConsumerState<JarScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  bool _showVerse = false;
 
   @override
   void initState() {
@@ -40,6 +40,14 @@ class _JarScreenState extends ConsumerState<JarScreen>
     );
     // Initialize sound effects service
     SoundEffectsService.instance.initialize();
+
+    // If verse is already loaded (from notification), show it immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final jarState = ref.read(jarNotifierProvider);
+      if (jarState.currentVerse != null) {
+        setState(() {}); // Trigger rebuild to show verse card
+      }
+    });
   }
 
   @override
@@ -83,7 +91,6 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   Future<void> _pullVerseAnimation() async {
-    setState(() => _showVerse = false);
     await _animationController.forward();
     await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
     // Only increment tap count if connected to internet
@@ -93,7 +100,6 @@ class _JarScreenState extends ConsumerState<JarScreen>
     }
     // Play whoosh sound when verse appears
     SoundEffectsService.instance.playWhoosh();
-    setState(() => _showVerse = true);
     _animationController.reset();
   }
 
@@ -266,7 +272,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       ),
 
                     // Verse Card
-                    if (_showVerse && jarState.currentVerse != null)
+                    if (jarState.currentVerse != null)
                       VerseCardWidget(
                         verse: jarState.currentVerse!,
                         onSaveToggle: () {
@@ -387,19 +393,26 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Daily Notification Toggle
-                    _SettingsToggle(
-                      icon: Icons.notifications_outlined,
-                      title: 'Daily Notification',
-                      value: isNotificationEnabled,
-                      onChanged: (value) async {
-                        await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
+                    // Jar Taps Per Day Section
+                    Text(
+                      'Jar Taps Per Day',
+                      style: AppTextStyles.loraBodySmall().copyWith(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _VersesPerDaySelector(
+                      versesPerDay: versesPerDay,
+                      onValueChanged: (value) async {
+                        await ref.read(preferencesNotifierProvider.notifier).setVersesPerDay(value);
                       },
                       primaryColor: primaryColor,
                     ),
 
+                    const SizedBox(height: 24),
+
                     // Sound Effects Toggle
-                    const SizedBox(height: 8),
                     _SettingsToggle(
                       icon: Icons.volume_up_outlined,
                       title: 'Sound Effects',
@@ -408,6 +421,28 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         setState(() {
                           SoundEffectsService.instance.setEnabled(value);
                         });
+                      },
+                      primaryColor: primaryColor,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Notification Settings Section
+                    Text(
+                      'Daily Notification',
+                      style: AppTextStyles.loraBodySmall().copyWith(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Daily Notification Toggle
+                    _SettingsToggle(
+                      icon: Icons.notifications_outlined,
+                      title: 'Daily Notification',
+                      value: isNotificationEnabled,
+                      onChanged: (value) async {
+                        await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
                       },
                       primaryColor: primaryColor,
                     ),
@@ -428,25 +463,35 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         icon: Icons.notifications_active,
                         title: 'Test Notification',
                         onTap: () async {
+                          // Just schedule the notification without changing the current verse
                           await ref.read(preferencesNotifierProvider.notifier).scheduleTestNotification();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Test notification sent!'),
+                                content: Text('Test notification sent! Check your notifications in a few seconds.'),
                                 backgroundColor: primaryColor,
-                                duration: const Duration(seconds: 2),
+                                duration: const Duration(seconds: 3),
                               ),
                             );
                           }
                         },
                         primaryColor: primaryColor,
                       ),
-                      // Verses Per Day Selector
-                      const SizedBox(height: 8),
-                      _VersesPerDaySelector(
-                        versesPerDay: versesPerDay,
-                        onValueChanged: (value) async {
-                          await ref.read(preferencesNotifierProvider.notifier).setVersesPerDay(value);
+                      // Debug: Show Scheduled Notifications
+                      _SettingsItem(
+                        icon: Icons.bug_report,
+                        title: 'Debug: Show Scheduled Notifications',
+                        onTap: () async {
+                          await NotificationService.instance.debugPrintScheduledNotifications();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Check console logs for scheduled notifications'),
+                                backgroundColor: primaryColor,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                         primaryColor: primaryColor,
                       ),

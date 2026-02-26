@@ -109,20 +109,24 @@ class LocalStorageService {
     await _appDataBox.put('notification_verse_timestamp', DateTime.now().toIso8601String());
   }
 
-  /// Get notification verse (returns null if not found or too old)
+  /// Get notification verse (returns null if not found or not from today)
   Future<VerseModel?> getNotificationVerse() async {
     final json = _appDataBox.get('notification_verse');
     if (json == null) return null;
 
-    // Check timestamp - only return if less than 24 hours old
+    // Check timestamp - only return if from today
     final timestampStr = _appDataBox.get('notification_verse_timestamp');
     if (timestampStr != null) {
       final timestamp = DateTime.parse(timestampStr as String);
       final now = DateTime.now();
-      final hoursPassed = now.difference(timestamp).inHours;
 
-      // If more than 24 hours have passed, return null
-      if (hoursPassed >= 24) {
+      // Check if the cached verse is from today (same calendar day)
+      final cachedDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (cachedDate != today) {
+        // Cached verse is from a previous day, clear it and return null
+        await clearNotificationVerse();
         return null;
       }
     }
