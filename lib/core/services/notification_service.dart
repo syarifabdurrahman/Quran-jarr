@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -25,6 +27,9 @@ class NotificationService {
   final QuranApiService _apiService = QuranApiService();
 
   bool _initialized = false;
+
+  // MethodChannel for checking exact alarm permission on Android 12+
+  static const MethodChannel _platform = MethodChannel('quran_jarr/alarm');
 
   // Stream controller for notification tap events with cached value
   String? _cachedVerseKey;
@@ -162,6 +167,30 @@ class NotificationService {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Check if exact alarm permission is granted (Android 12+)
+  /// Returns true if permission is granted or on older Android versions
+  /// Returns false if permission is needed but not granted (Android 12+)
+  Future<bool> checkExactAlarmPermission() async {
+    // If not Android, permission doesn't apply
+    if (!Platform.isAndroid) return true;
+
+    try {
+      // Use platform channel to check exact alarm permission
+      final result = await _platform.invokeMethod('checkExactAlarmPermission');
+      return result == true;
+    } catch (e) {
+      // If method call fails, assume permission is granted
+      // (this happens on older Android versions where permission isn't needed)
+      return true;
+    }
+  }
+
+  /// Request exact alarm permission by opening app settings
+  /// On Android 12+, this opens the settings page where user can enable it
+  Future<void> requestExactAlarmPermission() async {
+    await openNotificationSettings();
   }
 
   /// Schedule daily notification

@@ -10,6 +10,7 @@ import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
+import 'package:quran_jarr/core/utils/responsive_utils.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
@@ -336,6 +337,74 @@ class _SettingsDialog extends ConsumerStatefulWidget {
 }
 
 class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
+  /// Show dialog explaining exact alarm permission is needed
+  Future<bool?> _showExactAlarmDialog(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context)),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.alarm,
+              color: AppColors.sageGreen,
+              size: ResponsiveUtils.getIconSize(context),
+            ),
+            SizedBox(width: ResponsiveUtils.getSpacing(context) * 0.75),
+            Expanded(
+              child: Text(
+                'Enable Alarms & Reminders',
+                style: AppTextStyles.loraHeading(),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
+              style: AppTextStyles.loraBodyMedium(),
+            ),
+            SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
+            Text(
+              'This is required on Android 12+ for exact timing of notifications.',
+              style: AppTextStyles.loraBodySmall().copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.sageGreen),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await NotificationService.instance.openNotificationSettings();
+              Navigator.of(context).pop(true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.sageGreen,
+            ),
+            child: const Text(
+              'Open Settings',
+              style: TextStyle(color: AppColors.cream),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentMode = ref.watch(
@@ -350,24 +419,27 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
     final primaryColor = AppColors.sageGreen;
     final bgColor = AppColors.cream;
 
-    // Get screen height for responsive sizing
+    // Use responsive sizing
+    final dialogMaxWidth = ResponsiveUtils.getDialogMaxWidth(context);
+    final dialogMaxHeight = ResponsiveUtils.getDialogMaxHeight(context);
     final screenHeight = MediaQuery.of(context).size.height;
-    final dialogMaxHeight = screenHeight * 0.75;
 
     return Dialog(
       backgroundColor: bgColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context)),
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: dialogMaxHeight,
-          maxWidth: 400,
+          maxHeight: screenHeight * dialogMaxHeight,
+          maxWidth: dialogMaxWidth,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: ResponsiveUtils.getPadding(context),
               child: Row(
                 children: [
                   Text(
@@ -442,6 +514,18 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                       title: 'Daily Notification',
                       value: isNotificationEnabled,
                       onChanged: (value) async {
+                        if (value) {
+                          // Check exact alarm permission before enabling
+                          final hasPermission = await NotificationService.instance.checkExactAlarmPermission();
+                          if (!hasPermission && context.mounted) {
+                            // Show dialog explaining permission is needed
+                            final shouldProceed = await _showExactAlarmDialog(context);
+                            if (shouldProceed != true) {
+                              // User chose not to proceed
+                              return;
+                            }
+                          }
+                        }
                         await ref.read(preferencesNotifierProvider.notifier).setDailyNotificationEnabled(value);
                       },
                       primaryColor: primaryColor,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/core/utils/responsive_utils.dart';
 
 /// Jar Widget
 /// A beautiful glass jar visualization with pull interaction
@@ -101,59 +102,69 @@ class _JarWidgetState extends State<JarWidget>
             child: child,
           );
         },
-        child: SizedBox(
-          width: AppConstants.jarWidth + 60, // Extra space for paper slip
-          height: AppConstants.jarHeight + 80,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Jar (centered with offset)
-              Positioned(
-                left: 30,
-                top: 40,
-                child: AnimatedScale(
-                  scale: _isPressed ? 0.95 : 1.0,
-                  duration: const Duration(milliseconds: 100),
-                  curve: Curves.easeInOut,
-                  child: SizedBox(
-                    width: AppConstants.jarWidth,
-                    height: AppConstants.jarHeight,
-                    child: CustomPaint(
-                      painter: _JarPainter(
-                        isEmpty: widget.isEmpty,
-                      ),
-                    ),
-                  ),
-                ).animate().then(delay: 100.ms).fade(duration: 400.ms),
-              ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate responsive jar scale based on screen width
+            final screenWidth = MediaQuery.of(context).size.width;
+            final jarScale = (screenWidth / 375).clamp(0.7, 1.3);
+            final jarWidth = AppConstants.jarWidth * jarScale;
+            final jarHeight = AppConstants.jarHeight * jarScale;
 
-              // Paper slip that comes out
-              if (_showPaperSlip)
-                Positioned(
-                  left: AppConstants.jarWidth / 2 + 5,
-                  top: 90,
-                  child: AnimatedBuilder(
-                    animation: _paperController,
-                    builder: (context, child) {
-                      final curve = Curves.easeOutCubic;
-                      final t = curve.transform(_paperController.value);
-
-                      return Transform.translate(
-                        offset: Offset(0, -t * 120),
-                        child: Transform.rotate(
-                          angle: -0.15 + (t * 0.08),
-                          child: Opacity(
-                            opacity: t,
-                            child: child,
+            return SizedBox(
+              width: jarWidth + 60 * jarScale,
+              height: jarHeight + 80 * jarScale,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Jar (centered with offset)
+                  Positioned(
+                    left: 30 * jarScale,
+                    top: 40 * jarScale,
+                    child: AnimatedScale(
+                      scale: _isPressed ? 0.95 : 1.0,
+                      duration: const Duration(milliseconds: 100),
+                      curve: Curves.easeInOut,
+                      child: SizedBox(
+                        width: jarWidth,
+                        height: jarHeight,
+                        child: CustomPaint(
+                          painter: _JarPainter(
+                            isEmpty: widget.isEmpty,
                           ),
                         ),
-                      );
-                    },
-                    child: _PaperSlipWidget(),
-                  ).animate().fade(duration: 150.ms),
-                ),
-            ],
-          ),
+                      ),
+                    ).animate().then(delay: 100.ms).fade(duration: 400.ms),
+                  ),
+
+                  // Paper slip that comes out
+                  if (_showPaperSlip)
+                    Positioned(
+                      left: jarWidth / 2 + 5 * jarScale,
+                      top: 90 * jarScale,
+                      child: AnimatedBuilder(
+                        animation: _paperController,
+                        builder: (context, child) {
+                          final curve = Curves.easeOutCubic;
+                          final t = curve.transform(_paperController.value);
+
+                          return Transform.translate(
+                            offset: Offset(0, -t * 120 * jarScale),
+                            child: Transform.rotate(
+                              angle: -0.15 + (t * 0.08),
+                              child: Opacity(
+                                opacity: t,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _PaperSlipWidget(scale: jarScale),
+                      ).animate().fade(duration: 150.ms),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -163,11 +174,15 @@ class _JarWidgetState extends State<JarWidget>
 /// Paper Slip Widget
 /// Shows a paper slip coming out of the jar
 class _PaperSlipWidget extends StatelessWidget {
+  final double scale;
+
+  const _PaperSlipWidget({this.scale = 1.0});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 55,
-      height: 75,
+      width: 55 * scale,
+      height: 75 * scale,
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.circular(4),
@@ -184,64 +199,64 @@ class _PaperSlipWidget extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8 * scale),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Arabic text lines
             Container(
-              height: 3,
-              width: 35,
+              height: 3 * scale,
+              width: 35 * scale,
               decoration: BoxDecoration(
                 color: AppColors.deepUmber.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(1.5),
+                borderRadius: BorderRadius.circular(1.5 * scale),
               ),
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: 5 * scale),
             Container(
-              height: 3,
-              width: 40,
+              height: 3 * scale,
+              width: 40 * scale,
               decoration: BoxDecoration(
                 color: AppColors.deepUmber.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(1.5),
+                borderRadius: BorderRadius.circular(1.5 * scale),
               ),
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: 5 * scale),
             Container(
-              height: 3,
-              width: 28,
+              height: 3 * scale,
+              width: 28 * scale,
               decoration: BoxDecoration(
                 color: AppColors.deepUmber.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(1.5),
+                borderRadius: BorderRadius.circular(1.5 * scale),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * scale),
             // Translation lines
             Container(
-              height: 2.5,
-              width: 42,
+              height: 2.5 * scale,
+              width: 42 * scale,
               decoration: BoxDecoration(
                 color: AppColors.sageGreen.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(1),
+                borderRadius: BorderRadius.circular(1 * scale),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4 * scale),
             Container(
-              height: 2.5,
-              width: 36,
+              height: 2.5 * scale,
+              width: 36 * scale,
               decoration: BoxDecoration(
                 color: AppColors.sageGreen.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(1),
+                borderRadius: BorderRadius.circular(1 * scale),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4 * scale),
             Container(
-              height: 2.5,
-              width: 30,
+              height: 2.5 * scale,
+              width: 30 * scale,
               decoration: BoxDecoration(
                 color: AppColors.sageGreen.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(1),
+                borderRadius: BorderRadius.circular(1 * scale),
               ),
             ),
           ],

@@ -4,6 +4,8 @@ import android.content.Context
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.os.Bundle
+import android.app.AlarmManager
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -11,10 +13,12 @@ import io.flutter.plugin.common.MethodCall
 
 class MainActivity : FlutterActivity() {
     private lateinit var widgetChannel: MethodChannel
+    private lateinit var alarmChannel: MethodChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // Widget channel
         widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.simpurrapps.quran_jarr/widget")
         widgetChannel.setMethodCallHandler { call, result ->
             when (call.method) {
@@ -22,6 +26,30 @@ class MainActivity : FlutterActivity() {
                 "updateWidget" -> updateWidget(call, result)
                 else -> result.notImplemented()
             }
+        }
+
+        // Alarm permission channel
+        alarmChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "quran_jarr/alarm")
+        alarmChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "checkExactAlarmPermission" -> checkExactAlarmPermission(result)
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun checkExactAlarmPermission(result: MethodChannel.Result) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val canScheduleExact = alarmManager.canScheduleExactAlarms()
+                result.success(canScheduleExact)
+            } else {
+                // On older Android versions, exact alarm permission is not needed
+                result.success(true)
+            }
+        } catch (e: Exception) {
+            result.error("PERMISSION_ERROR", e.message, null)
         }
     }
 
