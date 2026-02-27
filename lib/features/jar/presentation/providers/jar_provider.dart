@@ -73,8 +73,6 @@ class JarNotifier extends StateNotifier<JarState> {
     // This handles the case when app is launched from terminated state via notification
     final pendingVerseKey = await NotificationService.instance.getPendingVerseKey();
 
-    print('🔔 JarNotifier._initialize: pendingVerseKey = $pendingVerseKey');
-
     if (pendingVerseKey != null) {
       await loadVerseByKey(pendingVerseKey);
     } else {
@@ -85,7 +83,6 @@ class JarNotifier extends StateNotifier<JarState> {
   /// Listen for notification taps
   void _listenToNotifications() {
     _notificationTapSubscription = NotificationService.instance.notificationTapStream.listen((verseKey) {
-      print('🔔 JarNotifier._listenToNotifications: received verseKey = $verseKey');
       loadVerseByKey(verseKey);
     });
   }
@@ -192,7 +189,6 @@ class JarNotifier extends StateNotifier<JarState> {
       tafsirResult.fold(
         (error) {
           // Continue saving even if tafsir fails
-          print('Failed to fetch tafsir: ${error.message}');
         },
         (tafsirText) {
           verseToSave = verse.copyWith(tafsir: tafsirText);
@@ -285,17 +281,14 @@ class JarNotifier extends StateNotifier<JarState> {
   /// Load a specific verse by its key (e.g., "2:255")
   /// Used when user taps on a notification
   Future<void> loadVerseByKey(String verseKey) async {
-    print('🔔 JarNotifier.loadVerseByKey: called with key = $verseKey');
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     // First, try to get the saved notification verse from local storage
     final notificationVerse = await NotificationService.instance.getNotificationVerse();
-    print('🔔 JarNotifier.loadVerseByKey: notificationVerse from storage = ${notificationVerse != null ? notificationVerse.verseKey : 'null'}');
 
     // If notification verse exists and matches the requested key, use it
     // Otherwise, always fetch fresh from API to ensure users get the latest verse
     if (notificationVerse == null || notificationVerse.verseKey != verseKey) {
-      print('🔔 JarNotifier.loadVerseByKey: fetching from API');
       // Fetch from API
       final translationId = _ref.read(selectedTranslationProvider).id;
       final result = await _ref.read(verseRepositoryProvider).getVerseByKey(
@@ -303,18 +296,14 @@ class JarNotifier extends StateNotifier<JarState> {
             translationId: translationId,
           );
 
-      print('🔔 JarNotifier.loadVerseByKey: API result = ${result.isRight() ? 'success' : 'error'}');
-
       result.fold(
         (error) {
-          print('🔔 JarNotifier.loadVerseByKey: error = ${error.message}');
           state = state.copyWith(
             isLoading: false,
             errorMessage: error.message,
           );
         },
         (verse) async {
-          print('🔔 JarNotifier.loadVerseByKey: got verse = ${verse.verseKey}');
           // Save the newly fetched verse as the notification verse
           await LocalStorageService.instance.saveNotificationVerse(
             VerseModel.fromEntity(verse),
@@ -323,19 +312,16 @@ class JarNotifier extends StateNotifier<JarState> {
             currentVerse: verse,
             isLoading: false,
           );
-          print('🔔 JarNotifier.loadVerseByKey: state updated');
         },
       );
       return;
     }
 
     // Use cached verse from today
-    print('🔔 JarNotifier.loadVerseByKey: using cached verse');
     state = state.copyWith(
       currentVerse: notificationVerse.toEntity(),
       isLoading: false,
     );
-    print('🔔 JarNotifier.loadVerseByKey: state updated with cached verse');
   }
 
   @override

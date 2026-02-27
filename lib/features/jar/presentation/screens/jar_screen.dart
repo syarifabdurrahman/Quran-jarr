@@ -457,18 +457,18 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         },
                         primaryColor: primaryColor,
                       ),
-                      // Test Notification Button
+                      // Test Notification Buttons
                       const SizedBox(height: 8),
                       _SettingsItem(
                         icon: Icons.notifications_active,
-                        title: 'Test Notification',
+                        title: 'Test Notification (5 min)',
                         onTap: () async {
                           // Just schedule the notification without changing the current verse
                           await ref.read(preferencesNotifierProvider.notifier).scheduleTestNotification();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Test notification sent! Check your notifications in a few seconds.'),
+                                content: Text('Test notification sent! Check your notifications in 5 minutes.'),
                                 backgroundColor: primaryColor,
                                 duration: const Duration(seconds: 3),
                               ),
@@ -477,18 +477,38 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         },
                         primaryColor: primaryColor,
                       ),
-                      // Debug: Show Scheduled Notifications
+                      // Test: 1-minute notification
                       _SettingsItem(
-                        icon: Icons.bug_report,
-                        title: 'Debug: Show Scheduled Notifications',
+                        icon: Icons.timer,
+                        title: 'Test: 1-minute notification',
                         onTap: () async {
-                          await NotificationService.instance.debugPrintScheduledNotifications();
+                          await NotificationService.instance.testOneMinuteNotification();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Check console logs for scheduled notifications'),
+                                content: Text('Notification scheduled for 1 minute from now!'),
                                 backgroundColor: primaryColor,
                                 duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        primaryColor: primaryColor,
+                      ),
+                      // Enable Alarm Permission (Android 12+)
+                      _SettingsItem(
+                        icon: Icons.settings,
+                        title: 'Enable Alarm Permission (Android 12+)',
+                        onTap: () async {
+                          final opened = await NotificationService.instance.openNotificationSettings();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(opened
+                                    ? 'Opening settings... Enable "Alarms & reminders"'
+                                    : 'Go to Settings > Apps > Quran Jarr > Alarms & reminders'),
+                                backgroundColor: primaryColor,
+                                duration: const Duration(seconds: 4),
                               ),
                             );
                           }
