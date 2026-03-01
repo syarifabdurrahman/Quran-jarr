@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/network/api_exception.dart';
 import 'package:quran_jarr/features/archive/data/repositories/archive_repository_impl.dart';
 import 'package:quran_jarr/features/archive/domain/usecases/archive_usecases.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
@@ -170,20 +171,39 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
           translationId: translationId,
         );
 
-        result.fold(
-          (error) {
-            // Keep the original verse if fetch fails, but note the error
-            updatedVerses.add(verse);
-            firstError ??= error.message;
-          },
-          (newVerse) {
-            // Preserve the isSaved status from the original verse
-            updatedVerses.add(newVerse.copyWith(
-              isSaved: verse.isSaved,
-              savedAt: verse.savedAt,
-            ));
-          },
+        if (result.isLeft()) {
+          // Keep the original verse if fetch fails, but note the error
+          updatedVerses.add(verse);
+          firstError ??= result.swap().getOrElse(() => ApiException('Unknown error')).message;
+          continue;
+        }
+
+        final newVerse = result.getOrElse(() => verse);
+
+        // Fetch tafsir for the new translation
+        final tafsirResult = await repository.getTafsir(
+          newVerse.surahNumber,
+          newVerse.ayahNumber,
+          translationId: translationId,
         );
+
+        // Merge tafsir maps - preserve existing, add new
+        final existingTafsirMap = verse.tafsirByTranslation ?? {};
+        final mergedTafsirMap = Map<String, String>.from(existingTafsirMap);
+
+        if (tafsirResult.isRight()) {
+          final tafsirText = tafsirResult.getOrElse(() => '');
+          if (tafsirText.isNotEmpty) {
+            mergedTafsirMap[translationId] = tafsirText;
+          }
+        }
+
+        // Create updated verse with merged tafsir map
+        updatedVerses.add(newVerse.copyWith(
+          isSaved: verse.isSaved,
+          savedAt: verse.savedAt,
+          tafsirByTranslation: mergedTafsirMap.isNotEmpty ? mergedTafsirMap : null,
+        ));
       }
 
       state = state.copyWith(

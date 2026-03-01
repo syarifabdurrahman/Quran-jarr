@@ -30,7 +30,8 @@ mixin _$VerseModel {
   String get translationId =>
       throw _privateConstructorUsedError; // Translation language ID
   String? get audioUrl => throw _privateConstructorUsedError;
-  String? get tafsir => throw _privateConstructorUsedError;
+  Map<String, String>? get tafsirByTranslation =>
+      throw _privateConstructorUsedError; // Tafsir by translation ID
   bool get isSaved => throw _privateConstructorUsedError;
   DateTime? get savedAt => throw _privateConstructorUsedError;
 
@@ -56,7 +57,7 @@ abstract class $VerseModelCopyWith<$Res> {
       String verseKey,
       String translationId,
       String? audioUrl,
-      String? tafsir,
+      Map<String, String>? tafsirByTranslation,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -83,7 +84,7 @@ class _$VerseModelCopyWithImpl<$Res, $Val extends VerseModel>
     Object? verseKey = null,
     Object? translationId = null,
     Object? audioUrl = freezed,
-    Object? tafsir = freezed,
+    Object? tafsirByTranslation = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -124,10 +125,10 @@ class _$VerseModelCopyWithImpl<$Res, $Val extends VerseModel>
           ? _value.audioUrl
           : audioUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      tafsir: freezed == tafsir
-          ? _value.tafsir
-          : tafsir // ignore: cast_nullable_to_non_nullable
-              as String?,
+      tafsirByTranslation: freezed == tafsirByTranslation
+          ? _value.tafsirByTranslation
+          : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -158,7 +159,7 @@ abstract class _$$VerseModelImplCopyWith<$Res>
       String verseKey,
       String translationId,
       String? audioUrl,
-      String? tafsir,
+      Map<String, String>? tafsirByTranslation,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -183,7 +184,7 @@ class __$$VerseModelImplCopyWithImpl<$Res>
     Object? verseKey = null,
     Object? translationId = null,
     Object? audioUrl = freezed,
-    Object? tafsir = freezed,
+    Object? tafsirByTranslation = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -224,10 +225,10 @@ class __$$VerseModelImplCopyWithImpl<$Res>
           ? _value.audioUrl
           : audioUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      tafsir: freezed == tafsir
-          ? _value.tafsir
-          : tafsir // ignore: cast_nullable_to_non_nullable
-              as String?,
+      tafsirByTranslation: freezed == tafsirByTranslation
+          ? _value._tafsirByTranslation
+          : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -253,10 +254,11 @@ class _$VerseModelImpl extends _VerseModel {
       required this.verseKey,
       this.translationId = 'english',
       this.audioUrl,
-      this.tafsir,
+      final Map<String, String>? tafsirByTranslation,
       this.isSaved = false,
       this.savedAt})
-      : super._();
+      : _tafsirByTranslation = tafsirByTranslation,
+        super._();
 
   factory _$VerseModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$VerseModelImplFromJson(json);
@@ -282,8 +284,18 @@ class _$VerseModelImpl extends _VerseModel {
 // Translation language ID
   @override
   final String? audioUrl;
+  final Map<String, String>? _tafsirByTranslation;
   @override
-  final String? tafsir;
+  Map<String, String>? get tafsirByTranslation {
+    final value = _tafsirByTranslation;
+    if (value == null) return null;
+    if (_tafsirByTranslation is EqualUnmodifiableMapView)
+      return _tafsirByTranslation;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+// Tafsir by translation ID
   @override
   @JsonKey()
   final bool isSaved;
@@ -292,7 +304,7 @@ class _$VerseModelImpl extends _VerseModel {
 
   @override
   String toString() {
-    return 'VerseModel(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsir: $tafsir, isSaved: $isSaved, savedAt: $savedAt)';
+    return 'VerseModel(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsirByTranslation: $tafsirByTranslation, isSaved: $isSaved, savedAt: $savedAt)';
   }
 
   @override
@@ -318,7 +330,8 @@ class _$VerseModelImpl extends _VerseModel {
                 other.translationId == translationId) &&
             (identical(other.audioUrl, audioUrl) ||
                 other.audioUrl == audioUrl) &&
-            (identical(other.tafsir, tafsir) || other.tafsir == tafsir) &&
+            const DeepCollectionEquality()
+                .equals(other._tafsirByTranslation, _tafsirByTranslation) &&
             (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
             (identical(other.savedAt, savedAt) || other.savedAt == savedAt));
   }
@@ -336,7 +349,7 @@ class _$VerseModelImpl extends _VerseModel {
       verseKey,
       translationId,
       audioUrl,
-      tafsir,
+      const DeepCollectionEquality().hash(_tafsirByTranslation),
       isSaved,
       savedAt);
 
@@ -365,7 +378,7 @@ abstract class _VerseModel extends VerseModel {
       required final String verseKey,
       final String translationId,
       final String? audioUrl,
-      final String? tafsir,
+      final Map<String, String>? tafsirByTranslation,
       final bool isSaved,
       final DateTime? savedAt}) = _$VerseModelImpl;
   const _VerseModel._() : super._();
@@ -392,8 +405,8 @@ abstract class _VerseModel extends VerseModel {
   @override // Translation language ID
   String? get audioUrl;
   @override
-  String? get tafsir;
-  @override
+  Map<String, String>? get tafsirByTranslation;
+  @override // Tafsir by translation ID
   bool get isSaved;
   @override
   DateTime? get savedAt;

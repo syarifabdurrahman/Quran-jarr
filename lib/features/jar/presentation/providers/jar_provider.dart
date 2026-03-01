@@ -63,8 +63,9 @@ class JarNotifier extends StateNotifier<JarState> {
         _saveVerseUseCase = saveVerseUseCase,
         _ref = ref,
         super(const JarState()) {
-    // Set up listener FIRST, then initialize
+    // Set up listeners FIRST, then initialize
     _listenToNotifications();
+    _listenToTranslationChanges();
     _initialize();
   }
 
@@ -85,6 +86,19 @@ class JarNotifier extends StateNotifier<JarState> {
   void _listenToNotifications() {
     _notificationTapSubscription = NotificationService.instance.notificationTapStream.listen((verseKey) {
       loadVerseByKey(verseKey);
+    });
+  }
+
+  /// Listen for translation changes and reload current verse
+  void _listenToTranslationChanges() {
+    _ref.listen(selectedTranslationProvider, (previous, next) {
+      final previousId = previous?.id;
+      final nextId = next.id;
+
+      // Only reload if translation actually changed and we have a current verse
+      if (previousId != nextId && state.currentVerse != null) {
+        reloadVerseWithTranslation(nextId);
+      }
     });
   }
 
@@ -177,25 +191,51 @@ class JarNotifier extends StateNotifier<JarState> {
       currentVerse: verse.copyWith(isSaved: isSaving),
     );
 
-    // If saving, fetch tafsir if not already loaded
+    // If saving, fetch tafsir in both English and Indonesian
     Verse verseToSave = verse;
-    if (isSaving && (verse.tafsir == null || verse.tafsir!.isEmpty)) {
-      final translationId = _ref.read(selectedTranslationProvider).id;
-      final tafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
+    if (isSaving) {
+      final Map<String, String> tafsirMap = {};
+
+      // Fetch English tafsir
+      final enTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
             verse.surahNumber,
             verse.ayahNumber,
-            translationId: translationId,
+            translationId: 'english',
           );
 
-      tafsirResult.fold(
+      enTafsirResult.fold(
         (error) {
-          // Continue saving even if tafsir fails
+          // Continue even if English tafsir fails
         },
         (tafsirText) {
-          verseToSave = verse.copyWith(tafsir: tafsirText);
-          state = state.copyWith(currentVerse: verseToSave);
+          tafsirMap['english'] = tafsirText;
         },
       );
+
+      // Fetch Indonesian tafsir
+      final idTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
+            verse.surahNumber,
+            verse.ayahNumber,
+            translationId: 'indonesian',
+          );
+
+      idTafsirResult.fold(
+        (error) {
+          // Continue even if Indonesian tafsir fails
+        },
+        (tafsirText) {
+          tafsirMap['indonesian'] = tafsirText;
+        },
+      );
+
+      // Update verse with tafsir map if we got any
+      if (tafsirMap.isNotEmpty) {
+        // Merge with existing tafsir map
+        final existingMap = verse.tafsirByTranslation ?? {};
+        final mergedMap = {...existingMap, ...tafsirMap};
+        verseToSave = verse.copyWith(tafsirByTranslation: mergedMap);
+        state = state.copyWith(currentVerse: verseToSave);
+      }
     }
 
     final result = await _saveVerseUseCase(verseToSave);
@@ -234,10 +274,14 @@ class JarNotifier extends StateNotifier<JarState> {
     final verse = state.currentVerse;
     if (verse == null) return;
 
-    // If tafsir is already loaded, do nothing
-    if (verse.tafsir != null && verse.tafsir!.isNotEmpty) return;
-
     final translationId = _ref.read(selectedTranslationProvider).id;
+
+    // If tafsir for this translation is already loaded, do nothing
+    if (verse.getTafsirForTranslation(translationId) != null &&
+        verse.getTafsirForTranslation(translationId)!.isNotEmpty) {
+      return;
+    }
+
     final result = await _ref.read(verseRepositoryProvider).getTafsir(
           verse.surahNumber,
           verse.ayahNumber,
@@ -248,9 +292,14 @@ class JarNotifier extends StateNotifier<JarState> {
       (error) => state = state.copyWith(
         errorMessage: error.message,
       ),
-      (tafsirText) => state = state.copyWith(
-        currentVerse: verse.copyWith(tafsir: tafsirText),
-      ),
+      (tafsirText) {
+        // Merge tafsir into the existing map
+        final existingMap = verse.tafsirByTranslation ?? {};
+        final mergedMap = {...existingMap, translationId: tafsirText};
+        state = state.copyWith(
+          currentVerse: verse.copyWith(tafsirByTranslation: mergedMap),
+        );
+      },
     );
   }
 
@@ -275,7 +324,7 @@ class JarNotifier extends StateNotifier<JarState> {
       (newVerse) => state = state.copyWith(
         currentVerse: newVerse.copyWith(
           isSaved: verse.isSaved,
-          tafsir: null, // Clear tafsir when translation changes - it will be re-fetched in the correct language
+          tafsirByTranslation: verse.tafsirByTranslation, // Preserve existing tafsir map
         ),
         isLoading: false,
       ),

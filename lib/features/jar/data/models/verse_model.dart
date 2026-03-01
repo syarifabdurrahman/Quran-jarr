@@ -20,7 +20,7 @@ class VerseModel with _$VerseModel {
     required String verseKey,
     @Default('english') String translationId, // Translation language ID
     String? audioUrl,
-    String? tafsir,
+    Map<String, String>? tafsirByTranslation, // Tafsir by translation ID
     @Default(false) bool isSaved,
     DateTime? savedAt,
   }) = _VerseModel;
@@ -39,7 +39,7 @@ class VerseModel with _$VerseModel {
         verseKey: verseKey,
         translationId: translationId,
         audioUrl: audioUrl,
-        tafsir: tafsir,
+        tafsirByTranslation: tafsirByTranslation,
         isSaved: isSaved,
         savedAt: savedAt,
       );
@@ -55,7 +55,7 @@ class VerseModel with _$VerseModel {
         verseKey: verse.verseKey,
         translationId: verse.translationId,
         audioUrl: verse.audioUrl,
-        tafsir: verse.tafsir,
+        tafsirByTranslation: verse.tafsirByTranslation,
         isSaved: verse.isSaved,
         savedAt: verse.savedAt,
       );

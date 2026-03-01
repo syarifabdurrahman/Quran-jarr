@@ -20,7 +20,7 @@ class Verse with _$Verse {
     required String verseKey, // e.g., "2:255"
     @Default('english') String translationId, // Translation language ID
     String? audioUrl,
-    String? tafsir, // Tafsir/interpretation text
+    Map<String, String>? tafsirByTranslation, // Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
     @Default(false) bool isSaved,
     DateTime? savedAt,
   }) = _Verse;
@@ -37,5 +37,17 @@ class Verse with _$Verse {
   bool get hasAudio => audioUrl != null && audioUrl!.isNotEmpty;
 
   /// Check if verse has tafsir available
-  bool get hasTafsir => tafsir != null && tafsir!.isNotEmpty;
+  bool get hasTafsir => tafsirByTranslation != null && tafsirByTranslation!.isNotEmpty;
+
+  /// Get tafsir for current translation ID
+  String? get tafsir {
+    if (tafsirByTranslation == null) return null;
+    return tafsirByTranslation![translationId];
+  }
+
+  /// Get tafsir for a specific translation ID
+  String? getTafsirForTranslation(String translationId) {
+    if (tafsirByTranslation == null) return null;
+    return tafsirByTranslation![translationId];
+  }
 }

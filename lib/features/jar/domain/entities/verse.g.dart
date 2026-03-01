@@ -16,7 +16,10 @@ _$VerseImpl _$$VerseImplFromJson(Map<String, dynamic> json) => _$VerseImpl(
       verseKey: json['verseKey'] as String,
       translationId: json['translationId'] as String? ?? 'english',
       audioUrl: json['audioUrl'] as String?,
-      tafsir: json['tafsir'] as String?,
+      tafsirByTranslation:
+          (json['tafsirByTranslation'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
       isSaved: json['isSaved'] as bool? ?? false,
       savedAt: json['savedAt'] == null
           ? null
@@ -34,7 +37,7 @@ Map<String, dynamic> _$$VerseImplToJson(_$VerseImpl instance) =>
       'verseKey': instance.verseKey,
       'translationId': instance.translationId,
       'audioUrl': instance.audioUrl,
-      'tafsir': instance.tafsir,
+      'tafsirByTranslation': instance.tafsirByTranslation,
       'isSaved': instance.isSaved,
       'savedAt': instance.savedAt?.toIso8601String(),
     };
