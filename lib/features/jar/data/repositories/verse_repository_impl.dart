@@ -29,10 +29,24 @@ class VerseRepositoryImpl implements VerseRepository {
       translationId: translationId,
       surahNumbers: surahNumbers,
     );
-    return result.fold(
-      (error) => Left(error),
-      (model) => Right(model.toEntity()),
-    );
+
+    if (result.isLeft()) {
+      return Left(result.swap().getOrElse(() => ApiException('Unknown error')));
+    }
+
+    final model = result.getOrElse(() => VerseModel(
+      surahNumber: 1,
+      ayahNumber: 1,
+      arabicText: '',
+      translation: '',
+      surahName: '',
+      verseKey: '1:1',
+    ));
+
+    final verse = model.toEntity();
+    // Check if verse is saved in archive
+    final isSaved = await _localStorage.isVerseSaved(verse.verseKey);
+    return Right(verse.copyWith(isSaved: isSaved));
   }
 
   @override
@@ -55,10 +69,24 @@ class VerseRepositoryImpl implements VerseRepository {
         ayahNo,
         translationId: translationId,
       );
-      return result.fold(
-        (error) => Left(error),
-        (model) => Right(model.toEntity()),
-      );
+
+      if (result.isLeft()) {
+        return Left(result.swap().getOrElse(() => ApiException('Unknown error')));
+      }
+
+      final model = result.getOrElse(() => VerseModel(
+        surahNumber: 1,
+        ayahNumber: 1,
+        arabicText: '',
+        translation: '',
+        surahName: '',
+        verseKey: '1:1',
+      ));
+
+      final verse = model.toEntity();
+      // Check if verse is saved in archive
+      final isSaved = await _localStorage.isVerseSaved(verse.verseKey);
+      return Right(verse.copyWith(isSaved: isSaved));
     } catch (e) {
       return Left(ApiException('Failed to parse verse key: $e'));
     }
@@ -72,7 +100,10 @@ class VerseRepositoryImpl implements VerseRepository {
     // Try to get cached today's verse first
     final cachedVerse = await _localStorage.getTodayVerse();
     if (cachedVerse != null) {
-      return Right(cachedVerse.toEntity());
+      final verse = cachedVerse.toEntity();
+      // Check if verse is saved in archive
+      final isSaved = await _localStorage.isVerseSaved(verse.verseKey);
+      return Right(verse.copyWith(isSaved: isSaved));
     }
 
     // If no cached verse, get a random one (respecting curated mode)
@@ -92,7 +123,10 @@ class VerseRepositoryImpl implements VerseRepository {
             verseKey: '1:1',
           ));
       await _localStorage.saveTodayVerse(model);
-      return Right(model.toEntity());
+      final verse = model.toEntity();
+      // Check if verse is saved in archive
+      final isSaved = await _localStorage.isVerseSaved(verse.verseKey);
+      return Right(verse.copyWith(isSaved: isSaved));
     }
 
     return Left(result.swap().getOrElse(() => ApiException('Unknown error')));

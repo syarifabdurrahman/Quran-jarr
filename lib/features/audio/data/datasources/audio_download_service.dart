@@ -59,17 +59,12 @@ class AudioDownloadService {
         audioUrl,
         filePath,
         onReceiveProgress: (received, total) {
-          if (total != -1) {
-            final progress = (received / total * 100).toStringAsFixed(0);
-            // Can be used for progress tracking
-            print('Download progress: $progress%');
-          }
+          // Can be used for progress tracking in the future
         },
       );
 
       return filePath;
     } catch (e) {
-      print('Error downloading audio: $e');
       return null;
     }
   }
@@ -90,7 +85,7 @@ class AudioDownloadService {
         await file.delete();
       }
     } catch (e) {
-      print('Error deleting audio: $e');
+      // Ignore delete errors
     }
   }
 
@@ -122,7 +117,7 @@ class AudioDownloadService {
         await audioDir.create(recursive: true);
       }
     } catch (e) {
-      print('Error clearing audio: $e');
+      // Ignore clear errors
     }
   }
 

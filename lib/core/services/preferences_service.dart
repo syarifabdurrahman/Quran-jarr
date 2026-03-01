@@ -168,18 +168,14 @@ class PreferencesService {
 
   /// Set pending verse key from notification tap (persisted)
   Future<void> setPendingVerseKey(String verseKey) async {
-    print('🔔 PreferencesService.setPendingVerseKey: $verseKey');
     await _prefsBox.put('pending_verse_key', verseKey);
-    print('🔔 PreferencesService.setPendingVerseKey: stored successfully');
   }
 
   /// Get and clear pending verse key from storage
   String? getAndClearPendingVerseKey() {
     final key = _prefsBox.get('pending_verse_key', defaultValue: null) as String?;
-    print('🔔 PreferencesService.getAndClearPendingVerseKey: retrieved key = $key');
     // Clear immediately after reading
     _prefsBox.delete('pending_verse_key');
-    print('🔔 PreferencesService.getAndClearPendingVerseKey: cleared');
     return key;
   }
 

@@ -18,6 +18,8 @@ import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
+import 'package:quran_jarr/l10n/app_localizations.dart';
+import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// Jar Screen
 /// Main screen with jar visualization and verse display
@@ -58,6 +60,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   Future<void> _handleJarTap() async {
+    final l10n = context.l10n;
     // Check if user can tap the jar today
     if (!ref.read(preferencesNotifierProvider.notifier).canTapJarToday()) {
       // Show limit reached message
@@ -65,14 +68,14 @@ class _JarScreenState extends ConsumerState<JarScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Alhamdulillah you reached limit today! Want more? You can change this in settings.',
+              l10n.alhamdulillahLimitReached,
               style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
             ),
             backgroundColor: AppColors.sageGreen,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 3),
             action: SnackBarAction(
-              label: 'Settings',
+              label: l10n.settings,
               textColor: Colors.white,
               onPressed: () {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -117,6 +120,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final jarState = ref.watch(jarNotifierProvider);
     final isConnected = ref.watch(connectivityProvider);
     final remainingTaps = ref.watch(remainingJarTapsProvider);
@@ -137,7 +141,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Quran Jarr',
+                    l10n.appTitle,
                     style: AppTextStyles.loraTitle(),
                   ),
                   Row(
@@ -206,14 +210,14 @@ class _JarScreenState extends ConsumerState<JarScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'No Internet Connection',
+                            l10n.noInternet,
                             style: AppTextStyles.loraBodyMedium().copyWith(
                               color: errorColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
-                            'Some features may not work offline',
+                            l10n.noInternetDesc,
                             style: AppTextStyles.loraBodySmall().copyWith(
                               color: errorColor.withValues(alpha: 0.8),
                             ),
@@ -232,7 +236,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Retry',
+                      tooltip: l10n.retry,
                     ),
                   ],
                 ),
@@ -339,6 +343,7 @@ class _SettingsDialog extends ConsumerStatefulWidget {
 class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
   /// Show dialog explaining exact alarm permission is needed
   Future<bool?> _showExactAlarmDialog(BuildContext context) async {
+    final l10n = context.l10n;
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -383,7 +388,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
-              'Cancel',
+              l10n.cancel,
               style: TextStyle(color: AppColors.sageGreen),
             ),
           ),
@@ -395,8 +400,8 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.sageGreen,
             ),
-            child: const Text(
-              'Open Settings',
+            child: Text(
+              l10n.settings,
               style: TextStyle(color: AppColors.cream),
             ),
           ),
@@ -407,6 +412,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final currentMode = ref.watch(
       preferencesServiceProvider.select((prefs) => prefs.getVerseSelectionMode()),
     );
@@ -443,7 +449,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
               child: Row(
                 children: [
                   Text(
-                    'Settings',
+                    l10n.settings,
                     style: AppTextStyles.loraHeading(),
                   ),
                   const Spacer(),
@@ -467,7 +473,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                   children: [
                     // Jar Taps Per Day Section
                     Text(
-                      'Jar Taps Per Day',
+                      l10n.jarTapsPerDay,
                       style: AppTextStyles.loraBodySmall().copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
@@ -487,7 +493,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Sound Effects Toggle
                     _SettingsToggle(
                       icon: Icons.volume_up_outlined,
-                      title: 'Sound Effects',
+                      title: l10n.soundEffects,
                       value: soundEffectsEnabled,
                       onChanged: (value) {
                         setState(() {
@@ -501,7 +507,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
 
                     // Notification Settings Section
                     Text(
-                      'Daily Notification',
+                      l10n.dailyNotification,
                       style: AppTextStyles.loraBodySmall().copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
@@ -541,71 +547,13 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                         },
                         primaryColor: primaryColor,
                       ),
-                      // Test Notification Buttons
-                      const SizedBox(height: 8),
-                      _SettingsItem(
-                        icon: Icons.notifications_active,
-                        title: 'Test Notification (5 min)',
-                        onTap: () async {
-                          // Just schedule the notification without changing the current verse
-                          await ref.read(preferencesNotifierProvider.notifier).scheduleTestNotification();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Test notification sent! Check your notifications in 5 minutes.'),
-                                backgroundColor: primaryColor,
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        },
-                        primaryColor: primaryColor,
-                      ),
-                      // Test: 1-minute notification
-                      _SettingsItem(
-                        icon: Icons.timer,
-                        title: 'Test: 1-minute notification',
-                        onTap: () async {
-                          await NotificationService.instance.testOneMinuteNotification();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Notification scheduled for 1 minute from now!'),
-                                backgroundColor: primaryColor,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                        primaryColor: primaryColor,
-                      ),
-                      // Enable Alarm Permission (Android 12+)
-                      _SettingsItem(
-                        icon: Icons.settings,
-                        title: 'Enable Alarm Permission (Android 12+)',
-                        onTap: () async {
-                          final opened = await NotificationService.instance.openNotificationSettings();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(opened
-                                    ? 'Opening settings... Enable "Alarms & reminders"'
-                                    : 'Go to Settings > Apps > Quran Jarr > Alarms & reminders'),
-                                backgroundColor: primaryColor,
-                                duration: const Duration(seconds: 4),
-                              ),
-                            );
-                          }
-                        },
-                        primaryColor: primaryColor,
-                      ),
                     ],
 
                     const SizedBox(height: 24),
 
             // Font Size Section
             Text(
-              'Font Size',
+              l10n.fontSize,
               style: AppTextStyles.loraBodySmall().copyWith(
                 color: primaryColor,
                 fontWeight: FontWeight.w600,
@@ -614,7 +562,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             const SizedBox(height: 12),
             _FontSizeSlider(
               icon: Icons.text_fields,
-              title: 'Arabic Text',
+              title: l10n.arabicText,
               value: arabicFontSize,
               min: 0.8,
               max: 1.5,
@@ -626,7 +574,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             const SizedBox(height: 8),
             _FontSizeSlider(
               icon: Icons.translate,
-              title: 'Translation Text',
+              title: l10n.translationText,
               value: englishFontSize,
               min: 0.8,
               max: 1.5,
@@ -640,7 +588,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
 
             // Verse Selection Mode Section
             Text(
-              'Verse Selection Mode',
+              l10n.verseSelection,
               style: AppTextStyles.loraBodySmall().copyWith(
                 color: primaryColor,
                 fontWeight: FontWeight.w600,
@@ -648,8 +596,8 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             ),
             const SizedBox(height: 12),
             _ModeOption(
-              title: 'Curated Surahs',
-              description: 'Selected surahs for hope, comfort & gratitude',
+              title: l10n.curatedSurahs,
+              description: l10n.curatedSurahsDesc,
               isSelected: currentMode == VerseSelectionMode.curated,
               onTap: () async {
                 await PreferencesService.instance
@@ -663,8 +611,8 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             ),
             const SizedBox(height: 8),
             _ModeOption(
-              title: 'Random Verses',
-              description: 'Completely random from all 114 surahs',
+              title: l10n.randomVerses,
+              description: l10n.randomVersesDesc,
               isSelected: currentMode == VerseSelectionMode.random,
               onTap: () async {
                 await PreferencesService.instance
@@ -682,7 +630,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             // About Section
             _SettingsItem(
               icon: Icons.info_outline,
-              title: 'About Us',
+              title: l10n.aboutUs,
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.push(
@@ -878,6 +826,7 @@ class _NotificationTimePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return InkWell(
       onTap: () async {
         final picked = await showTimePicker(
@@ -901,7 +850,7 @@ class _NotificationTimePicker extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: Text(
-                'Notification Time',
+                l10n.notificationTime,
                 style: AppTextStyles.loraBodyMedium().copyWith(
                   color: primaryColor.withValues(alpha: 0.8),
                 ),
@@ -1040,6 +989,7 @@ class _VersesPerDaySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
@@ -1055,7 +1005,7 @@ class _VersesPerDaySelector extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Jar Taps Per Day',
+                  l10n.jarTapsPerDay,
                   style: AppTextStyles.loraBodyMedium().copyWith(
                     color: primaryColor.withValues(alpha: 0.8),
                   ),

@@ -12,6 +12,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Quran Jar';
 
   @override
+  String get chooseYourLanguage => 'Choose Your Language';
+
+  @override
+  String get selectYourPreferredLanguage =>
+      'Select your preferred language for the app and Quran translation.';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get bahasaIndonesia => 'Bahasa Indonesia';
+
+  @override
+  String get ok => 'OK';
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -136,4 +152,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookmarkAdded => 'Verse saved to archive';
+
+  @override
+  String get internetConnectionRequired => 'Internet Connection Required';
+
+  @override
+  String get internetConnectionDesc =>
+      'Quran Jarr needs an internet connection to fetch verses, translations, and audio recitations.';
+
+  @override
+  String get maybeLater => 'Maybe Later';
+
+  @override
+  String get iUnderstand => 'I Understand';
+
+  @override
+  String get chooseYourExperience => 'Choose Your Experience';
+
+  @override
+  String get selectYourExperienceDesc =>
+      'Select how you\'d like to receive verses from the Quran.';
+
+  @override
+  String get enableNotifications => 'Enable Notifications';
+
+  @override
+  String get dailyNotificationDesc =>
+      'Receive a beautiful verse from the Quran every day to start your morning with peace and reflection.';
+
+  @override
+  String get jarTapsPerDay => 'Jar Taps Per Day';
+
+  @override
+  String get jarTapsPerDayDesc =>
+      'Choose how many jar taps you\'d like per day. Tap the number to increase, or use +/- buttons. You can change this later in settings.';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get soundEffects => 'Sound Effects';
+
+  @override
+  String get alhamdulillahLimitReached =>
+      'Alhamdulillah you reached limit today! Want more? You can change this in settings.';
 }

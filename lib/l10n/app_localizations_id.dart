@@ -12,6 +12,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get appTitle => 'Quran Jar';
 
   @override
+  String get chooseYourLanguage => 'Pilih Bahasa Anda';
+
+  @override
+  String get selectYourPreferredLanguage =>
+      'Pilih bahasa pilihan Anda untuk aplikasi dan terjemahan Quran.';
+
+  @override
+  String get english => 'Inggris';
+
+  @override
+  String get bahasaIndonesia => 'Bahasa Indonesia';
+
+  @override
+  String get ok => 'OK';
+
+  @override
   String get settings => 'Pengaturan';
 
   @override
@@ -135,4 +151,48 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get bookmarkAdded => 'Ayat disimpan ke arsip';
+
+  @override
+  String get internetConnectionRequired => 'Koneksi Internet Diperlukan';
+
+  @override
+  String get internetConnectionDesc =>
+      'Quran Jarr memerlukan koneksi internet untuk mengambil ayat, terjemahan, dan bacaan audio.';
+
+  @override
+  String get maybeLater => 'Nanti Saja';
+
+  @override
+  String get iUnderstand => 'Saya Mengerti';
+
+  @override
+  String get chooseYourExperience => 'Pilih Pengalaman Anda';
+
+  @override
+  String get selectYourExperienceDesc =>
+      'Pilih bagaimana Anda ingin menerima ayat dari Quran.';
+
+  @override
+  String get enableNotifications => 'Aktifkan Notifikasi';
+
+  @override
+  String get dailyNotificationDesc =>
+      'Terima ayat indah dari Quran setiap hari untuk memulai pagi Anda dengan kedamaian dan refleksi.';
+
+  @override
+  String get jarTapsPerDay => 'Ketukan Toples Per Hari';
+
+  @override
+  String get jarTapsPerDayDesc =>
+      'Pilih berapa banyak ketukan toples yang Anda inginkan per hari. Ketuk nomor untuk menambah, atau gunakan tombol +/-. Anda bisa mengubahnya nanti di pengaturan.';
+
+  @override
+  String get getStarted => 'Mulai';
+
+  @override
+  String get soundEffects => 'Efek Suara';
+
+  @override
+  String get alhamdulillahLimitReached =>
+      'Alhamdulillah Anda telah mencapai batas hari ini! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan.';
 }

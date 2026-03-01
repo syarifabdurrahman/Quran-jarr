@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/features/archive/data/repositories/archive_repository_impl.dart';
 import 'package:quran_jarr/features/archive/domain/usecases/archive_usecases.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
-import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart' show localStorageServiceProvider, verseRepositoryProvider;
+import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart' show localStorageServiceProvider, verseRepositoryProvider, jarNotifierProvider;
 
 /// Archive State
 class ArchiveState {
@@ -108,7 +108,12 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
 
     result.fold(
       (error) => state = state.copyWith(errorMessage: error.message),
-      (_) => loadSavedVerses(), // Refresh the list
+      (_) async {
+        // Refresh the list
+        await loadSavedVerses();
+        // Invalidate jar provider so it updates isSaved status
+        _ref.invalidate(jarNotifierProvider);
+      },
     );
   }
 
@@ -123,7 +128,11 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
         isLoading: false,
         errorMessage: error.message,
       ),
-      (_) => loadSavedVerses(),
+      (_) async {
+        await loadSavedVerses();
+        // Invalidate jar provider so it updates isSaved status for all verses
+        _ref.invalidate(jarNotifierProvider);
+      },
     );
   }
 

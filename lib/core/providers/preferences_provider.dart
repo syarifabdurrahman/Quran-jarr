@@ -105,6 +105,12 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     _notify();
   }
 
+  /// Set onboarding as completed
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _prefs.setOnboardingCompleted(completed);
+    _notify();
+  }
+
   /// Increment jar tap count (called after successfully pulling a verse)
   Future<void> incrementJarTapCount() async {
     await _prefs.incrementJarTapCount();
@@ -114,18 +120,6 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
   /// Check if user can tap the jar today
   bool canTapJarToday() {
     return _prefs.canTapJarToday();
-  }
-
-  /// Schedule test notification (shows immediately)
-  Future<void> scheduleTestNotification() async {
-    // Request permission first
-    await NotificationService.instance.requestPermission();
-
-    final (hour, minute) = _prefs.getNotificationTime();
-    await NotificationService.instance.scheduleDailyNotification(
-      TimeOfDay(hour: hour, minute: minute),
-      testMode: true,
-    );
   }
 }
 

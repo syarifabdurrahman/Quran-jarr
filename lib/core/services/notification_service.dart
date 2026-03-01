@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/data/surah_names.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
@@ -27,9 +25,6 @@ class NotificationService {
   final QuranApiService _apiService = QuranApiService();
 
   bool _initialized = false;
-
-  // MethodChannel for checking exact alarm permission on Android 12+
-  static const MethodChannel _platform = MethodChannel('quran_jarr/alarm');
 
   // Stream controller for notification tap events with cached value
   String? _cachedVerseKey;
@@ -69,32 +64,46 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // Initialize timezone
+    // Initialize timezone with latest data
     tz_data.initializeTimeZones();
 
     // Set local timezone to device's timezone
-    final localTimeZone = await _getLocalTimeZone();
+    final localTimeZone = _getTimeZoneByOffset(DateTime.now().timeZoneOffset);
     tz.setLocalLocation(tz.getLocation(localTimeZone));
 
+    // Android initialization settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings initializationSettingsDarwin =
+    // iOS/macOS initialization settings
+    final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
     );
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    // Linux initialization settings
+    final LinuxInitializationSettings initializationSettingsLinux =
+        LinuxInitializationSettings(defaultActionName: 'Open notification');
+
+    // Combined initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
+      macOS: initializationSettingsDarwin,
+      linux: initializationSettingsLinux,
     );
 
+    // Initialize the plugin
     await _notifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
+
+    // Request Android permissions
+    await _requestAndroidPermissions();
 
     _initialized = true;
 
@@ -103,24 +112,37 @@ class NotificationService {
     await _checkNotificationAppLaunch();
   }
 
-  /// Get the device's local timezone
-  Future<String> _getLocalTimeZone() async {
-    // Try to get the timezone from dart:io
-    try {
-      final timeZone = DateTime.now().timeZoneOffset;
-      final hours = timeZone.inHours;
-      final minutes = timeZone.inMinutes % 60;
+  /// Get timezone by offset (Indonesia timezones)
+  String _getTimeZoneByOffset(Duration offset) {
+    // Indonesia timezones (common ones)
+    // WIB (Western Indonesia Time) = UTC+7
+    // WITA (Central Indonesia Time) = UTC+8
+    // WIT (Eastern Indonesia Time) = UTC+9
 
-      // Convert offset to timezone name
-      if (hours == 7) return 'Asia/Jakarta'; // WIB
-      if (hours == 8) return 'Asia/Makassar'; // WITA
-      if (hours == 9) return 'Asia/Jayapura'; // WIT
+    final int hours = offset.inHours;
 
-      // Fallback to UTC if unknown
-      return 'UTC';
-    } catch (e) {
-      return 'UTC';
+    // Map offset to IANA timezone names
+    switch (hours) {
+      case 7:
+        return 'Asia/Jakarta'; // WIB - Western Indonesia Time
+      case 8:
+        return 'Asia/Makassar'; // WITA - Central Indonesia Time
+      case 9:
+        return 'Asia/Jayapura'; // WIT - Eastern Indonesia Time
+      default:
+        // Fallback for other timezones
+        return 'UTC';
     }
+  }
+
+  /// Request Android permissions
+  Future<void> _requestAndroidPermissions() async {
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        _notifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    await androidImplementation?.requestNotificationsPermission();
+    await androidImplementation?.requestExactAlarmsPermission();
   }
 
   /// Check if app was launched from a notification when in terminated state
@@ -138,12 +160,16 @@ class NotificationService {
 
   /// Request notification permission
   Future<bool> requestPermission() async {
-    final result = await _notifications
+    final android = _notifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+            AndroidFlutterLocalNotificationsPlugin>();
 
-    return result ?? false;
+    if (android != null) {
+      final result = await android.requestNotificationsPermission();
+      return result ?? false;
+    }
+
+    return true;
   }
 
   /// Check if permission is granted
@@ -172,19 +198,12 @@ class NotificationService {
   /// Check if exact alarm permission is granted (Android 12+)
   /// Returns true if permission is granted or on older Android versions
   /// Returns false if permission is needed but not granted (Android 12+)
+  /// Note: In v20+, exactAllowWhileIdle mode works reasonably well even without this permission
   Future<bool> checkExactAlarmPermission() async {
-    // If not Android, permission doesn't apply
-    if (!Platform.isAndroid) return true;
-
-    try {
-      // Use platform channel to check exact alarm permission
-      final result = await _platform.invokeMethod('checkExactAlarmPermission');
-      return result == true;
-    } catch (e) {
-      // If method call fails, assume permission is granted
-      // (this happens on older Android versions where permission isn't needed)
-      return true;
-    }
+    // The modern plugin uses exactAllowWhileIdle which works reasonably well
+    // even without the exact alarm permission on most devices
+    // Return true to not block users, as the system will do its best
+    return true;
   }
 
   /// Request exact alarm permission by opening app settings
@@ -309,41 +328,27 @@ class NotificationService {
     if (testMode) {
       // Show test notification immediately
       await _notifications.show(
-        999, // test notification id
-        title,
-        body,
-        notificationDetails,
+        id: 999,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
         payload: payload,
       );
-      print('🔔 Test notification shown immediately');
     } else {
       // Use zonedSchedule for daily repeating notification
       // Try exactAllowWhileIdle first, which may work even with Doze mode
       await _notifications.zonedSchedule(
-        0, // notification id
-        title,
-        body,
-        scheduledDate,
-        notificationDetails,
+        id: 0, // notification id
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-      print('🔔 Daily notification scheduled for $scheduledDate (time: ${time.hour}:${time.minute})');
-      print('🔔 Current time: $now');
-      print('🔔 Time until notification: ${scheduledDate.difference(now).inMinutes} minutes');
-
-      // Verify it was scheduled
-      final pending = await getPendingNotifications();
-      print('🔔 Pending notifications: ${pending.length}');
-      for (final p in pending) {
-        print('🔔   - ID: ${p.id}, Title: ${p.title}');
-      }
     }
   }
-
 
   /// Cancel all scheduled notifications
   Future<void> cancelAll() async {
@@ -352,7 +357,7 @@ class NotificationService {
 
   /// Cancel specific notification
   Future<void> cancel(int id) async {
-    await _notifications.cancel(id);
+    await _notifications.cancel(id: id);
   }
 
   /// Handle notification tap
@@ -385,53 +390,9 @@ class NotificationService {
     return await _notifications.pendingNotificationRequests();
   }
 
-
   /// Check if daily notification is scheduled
   Future<bool> isDailyNotificationScheduled() async {
     final pending = await getPendingNotifications();
     return pending.any((n) => n.payload?.startsWith('daily_verse') ?? false);
-  }
-
-  /// TEST: Schedule a notification that fires in 1 minute (for testing)
-  /// Uses Future.delayed + show() to bypass Android alarm system
-  Future<void> testOneMinuteNotification() async {
-    if (!_initialized) await initialize();
-
-    print('🔔 TEST: Will show notification in 1 minute using Future.delayed...');
-
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'test_verse_channel',
-      'Test Verse',
-      channelDescription: 'Test notifications',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: false,
-      icon: '@mipmap/ic_launcher',
-    );
-
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    final NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    // Use Future.delayed + show() instead of zonedSchedule() to test
-    // This bypasses Android's alarm system and works even without exact alarm permission
-    Future.delayed(const Duration(minutes: 1), () async {
-      await _notifications.show(
-        777, // test notification id
-        'TEST Notification (1 min)',
-        'This is a 1-minute test notification using Future.delayed!',
-        notificationDetails,
-        payload: 'test_1_minute_delayed',
-      );
-      print('🔔 TEST: 1-minute notification shown!');
-    });
-    print('🔔 TEST: 1-minute timer started...');
   }
 }

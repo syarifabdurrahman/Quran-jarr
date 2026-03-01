@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/core/config/translations.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
-import 'package:quran_jarr/features/jar/presentation/screens/jar_screen.dart';
+import 'package:quran_jarr/l10n/app_localizations.dart';
+import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// Onboarding Screen
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -20,6 +23,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // Language/Locale selection (English by default)
+  String _selectedTranslationId = 'english';
+
   // Verses per day selection
   int _selectedVersesPerDay = 1;
 
@@ -29,18 +35,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
+  // Save translation immediately when language is selected
+  Future<void> _onLanguageChanged(String translationId) async {
+    setState(() => _selectedTranslationId = translationId);
+    final translation = AvailableTranslations.getById(translationId);
+    await ref.read(preferencesNotifierProvider.notifier).setTranslation(translation);
+  }
+
   Future<void> _completeOnboarding() async {
-    await PreferencesService.instance.setVersesPerDay(_selectedVersesPerDay);
-    await PreferencesService.instance.setOnboardingCompleted(true);
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const JarScreen()),
-      );
-    }
+    // Translation is already saved when selected, no need to save again here
+    // Save other preferences using the notifier
+    await ref.read(preferencesNotifierProvider.notifier).setVersesPerDay(_selectedVersesPerDay);
+
+    // Save onboarding completed LAST - this will trigger the app to rebuild and show JarScreen
+    await ref.read(preferencesNotifierProvider.notifier).setOnboardingCompleted(true);
+
+    // Don't navigate - let the provider change trigger a rebuild of the main app
   }
 
   void _nextPage() {
-    if (_currentPage < 3) {
+    if (_currentPage < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -55,8 +69,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip button (only show on pages 2-3)
-            if (_currentPage >= 2)
+            // Skip button (only show on pages 3-4, not on language page)
+            if (_currentPage >= 3)
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Align(
@@ -81,6 +95,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   setState(() => _currentPage = page);
                 },
                 children: [
+                  _LanguageSelectionPage(
+                    selectedTranslationId: _selectedTranslationId,
+                    onSelectionChanged: _onLanguageChanged,
+                    onNext: _nextPage,
+                    onSkip: _completeOnboarding,
+                  ),
                   _InternetCheckPage(onNext: _nextPage),
                   _ModeSelectionPage(onNext: _nextPage),
                   _NotificationPermissionPage(
@@ -104,7 +124,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  4,
+                  5,
                   (index) => AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -127,6 +147,230 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
+/// Language Selection Page
+class _LanguageSelectionPage extends StatelessWidget {
+  final String selectedTranslationId;
+  final Future<void> Function(String) onSelectionChanged;
+  final VoidCallback onNext;
+  final VoidCallback onSkip;
+
+  const _LanguageSelectionPage({
+    required this.selectedTranslationId,
+    required this.onSelectionChanged,
+    required this.onNext,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 40),
+
+          // Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.sageGreen.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.language_outlined,
+              size: 60,
+              color: AppColors.sageGreen,
+            ),
+          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+
+          const SizedBox(height: 40),
+
+          // Title
+          Text(
+            l10n.chooseYourLanguage,
+            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+            textAlign: TextAlign.center,
+          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+
+          const SizedBox(height: 16),
+
+          // Description
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.selectYourPreferredLanguage,
+              style: AppTextStyles.loraBodyMedium(),
+              textAlign: TextAlign.center,
+            ),
+          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+
+          const SizedBox(height: 40),
+
+          // English Card
+          _LanguageCard(
+            languageName: l10n.english,
+            languageCode: 'en',
+            translationAuthor: 'Quran API',
+            isSelected: selectedTranslationId == 'english',
+            onTap: () => onSelectionChanged('english'),
+          ).animate().fade(delay: 500.ms).slideY(begin: 0.3),
+
+          const SizedBox(height: 20),
+
+          // Indonesian Card
+          _LanguageCard(
+            languageName: l10n.bahasaIndonesia,
+            languageCode: 'id',
+            translationAuthor: 'Kemenag RI',
+            isSelected: selectedTranslationId == 'indonesian',
+            onTap: () => onSelectionChanged('indonesian'),
+          ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
+
+          const SizedBox(height: 40),
+
+          // Action Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Skip Button
+              TextButton(
+                onPressed: onSkip,
+                child: Text(
+                  l10n.cancel,
+                  style: AppTextStyles.loraBodyMedium().copyWith(
+                    color: AppColors.sageGreen,
+                  ),
+                ),
+              ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
+
+              const SizedBox(width: 16),
+
+              // OK Button
+              ElevatedButton(
+                onPressed: onNext,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.sageGreen,
+                  foregroundColor: AppColors.cream,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  l10n.ok,
+                  style: AppTextStyles.loraBodyMedium(),
+                ),
+              ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Language Card Widget
+class _LanguageCard extends StatelessWidget {
+  final String languageName;
+  final String languageCode;
+  final String translationAuthor;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LanguageCard({
+    required this.languageName,
+    required this.languageCode,
+    required this.translationAuthor,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.sageGreen.withValues(alpha: 0.15)
+              : AppColors.sageGreen.withValues(alpha: 0.05),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.sageGreen
+                : AppColors.sageGreen.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            // Language Code Badge
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.sageGreen.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  languageCode.toUpperCase(),
+                  style: AppTextStyles.loraHeading().copyWith(
+                    color: AppColors.sageGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    languageName,
+                    style: AppTextStyles.loraHeading().copyWith(
+                      color: AppColors.sageGreen,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Translation: $translationAuthor',
+                    style: AppTextStyles.loraBodySmall(),
+                  ),
+                ],
+              ),
+            ),
+
+            // Selection indicator
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                size: 24,
+                color: AppColors.sageGreen,
+              )
+            else
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColors.sageGreen.withValues(alpha: 0.5),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Internet Check Page
 class _InternetCheckPage extends StatelessWidget {
   final VoidCallback onNext;
@@ -135,6 +379,7 @@ class _InternetCheckPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -161,7 +406,7 @@ class _InternetCheckPage extends StatelessWidget {
 
           // Title
           Text(
-            'Internet Connection Required',
+            l10n.internetConnectionRequired,
             style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
@@ -172,7 +417,7 @@ class _InternetCheckPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Quran Jarr needs an internet connection to fetch verses, translations, and audio recitations.',
+              l10n.internetConnectionDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
@@ -185,7 +430,7 @@ class _InternetCheckPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _OnboardingButton(
-                text: 'Maybe Later',
+                text: l10n.maybeLater,
                 isPrimary: false,
                 onPressed: () {
                   PreferencesService.instance.setInternetAccepted(false);
@@ -196,7 +441,7 @@ class _InternetCheckPage extends StatelessWidget {
               const SizedBox(width: 16),
 
               _OnboardingButton(
-                text: 'I Understand',
+                text: l10n.iUnderstand,
                 isPrimary: true,
                 onPressed: () {
                   PreferencesService.instance.setInternetAccepted(true);
@@ -219,6 +464,7 @@ class _ModeSelectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -228,7 +474,7 @@ class _ModeSelectionPage extends StatelessWidget {
 
           // Title
           Text(
-            'Choose Your Experience',
+            l10n.chooseYourExperience,
             style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
@@ -239,7 +485,7 @@ class _ModeSelectionPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Select how you\'d like to receive verses from the Quran.',
+              l10n.selectYourExperienceDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
@@ -250,8 +496,8 @@ class _ModeSelectionPage extends StatelessWidget {
           // Curated Mode Card
           _ModeCard(
             icon: Icons.auto_awesome_outlined,
-            title: 'Curated Surahs',
-            description: 'Carefully selected surahs focused on hope, comfort, gratitude, and mindfulness.',
+            title: l10n.curatedSurahs,
+            description: l10n.curatedSurahsDesc,
             isSelected: false,
             onTap: () async {
               await PreferencesService.instance
@@ -265,8 +511,8 @@ class _ModeSelectionPage extends StatelessWidget {
           // Random Mode Card
           _ModeCard(
             icon: Icons.shuffle_outlined,
-            title: 'Random Verses',
-            description: 'Completely random verses from all 114 surahs of the Quran.',
+            title: l10n.randomVerses,
+            description: l10n.randomVersesDesc,
             isSelected: true,
             onTap: () async {
               await PreferencesService.instance
@@ -292,6 +538,7 @@ class _NotificationPermissionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -318,7 +565,7 @@ class _NotificationPermissionPage extends StatelessWidget {
 
           // Title
           Text(
-            'Daily Verses',
+            l10n.dailyNotification,
             style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
@@ -329,7 +576,7 @@ class _NotificationPermissionPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Receive a beautiful verse from the Quran every day to start your morning with peace and reflection.',
+              l10n.dailyNotificationDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
@@ -341,7 +588,7 @@ class _NotificationPermissionPage extends StatelessWidget {
           Column(
             children: [
               _OnboardingButton(
-                text: 'Enable Notifications',
+                text: l10n.enableNotifications,
                 isPrimary: true,
                 onPressed: () async {
                   await NotificationService.instance.requestPermission();
@@ -356,7 +603,7 @@ class _NotificationPermissionPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               _OnboardingButton(
-                text: 'Maybe Later',
+                text: l10n.maybeLater,
                 isPrimary: false,
                 onPressed: () {
                   PreferencesService.instance.setDailyNotificationEnabled(false);
@@ -385,6 +632,7 @@ class _VersesPerDayPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -411,7 +659,7 @@ class _VersesPerDayPage extends StatelessWidget {
 
           // Title
           Text(
-            'Jar Taps Per Day',
+            l10n.jarTapsPerDay,
             style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
             textAlign: TextAlign.center,
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
@@ -422,7 +670,7 @@ class _VersesPerDayPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Choose how many jar taps you\'d like per day. Tap the number to increase, or use +/- buttons. You can change this later in settings.',
+              l10n.jarTapsPerDayDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
             ),
@@ -549,7 +797,7 @@ class _VersesPerDayPage extends StatelessWidget {
 
           // Complete button
           _OnboardingButton(
-            text: 'Get Started',
+            text: l10n.getStarted,
             isPrimary: true,
             onPressed: onComplete,
           ).animate().fade(delay: 800.ms).slideY(begin: 0.3),

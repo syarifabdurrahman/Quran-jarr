@@ -1,6 +1,11 @@
 {
   "@@locale": "en",
   "appTitle": "Quran Jar",
+  "chooseYourLanguage": "Choose Your Language",
+  "selectYourPreferredLanguage": "Select your preferred language for the app and Quran translation.",
+  "english": "English",
+  "bahasaIndonesia": "Bahasa Indonesia",
+  "ok": "OK",
   "settings": "Settings",
   "aboutUs": "About Us",
   "myArchive": "My Archive",
@@ -41,5 +46,18 @@
   "tapJar": "Tap the jar to get a verse",
   "pullToRefresh": "Pull to refresh",
   "bookmarkRemoved": "Verse removed from archive",
-  "bookmarkAdded": "Verse saved to archive"
+  "bookmarkAdded": "Verse saved to archive",
+  "internetConnectionRequired": "Internet Connection Required",
+  "internetConnectionDesc": "Quran Jarr needs an internet connection to fetch verses, translations, and audio recitations.",
+  "maybeLater": "Maybe Later",
+  "iUnderstand": "I Understand",
+  "chooseYourExperience": "Choose Your Experience",
+  "selectYourExperienceDesc": "Select how you'd like to receive verses from the Quran.",
+  "enableNotifications": "Enable Notifications",
+  "dailyNotificationDesc": "Receive a beautiful verse from the Quran every day to start your morning with peace and reflection.",
+  "jarTapsPerDay": "Jar Taps Per Day",
+  "jarTapsPerDayDesc": "Choose how many jar taps you'd like per day. Tap the number to increase, or use +/- buttons. You can change this later in settings.",
+  "getStarted": "Get Started",
+  "soundEffects": "Sound Effects",
+  "alhamdulillahLimitReached": "Alhamdulillah you reached limit today! Want more? You can change this in settings."
 }

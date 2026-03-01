@@ -132,7 +132,6 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})''';
 
       return file;
     } catch (e) {
-      print('Error capturing card: $e');
       return null;
     }
   }

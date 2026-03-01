@@ -104,6 +104,36 @@ abstract class AppLocalizations {
   /// **'Quran Jar'**
   String get appTitle;
 
+  /// No description provided for @chooseYourLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Your Language'**
+  String get chooseYourLanguage;
+
+  /// No description provided for @selectYourPreferredLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your preferred language for the app and Quran translation.'**
+  String get selectYourPreferredLanguage;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @bahasaIndonesia.
+  ///
+  /// In en, this message translates to:
+  /// **'Bahasa Indonesia'**
+  String get bahasaIndonesia;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
@@ -349,6 +379,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verse saved to archive'**
   String get bookmarkAdded;
+
+  /// No description provided for @internetConnectionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet Connection Required'**
+  String get internetConnectionRequired;
+
+  /// No description provided for @internetConnectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Quran Jarr needs an internet connection to fetch verses, translations, and audio recitations.'**
+  String get internetConnectionDesc;
+
+  /// No description provided for @maybeLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Maybe Later'**
+  String get maybeLater;
+
+  /// No description provided for @iUnderstand.
+  ///
+  /// In en, this message translates to:
+  /// **'I Understand'**
+  String get iUnderstand;
+
+  /// No description provided for @chooseYourExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Your Experience'**
+  String get chooseYourExperience;
+
+  /// No description provided for @selectYourExperienceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Select how you\'d like to receive verses from the Quran.'**
+  String get selectYourExperienceDesc;
+
+  /// No description provided for @enableNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Notifications'**
+  String get enableNotifications;
+
+  /// No description provided for @dailyNotificationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive a beautiful verse from the Quran every day to start your morning with peace and reflection.'**
+  String get dailyNotificationDesc;
+
+  /// No description provided for @jarTapsPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Jar Taps Per Day'**
+  String get jarTapsPerDay;
+
+  /// No description provided for @jarTapsPerDayDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how many jar taps you\'d like per day. Tap the number to increase, or use +/- buttons. You can change this later in settings.'**
+  String get jarTapsPerDayDesc;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @soundEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound Effects'**
+  String get soundEffects;
+
+  /// No description provided for @alhamdulillahLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Alhamdulillah you reached limit today! Want more? You can change this in settings.'**
+  String get alhamdulillahLimitReached;
 }
 
 class _AppLocalizationsDelegate

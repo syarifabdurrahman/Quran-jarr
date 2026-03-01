@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Widget Service
@@ -24,7 +23,6 @@ class WidgetService {
         _isAvailable = true;
       }
     } catch (e) {
-      debugPrint('Widget service not available: $e');
       _isAvailable = false;
     }
   }
@@ -51,7 +49,7 @@ class WidgetService {
         'ayahNumber': ayahNumber,
       });
     } catch (e) {
-      debugPrint('Failed to update widget: $e');
+      // Ignore widget update errors
     }
   }
 }

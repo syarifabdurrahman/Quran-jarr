@@ -16,6 +16,7 @@ import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/domain/usecases/get_daily_verse.dart';
 import 'package:quran_jarr/features/jar/domain/usecases/pull_random_verse.dart';
 import 'package:quran_jarr/features/jar/domain/usecases/save_verse.dart';
+import 'package:quran_jarr/features/archive/presentation/providers/archive_provider.dart';
 
 /// Jar State
 class JarState {
@@ -208,6 +209,9 @@ class JarNotifier extends StateNotifier<JarState> {
         state = state.copyWith(
           currentVerse: state.currentVerse?.copyWith(isSaved: isSaved),
         );
+
+        // Invalidate archive provider so it reloads saved verses
+        _ref.invalidate(archiveNotifierProvider);
 
         // Download audio if verse is saved and has audio
         if (isSaved && verseToSave.hasAudio) {

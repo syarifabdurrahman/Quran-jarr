@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/l10n/app_localizations.dart';
+import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// About Screen
 /// Displays app information and credits
@@ -11,6 +13,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bgColor = AppColors.cream;
     final primaryColor = AppColors.sageGreen;
     final cardColor = Colors.white;
@@ -19,7 +22,7 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('About', style: AppTextStyles.loraHeading()),
+        title: Text(l10n.aboutUs, style: AppTextStyles.loraHeading()),
         backgroundColor: bgColor,
         elevation: 0,
         iconTheme: IconThemeData(color: primaryColor),
@@ -70,7 +73,7 @@ class AboutScreen extends StatelessWidget {
 
               // Tagline
               Text(
-                'Daily verses from the Quran',
+                l10n.appTitle,
                 style: AppTextStyles.loraBodyMedium().copyWith(
                   color: primaryColor,
                   fontStyle: FontStyle.italic,
@@ -98,14 +101,14 @@ class AboutScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'About Quran Jarr',
+                      l10n.aboutUs,
                       style: AppTextStyles.loraHeading().copyWith(
                         color: primaryColor,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Quran Jarr brings you meaningful verses from the Quran every day. Like reaching into a jar of wisdom, pull a verse to find inspiration, comfort, and guidance for your daily life.',
+                      l10n.aboutDescription,
                       style: AppTextStyles.loraBodyMedium(),
                     ),
                   ],
@@ -116,7 +119,7 @@ class AboutScreen extends StatelessWidget {
 
               // Developers Section
               Text(
-                'Developers',
+                l10n.developers,
                 style: AppTextStyles.loraBodySmall().copyWith(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
@@ -128,8 +131,8 @@ class AboutScreen extends StatelessWidget {
 
               // Developer Cards
               _DeveloperCard(
-                name: 'Favian Hugo',
-                role: 'Developer',
+                name: l10n.favianHugo,
+                role: l10n.developers,
                 icon: Icons.code_outlined,
                 primaryColor: primaryColor,
                 cardColor: cardColor,
@@ -139,8 +142,8 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               _DeveloperCard(
-                name: 'Syarif Abdurrahman',
-                role: 'Developer',
+                name: l10n.syarifAbdurrahman,
+                role: l10n.developers,
                 icon: Icons.code_outlined,
                 primaryColor: primaryColor,
                 cardColor: cardColor,

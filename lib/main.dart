@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/config/theme_config.dart';
 import 'package:quran_jarr/core/providers/locale_provider.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
@@ -35,46 +36,29 @@ class QuranJarrApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(localeProvider);
+    final locale = ref.watch(localeNotifierProvider);
+    final isOnboarded = ref.watch(_onboardingProvider);
 
-    return FutureBuilder<bool>(
-      future: _checkOnboarding(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return MaterialApp(
-            title: 'Quran Jarr',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeConfig.lightTheme,
-            home: Scaffold(
-              backgroundColor: const Color(0xFFFFF8F0),
-              body: const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF7CB342),
-                ),
-              ),
-            ),
-          );
-        }
-        final isOnboarded = snapshot.data ?? false;
-        return MaterialApp(
-          title: 'Quran Jarr',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeConfig.lightTheme,
-          locale: locale,
-          supportedLocales: LocaleService.instance.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: isOnboarded ? const JarScreen() : const OnboardingScreen(),
-        );
-      },
+    return MaterialApp(
+      title: 'Quran Jarr',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeConfig.lightTheme,
+      locale: locale,
+      supportedLocales: LocaleService.instance.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: isOnboarded ? const JarScreen() : const OnboardingScreen(),
     );
   }
-
-  Future<bool> _checkOnboarding() async {
-    return PreferencesService.instance.isOnboardingCompleted();
-  }
 }
+
+/// Provider for checking onboarding status (reacts to preference changes)
+final _onboardingProvider = Provider<bool>((ref) {
+  // Watch preferences provider to trigger updates when preferences change
+  final prefs = ref.watch(preferencesNotifierProvider).prefs;
+  return prefs.isOnboardingCompleted();
+});

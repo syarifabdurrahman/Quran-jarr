@@ -5,35 +5,37 @@ import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// Locale Provider
 /// Provides the current app locale based on translation preference
+/// Reacts to preference changes automatically
 final localeProvider = Provider<Locale>((ref) {
   return LocaleService.instance.getCurrentLocale();
 });
 
-/// Locale Notifier Provider
-/// Allows changing the app locale
+/// Locale Notifier
+/// Manages locale state reactively
 class LocaleNotifier extends StateNotifier<Locale> {
-  LocaleNotifier() : super(LocaleService.instance.getCurrentLocale());
+  final Ref ref;
 
-  /// Update locale based on translation preference
-  void updateLocale() {
-    state = LocaleService.instance.getCurrentLocale();
+  LocaleNotifier(this.ref) : super(const Locale('en')) {
+    // Initialize with current locale
+    _updateLocale();
+    // Listen to preferences changes
+    ref.listen(preferencesNotifierProvider, (previous, next) {
+      _updateLocale();
+    });
+  }
+
+  void _updateLocale() {
+    final translationId = ref.read(preferencesNotifierProvider).prefs.getSelectedTranslation().id;
+    final newLocale = translationId == 'indonesian' || translationId == 'id.indonesian'
+        ? const Locale('id')
+        : const Locale('en');
+
+    state = newLocale;
   }
 }
 
-final localeNotifierProvider =
-    StateNotifierProvider<LocaleNotifier, Locale>((ref) {
-  final notifier = LocaleNotifier();
-
-  // Watch for translation changes and update locale
-  ref.listen(preferencesNotifierProvider, (previous, next) {
-    if (previous != null) {
-      final prevTrans = previous.prefs.getSelectedTranslation().id;
-      final nextTrans = next.prefs.getSelectedTranslation().id;
-      if (prevTrans != nextTrans) {
-        notifier.updateLocale();
-      }
-    }
-  });
-
-  return notifier;
+/// Locale Notifier Provider
+/// Provides a reactive locale that updates when translation changes
+final localeNotifierProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
+  return LocaleNotifier(ref);
 });

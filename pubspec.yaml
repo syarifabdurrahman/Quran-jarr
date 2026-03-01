@@ -56,8 +56,8 @@ dependencies:
   audio_session: ^0.1.21
 
   # Notifications
-  flutter_local_notifications: ^17.2.3
-  timezone: ^0.9.4
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.0
 
   # Image Export & Sharing
   screenshot: ^3.0.0

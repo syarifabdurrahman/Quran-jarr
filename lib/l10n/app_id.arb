@@ -1,6 +1,11 @@
 {
   "@@locale": "id",
   "appTitle": "Quran Jar",
+  "chooseYourLanguage": "Pilih Bahasa Anda",
+  "selectYourPreferredLanguage": "Pilih bahasa pilihan Anda untuk aplikasi dan terjemahan Quran.",
+  "english": "Inggris",
+  "bahasaIndonesia": "Bahasa Indonesia",
+  "ok": "OK",
   "settings": "Pengaturan",
   "aboutUs": "Tentang Kami",
   "myArchive": "Arsip Saya",
@@ -41,5 +46,18 @@
   "tapJar": "Ketuk toples untuk mendapatkan ayat",
   "pullToRefresh": "Tarik untuk refresh",
   "bookmarkRemoved": "Ayat dihapus dari arsip",
-  "bookmarkAdded": "Ayat disimpan ke arsip"
+  "bookmarkAdded": "Ayat disimpan ke arsip",
+  "internetConnectionRequired": "Koneksi Internet Diperlukan",
+  "internetConnectionDesc": "Quran Jarr memerlukan koneksi internet untuk mengambil ayat, terjemahan, dan bacaan audio.",
+  "maybeLater": "Nanti Saja",
+  "iUnderstand": "Saya Mengerti",
+  "chooseYourExperience": "Pilih Pengalaman Anda",
+  "selectYourExperienceDesc": "Pilih bagaimana Anda ingin menerima ayat dari Quran.",
+  "enableNotifications": "Aktifkan Notifikasi",
+  "dailyNotificationDesc": "Terima ayat indah dari Quran setiap hari untuk memulai pagi Anda dengan kedamaian dan refleksi.",
+  "jarTapsPerDay": "Ketukan Toples Per Hari",
+  "jarTapsPerDayDesc": "Pilih berapa banyak ketukan toples yang Anda inginkan per hari. Ketuk nomor untuk menambah, atau gunakan tombol +/-. Anda bisa mengubahnya nanti di pengaturan.",
+  "getStarted": "Mulai",
+  "soundEffects": "Efek Suara",
+  "alhamdulillahLimitReached": "Alhamdulillah Anda telah mencapai batas hari ini! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan."
 }

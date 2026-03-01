@@ -10,8 +10,12 @@
 
     <!-- Notification permissions -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- For exact alarms on Android 14+ -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Alternative for exact alarms targeting API 33+ -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- For posting notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="Quran Jar"
@@ -48,18 +52,18 @@
 
         <!-- Notification Service -->
         <service
-            android:name="com.dexterous.flutter.localnotifications.LocalNotificationService"
+            android:name="com.dexterous.flutterlocalnotifications.LocalNotificationService"
             android:exported="false"
             android:enabled="true" />
 
         <!-- Notification Broadcast Receivers -->
         <receiver
             android:exported="false"
-            android:name="com.dexterous.flutter.localnotifications.ScheduledNotificationReceiver" />
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
 
         <receiver
             android:exported="false"
-            android:name="com.dexterous.flutter.localnotifications.ScheduledNotificationBootReceiver">
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
