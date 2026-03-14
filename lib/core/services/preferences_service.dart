@@ -91,30 +91,58 @@ class PreferencesService {
   }
 
   /// Get today's jar tap count
+  /// Resets at the notification time (24-hour cycle from notification time)
   int getTodayJarTapCount() {
-    final lastTapDate = _prefsBox.get('last_tap_date', defaultValue: '') as String;
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final now = DateTime.now();
+    final (hour, minute) = getNotificationTime();
+    final lastResetDate = _prefsBox.get('last_reset_date', defaultValue: '') as String;
 
-    // Reset count if it's a new day
-    if (lastTapDate != today) {
+    // Calculate the notification time for today and yesterday
+    final todayNotificationTime = DateTime(now.year, now.month, now.day, hour, minute);
+    final yesterdayNotificationTime = todayNotificationTime.subtract(const Duration(days: 1));
+
+    // Determine the most recent reset time
+    DateTime lastReset;
+    if (lastResetDate.isEmpty) {
+      // First time ever - use yesterday's notification time as reset
+      lastReset = yesterdayNotificationTime;
+    } else {
+      lastReset = DateTime.parse(lastResetDate);
+    }
+
+    // Check if we should reset (current time is after today's notification time
+    // and last reset was before today's notification time)
+    if (now.isAfter(todayNotificationTime) && lastReset.isBefore(todayNotificationTime)) {
+      // New cycle - reset count
       return 0;
     }
 
+    // Still in the same cycle, return current count
     return _prefsBox.get('today_tap_count', defaultValue: 0) as int;
   }
 
   /// Increment today's jar tap count
   Future<void> incrementJarTapCount() async {
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final lastTapDate = _prefsBox.get('last_tap_date', defaultValue: '') as String;
+    final now = DateTime.now();
+    final (hour, minute) = getNotificationTime();
+    final todayNotificationTime = DateTime(now.year, now.month, now.day, hour, minute);
+    final lastResetDate = _prefsBox.get('last_reset_date', defaultValue: '') as String;
 
     int newCount;
-    if (lastTapDate != today) {
-      // New day, reset count
-      newCount = 1;
-      await _prefsBox.put('last_tap_date', today);
+    DateTime lastReset;
+    if (lastResetDate.isEmpty) {
+      lastReset = todayNotificationTime.subtract(const Duration(days: 1));
     } else {
-      // Same day, increment count
+      lastReset = DateTime.parse(lastResetDate);
+    }
+
+    // Check if we need to reset (new cycle)
+    if (now.isAfter(todayNotificationTime) && lastReset.isBefore(todayNotificationTime)) {
+      // New cycle, reset count to 1
+      newCount = 1;
+      await _prefsBox.put('last_reset_date', now.toIso8601String());
+    } else {
+      // Same cycle, increment count
       final currentCount = _prefsBox.get('today_tap_count', defaultValue: 0) as int;
       newCount = currentCount + 1;
     }

@@ -41,19 +41,32 @@ class QuranJarrApp extends ConsumerWidget {
     final locale = ref.watch(localeNotifierProvider);
     final isOnboarded = ref.watch(_onboardingProvider);
 
-    return MaterialApp(
-      title: 'Quran Jarr',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeConfig.lightTheme,
-      locale: locale,
-      supportedLocales: LocaleService.instance.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: isOnboarded ? const JarScreen() : const OnboardingScreen(),
+    return Builder(
+      builder: (context) {
+        // Get the system text scale factor and clamp it
+        final systemTextScale = MediaQuery.of(context).textScaler.scale(1.0);
+        final clampedTextScale = systemTextScale.clamp(1.0, 1.3);
+
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(clampedTextScale),
+          ),
+          child: MaterialApp(
+            title: 'Quran Jarr',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeConfig.lightTheme,
+            locale: locale,
+            supportedLocales: LocaleService.instance.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: isOnboarded ? const JarScreen() : const OnboardingScreen(),
+          ),
+        );
+      },
     );
   }
 }

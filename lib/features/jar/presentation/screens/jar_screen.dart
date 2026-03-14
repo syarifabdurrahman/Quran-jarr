@@ -140,51 +140,85 @@ class _JarScreenState extends ConsumerState<JarScreen>
           children: [
             // App Bar
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.appTitle,
-                    style: AppTextStyles.loraTitle(),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          showTranslationPicker(context);
-                        },
-                        icon: Icon(
-                          Icons.translate_outlined,
-                          color: primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: 48,
+                  maxHeight: MediaQuery.of(context).size.height * 0.15,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          l10n.appTitle,
+                          style: AppTextStyles.loraTitle(),
+                          maxLines: 1,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ArchiveScreen(),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            onPressed: () {
+                              showTranslationPicker(context);
+                            },
+                            icon: Icon(
+                              Icons.translate_outlined,
+                              color: primaryColor,
                             ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.bookmark_outline_outlined,
-                          color: primaryColor,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          _showSettingsDialog(context);
-                        },
-                        icon: Icon(
-                          Icons.settings_outlined,
-                          color: primaryColor,
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ArchiveScreen(),
+                                ),
+                              );
+                            },
+                            icon: Icon(
+                              Icons.bookmark_outline_outlined,
+                              color: primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            onPressed: () {
+                              _showSettingsDialog(context);
+                            },
+                            icon: Icon(
+                              Icons.settings_outlined,
+                              color: primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
 

@@ -98,42 +98,72 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           children: [
             // App Bar
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.arrow_back_ios_new,
-                      color: primaryColor,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'My Archive',
-                      style: AppTextStyles.loraTitle(),
-                    ),
-                  ),
-                  // Translation button
-                  IconButton(
-                    onPressed: () => _showTranslationPicker(),
-                    icon: Icon(
-                      Icons.translate_outlined,
-                      color: primaryColor,
-                    ),
-                    tooltip: 'Change translation',
-                  ),
-                  // Clear all button
-                  if (archiveState.savedVerses.isNotEmpty)
-                    IconButton(
-                      onPressed: () => _showClearDialog(archiveState),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: errorColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: 48,
+                  maxHeight: MediaQuery.of(context).size.height * 0.15,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Icons.arrow_back_ios_new,
+                          color: primaryColor,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                      tooltip: 'Clear all',
                     ),
-                ],
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'My Archive',
+                          style: AppTextStyles.loraTitle(),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Translation button
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        onPressed: () => _showTranslationPicker(),
+                        icon: Icon(
+                          Icons.translate_outlined,
+                          color: primaryColor,
+                        ),
+                        tooltip: 'Change translation',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                    // Clear all button
+                    if (archiveState.savedVerses.isNotEmpty)
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: IconButton(
+                          onPressed: () => _showClearDialog(archiveState),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: errorColor,
+                          ),
+                          tooltip: 'Clear all',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
 
