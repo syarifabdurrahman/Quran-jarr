@@ -55,11 +55,17 @@ class MainActivity : FlutterActivity() {
 
     private fun updateWidget(call: MethodCall, result: MethodChannel.Result) {
         try {
-            val arabicText = call.argument<String>("arabicText") ?: ""
-            val translation = call.argument<String>("translation") ?: ""
-            val surahName = call.argument<String>("surahName") ?: ""
+            // Get arguments with safe defaults and length limits
+            var arabicText = call.argument<String>("arabicText")?.take(500) ?: ""
+            var translation = call.argument<String>("translation")?.take(500) ?: ""
+            var surahName = call.argument<String>("surahName")?.take(100) ?: ""
             val surahNumber = call.argument<Int>("surahNumber") ?: 1
             val ayahNumber = call.argument<Int>("ayahNumber") ?: 1
+
+            // Ensure we have at least default values if strings are empty
+            if (arabicText.isEmpty()) arabicText = "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+            if (translation.isEmpty()) translation = "In the name of Allah, the Most Gracious, the Most Merciful"
+            if (surahName.isEmpty()) surahName = "Al-Fatiha"
 
             val prefs = getSharedPreferences("QuranJarrWidget", Context.MODE_PRIVATE)
             prefs.edit().apply {
@@ -78,15 +84,21 @@ class MainActivity : FlutterActivity() {
 
             // Only update if widget exists
             if (widgetIds.isNotEmpty()) {
-                com.simpurrapps.quran_jarr.widget.QuranWidgetReceiver.updateAppWidget(
-                    this,
-                    appWidgetManager,
-                    widgetIds[0]
-                )
+                try {
+                    com.simpurrapps.quran_jarr.widget.QuranWidgetReceiver.updateAppWidget(
+                        this,
+                        appWidgetManager,
+                        widgetIds[0]
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Error updating widget: ${e.message}", e)
+                    // Don't fail the entire call if widget update fails
+                }
             }
 
             result.success(true)
         } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error in updateWidget: ${e.message}", e)
             result.error("UPDATE_ERROR", e.message, null)
         }
     }

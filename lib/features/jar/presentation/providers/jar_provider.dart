@@ -117,6 +117,34 @@ class JarNotifier extends StateNotifier<JarState> {
         ? CuratedSurahs.surahNumbers
         : null;
 
+    // First, check if we have a cached "today's verse" (within 24 hours)
+    final cachedVerse = await _ref.read(localStorageServiceProvider).getTodayVerse();
+    if (cachedVerse != null) {
+      final verse = cachedVerse.toEntity();
+      // Check if verse is already saved in archive
+      final isSaved = await _ref.read(localStorageServiceProvider).isVerseSaved(verse.verseKey);
+      state = state.copyWith(
+        currentVerse: verse.copyWith(
+          isSaved: isSaved,
+          translationId: translationId,
+        ),
+        isLoading: false,
+      );
+
+      // Update home screen widget (Android only)
+      if (WidgetService.instance.isAvailable) {
+        await WidgetService.instance.updateWidget(
+          arabicText: verse.arabicText,
+          translation: verse.translation,
+          surahName: verse.surahName,
+          surahNumber: verse.surahNumber,
+          ayahNumber: verse.ayahNumber,
+        );
+      }
+
+      return;
+    }
+
     // Check connectivity
     final isConnected = _ref.read(connectivityProvider);
 
@@ -137,6 +165,18 @@ class JarNotifier extends StateNotifier<JarState> {
             ),
             isLoading: false,
           );
+
+          // Update home screen widget (Android only)
+          if (WidgetService.instance.isAvailable) {
+            await WidgetService.instance.updateWidget(
+              arabicText: verse.arabicText,
+              translation: verse.translation,
+              surahName: verse.surahName,
+              surahNumber: verse.surahNumber,
+              ayahNumber: verse.ayahNumber,
+            );
+          }
+
           return;
         }
       } catch (e) {
@@ -163,11 +203,29 @@ class JarNotifier extends StateNotifier<JarState> {
         isLoading: false,
         errorMessage: error.message,
       ),
-      (verse) => state = state.copyWith(
-        // Reset saved state - this is a new verse, user needs to explicitly save it
-        currentVerse: verse.copyWith(isSaved: false),
-        isLoading: false,
-      ),
+      (verse) async {
+        // Save the verse as "today's verse" for caching
+        await _ref.read(localStorageServiceProvider).saveTodayVerse(
+          VerseModel.fromEntity(verse),
+        );
+
+        state = state.copyWith(
+          // Reset saved state - this is a new verse, user needs to explicitly save it
+          currentVerse: verse.copyWith(isSaved: false),
+          isLoading: false,
+        );
+
+        // Update home screen widget (Android only)
+        if (WidgetService.instance.isAvailable) {
+          await WidgetService.instance.updateWidget(
+            arabicText: verse.arabicText,
+            translation: verse.translation,
+            surahName: verse.surahName,
+            surahNumber: verse.surahNumber,
+            ayahNumber: verse.ayahNumber,
+          );
+        }
+      },
     );
   }
 
@@ -520,16 +578,39 @@ class JarNotifier extends StateNotifier<JarState> {
             currentVerse: verse,
             isLoading: false,
           );
+
+          // Update home screen widget (Android only)
+          if (WidgetService.instance.isAvailable) {
+            await WidgetService.instance.updateWidget(
+              arabicText: verse.arabicText,
+              translation: verse.translation,
+              surahName: verse.surahName,
+              surahNumber: verse.surahNumber,
+              ayahNumber: verse.ayahNumber,
+            );
+          }
         },
       );
       return;
     }
 
     // Use cached verse from today
+    final verse = notificationVerse.toEntity();
     state = state.copyWith(
-      currentVerse: notificationVerse.toEntity(),
+      currentVerse: verse,
       isLoading: false,
     );
+
+    // Update home screen widget (Android only)
+    if (WidgetService.instance.isAvailable) {
+      await WidgetService.instance.updateWidget(
+        arabicText: verse.arabicText,
+        translation: verse.translation,
+        surahName: verse.surahName,
+        surahNumber: verse.surahNumber,
+        ayahNumber: verse.ayahNumber,
+      );
+    }
   }
 
   @override

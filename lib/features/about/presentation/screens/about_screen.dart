@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/config/constants.dart';
-import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// About Screen
@@ -22,7 +21,10 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text(l10n.aboutUs, style: AppTextStyles.loraHeading()),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(l10n.aboutUs, style: AppTextStyles.loraHeading()),
+        ),
         backgroundColor: bgColor,
         elevation: 0,
         iconTheme: IconThemeData(color: primaryColor),
@@ -53,32 +55,44 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // App Name
-              Text(
-                AppConstants.appName,
-                style: AppTextStyles.loraTitle(),
-                textAlign: TextAlign.center,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  AppConstants.appName,
+                  style: AppTextStyles.loraTitle(),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                ),
               ).animate().fade(delay: 100.ms),
 
               const SizedBox(height: 8),
 
               // App Version
-              Text(
-                'Version ${AppConstants.appVersion}',
-                style: AppTextStyles.loraBodySmall().copyWith(
-                  color: textSecondary,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Version ${AppConstants.appVersion}',
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: textSecondary,
+                  ),
+                  maxLines: 1,
                 ),
               ).animate().fade(delay: 150.ms),
 
               const SizedBox(height: 8),
 
               // Tagline
-              Text(
-                l10n.appTitle,
-                style: AppTextStyles.loraBodyMedium().copyWith(
-                  color: primaryColor,
-                  fontStyle: FontStyle.italic,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.appTitle,
+                  style: AppTextStyles.loraBodyMedium().copyWith(
+                    color: primaryColor,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
                 ),
-                textAlign: TextAlign.center,
               ).animate().fade(delay: 200.ms),
 
               const SizedBox(height: 48),
@@ -110,6 +124,8 @@ class AboutScreen extends StatelessWidget {
                     Text(
                       l10n.aboutDescription,
                       style: AppTextStyles.loraBodyMedium(),
+                      maxLines: 10,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -153,19 +169,27 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 48),
 
               // Footer
-              Text(
-                'Made with ❤️ for the Ummah',
-                style: AppTextStyles.loraBodySmall().copyWith(
-                  color: textSecondary,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Made with ❤️ for the Ummah',
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: textSecondary,
+                  ),
+                  maxLines: 1,
                 ),
               ).animate().fade(delay: 450.ms),
 
               const SizedBox(height: 8),
 
-              Text(
-                '© 2026 Quran Jarr',
-                style: AppTextStyles.loraCaption().copyWith(
-                  color: textSecondary,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '© 2026 Quran Jarr',
+                  style: AppTextStyles.loraCaption().copyWith(
+                    color: textSecondary,
+                  ),
+                  maxLines: 1,
                 ),
               ).animate().fade(delay: 500.ms),
             ],
@@ -233,17 +257,27 @@ class _DeveloperCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    name,
+                    style: AppTextStyles.loraBodyMedium().copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  role,
-                  style: AppTextStyles.loraBodySmall().copyWith(
-                    color: textSecondary,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    role,
+                    style: AppTextStyles.loraBodySmall().copyWith(
+                      color: textSecondary,
+                    ),
+                    maxLines: 1,
                   ),
                 ),
               ],

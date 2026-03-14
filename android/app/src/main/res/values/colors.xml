@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="jar_widget_bg">#F9F7F2</color>
+    <color name="jar_text_dark">#2D3A3A</color>
+    <color name="jar_text_muted">#6B7A72</color>
+    <color name="jar_sage_accent">#8FA596</color>
+</resources>

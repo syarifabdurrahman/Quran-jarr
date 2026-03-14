@@ -822,19 +822,24 @@ class _SettingsToggle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
           Icon(
             icon,
-            size: 20,
+            size: 18,
             color: primaryColor,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.loraBodyMedium(),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: AppTextStyles.loraBodyMedium(),
+                maxLines: 1,
+              ),
             ),
           ),
           Switch(
@@ -877,26 +882,31 @@ class _NotificationTimePicker extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Icon(
               Icons.access_time,
-              size: 20,
+              size: 18,
               color: primaryColor.withValues(alpha: 0.7),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                l10n.notificationTime,
-                style: AppTextStyles.loraBodyMedium().copyWith(
-                  color: primaryColor.withValues(alpha: 0.8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.notificationTime,
+                  style: AppTextStyles.loraBodyMedium().copyWith(
+                    color: primaryColor.withValues(alpha: 0.8),
+                  ),
+                  maxLines: 1,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -951,43 +961,52 @@ class _FontSizeSlider extends ConsumerWidget {
     final percentage = (value * 100).round();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Icon(
                 icon,
-                size: 20,
+                size: 18,
                 color: primaryColor.withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
-                    color: primaryColor.withValues(alpha: 0.8),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title,
+                    style: AppTextStyles.loraBodyMedium().copyWith(
+                      color: primaryColor.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 1,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  '$percentage%',
-                  style: AppTextStyles.loraBodySmall().copyWith(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w600,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$percentage%',
+                    style: AppTextStyles.loraBodySmall().copyWith(
+                      color: primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 4,
@@ -1029,37 +1048,43 @@ class _VersesPerDaySelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Icon(
                 Icons.format_list_numbered_outlined,
-                size: 20,
+                size: 18,
                 color: primaryColor.withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  l10n.jarTapsPerDay,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
-                    color: primaryColor.withValues(alpha: 0.8),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.jarTapsPerDay,
+                    style: AppTextStyles.loraBodyMedium().copyWith(
+                      color: primaryColor.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 1,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             children: [
               // Decrease button
               GestureDetector(
                 onTap: () => onValueChanged(versesPerDay > 1 ? versesPerDay - 1 : 1),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1071,17 +1096,17 @@ class _VersesPerDaySelector extends StatelessWidget {
                   child: Icon(
                     Icons.remove,
                     color: primaryColor,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // Number display
               Expanded(
                 child: GestureDetector(
                   onTap: () => onValueChanged(versesPerDay >= 9999 ? 1 : versesPerDay + 1),
                   child: Container(
-                    height: 48,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: primaryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
@@ -1090,25 +1115,26 @@ class _VersesPerDaySelector extends StatelessWidget {
                         width: 2,
                       ),
                     ),
-                    child: Center(
+                    child: FittedBox(
                       child: Text(
                         versesPerDay >= 9999 ? '∞' : versesPerDay.toString(),
                         style: AppTextStyles.loraBodyLarge().copyWith(
                           color: primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // Increase button
               GestureDetector(
                 onTap: () => onValueChanged(versesPerDay + 1),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: primaryColor,
                     borderRadius: BorderRadius.circular(12),
@@ -1117,20 +1143,20 @@ class _VersesPerDaySelector extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add,
                     color: AppColors.cream,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               // Infinity button
               GestureDetector(
                 onTap: () => onValueChanged(versesPerDay >= 9999 ? 10 : 9999),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: versesPerDay >= 9999 ? primaryColor : primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1142,7 +1168,7 @@ class _VersesPerDaySelector extends StatelessWidget {
                   child: Icon(
                     Icons.all_inclusive,
                     color: versesPerDay >= 9999 ? AppColors.cream : primaryColor,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),
@@ -1173,7 +1199,10 @@ class _RemainingTapsIndicator extends StatelessWidget {
     final bool isUnlimited = dailyLimit >= 9999;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.9,
+      ),
       decoration: BoxDecoration(
         color: primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
@@ -1187,24 +1216,25 @@ class _RemainingTapsIndicator extends StatelessWidget {
         children: [
           Icon(
             Icons.touch_app_outlined,
-            size: 16,
+            size: 14,
             color: primaryColor.withValues(alpha: 0.7),
           ),
-          const SizedBox(width: 8),
-          if (isUnlimited)
-            Text(
-              '∞ Unlimited taps',
-              style: AppTextStyles.loraBodySmall().copyWith(
-                color: primaryColor.withValues(alpha: 0.8),
-              ),
-            )
-          else
-            Text(
-              '$remainingTaps of $dailyLimit taps remaining',
-              style: AppTextStyles.loraBodySmall().copyWith(
-                color: primaryColor.withValues(alpha: 0.8),
+          const SizedBox(width: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                isUnlimited
+                    ? '∞ Unlimited taps'
+                    : '$remainingTaps of $dailyLimit taps remaining',
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: primaryColor.withValues(alpha: 0.8),
+                ),
+                maxLines: 1,
               ),
             ),
+          ),
         ],
       ),
     );

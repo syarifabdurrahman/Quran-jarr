@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
+import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/core/data/surah_names.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
@@ -259,6 +261,15 @@ class NotificationService {
         final body = verse.translation.length > 100
             ? '${verse.translation.substring(0, 100)}...'
             : verse.translation;
+
+        // Update the widget with the new verse
+        await WidgetService.instance.updateWidget(
+          arabicText: verse.arabicText,
+          translation: verse.translation,
+          surahName: title,
+          surahNumber: verse.surahNumber,
+          ayahNumber: verse.ayahNumber,
+        );
 
         await _scheduleNotification(
           time,

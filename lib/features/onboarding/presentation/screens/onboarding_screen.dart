@@ -166,9 +166,15 @@ class _LanguageSelectionPage extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           const SizedBox(height: 40),
 
           // Icon
@@ -189,10 +195,14 @@ class _LanguageSelectionPage extends StatelessWidget {
           const SizedBox(height: 40),
 
           // Title
-          Text(
-            l10n.chooseYourLanguage,
-            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.chooseYourLanguage,
+              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
           const SizedBox(height: 16),
@@ -204,6 +214,8 @@ class _LanguageSelectionPage extends StatelessWidget {
               l10n.selectYourPreferredLanguage,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
@@ -232,41 +244,53 @@ class _LanguageSelectionPage extends StatelessWidget {
           const SizedBox(height: 40),
 
           // Action Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Skip Button
-              TextButton(
-                onPressed: onSkip,
-                child: Text(
-                  l10n.cancel,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
-                    color: AppColors.sageGreen,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Skip Button
+                TextButton(
+                  onPressed: onSkip,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                ),
-              ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
-
-              const SizedBox(width: 16),
-
-              // OK Button
-              ElevatedButton(
-                onPressed: onNext,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.sageGreen,
-                  foregroundColor: AppColors.cream,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  child: Text(
+                    l10n.cancel,
+                    style: AppTextStyles.loraBodyMedium().copyWith(
+                      color: AppColors.sageGreen,
+                    ),
                   ),
-                ),
-                child: Text(
-                  l10n.ok,
-                  style: AppTextStyles.loraBodyMedium(),
-                ),
-              ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
-            ],
+                ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
+
+                const SizedBox(width: 12),
+
+                // OK Button
+                ElevatedButton(
+                  onPressed: onNext,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sageGreen,
+                    foregroundColor: AppColors.cream,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.ok,
+                    style: AppTextStyles.loraBodyMedium(),
+                  ),
+                ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
+              ],
+            ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -335,17 +359,24 @@ class _LanguageCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    languageName,
-                    style: AppTextStyles.loraHeading().copyWith(
-                      color: AppColors.sageGreen,
-                      fontWeight: FontWeight.bold,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      languageName,
+                      style: AppTextStyles.loraHeading().copyWith(
+                        color: AppColors.sageGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Translation: $translationAuthor',
                     style: AppTextStyles.loraBodySmall(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -382,9 +413,15 @@ class _InternetCheckPage extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           const SizedBox(height: 40),
 
           // Icon
@@ -405,10 +442,14 @@ class _InternetCheckPage extends StatelessWidget {
           const SizedBox(height: 40),
 
           // Title
-          Text(
-            l10n.internetConnectionRequired,
-            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.internetConnectionRequired,
+              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
           const SizedBox(height: 16),
@@ -420,6 +461,8 @@ class _InternetCheckPage extends StatelessWidget {
               l10n.internetConnectionDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
@@ -451,6 +494,8 @@ class _InternetCheckPage extends StatelessWidget {
             ],
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -467,16 +512,26 @@ class _ModeSelectionPage extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           const SizedBox(height: 20),
 
           // Title
-          Text(
-            l10n.chooseYourExperience,
-            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.chooseYourExperience,
+              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
           const SizedBox(height: 16),
@@ -488,6 +543,8 @@ class _ModeSelectionPage extends StatelessWidget {
               l10n.selectYourExperienceDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
@@ -521,6 +578,8 @@ class _ModeSelectionPage extends StatelessWidget {
             },
           ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -541,9 +600,15 @@ class _NotificationPermissionPage extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           const SizedBox(height: 20),
 
           // Icon
@@ -564,10 +629,14 @@ class _NotificationPermissionPage extends StatelessWidget {
           const SizedBox(height: 40),
 
           // Title
-          Text(
-            l10n.dailyNotification,
-            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.dailyNotification,
+              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
           const SizedBox(height: 16),
@@ -579,6 +648,8 @@ class _NotificationPermissionPage extends StatelessWidget {
               l10n.dailyNotificationDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
@@ -613,6 +684,8 @@ class _NotificationPermissionPage extends StatelessWidget {
             ],
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -635,9 +708,15 @@ class _VersesPerDayPage extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           const SizedBox(height: 20),
 
           // Icon
@@ -658,10 +737,14 @@ class _VersesPerDayPage extends StatelessWidget {
           const SizedBox(height: 40),
 
           // Title
-          Text(
-            l10n.jarTapsPerDay,
-            style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.jarTapsPerDay,
+              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
           ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
           const SizedBox(height: 16),
@@ -673,6 +756,8 @@ class _VersesPerDayPage extends StatelessWidget {
               l10n.jarTapsPerDayDesc,
               style: AppTextStyles.loraBodyMedium(),
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
           ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
@@ -802,6 +887,8 @@ class _VersesPerDayPage extends StatelessWidget {
             onPressed: onComplete,
           ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -828,14 +915,18 @@ class _OnboardingButton extends StatelessWidget {
             ? AppColors.sageGreen
             : AppColors.sageGreen.withValues(alpha: 0.1),
         foregroundColor: isPrimary ? AppColors.cream : AppColors.sageGreen,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      child: Text(
-        text,
-        style: AppTextStyles.loraBodyMedium(),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          text,
+          style: AppTextStyles.loraBodyMedium(),
+          maxLines: 1,
+        ),
       ),
     );
   }
@@ -900,17 +991,24 @@ class _ModeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.loraHeading().copyWith(
-                      color: AppColors.sageGreen,
-                      fontWeight: FontWeight.bold,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: AppTextStyles.loraHeading().copyWith(
+                        color: AppColors.sageGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
                     style: AppTextStyles.loraBodySmall(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

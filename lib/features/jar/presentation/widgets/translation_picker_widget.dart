@@ -45,16 +45,27 @@ class TranslationPickerWidget extends ConsumerWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Text(
-                  'Select Translation',
-                  style: AppTextStyles.loraTitle(),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Select Translation',
+                      style: AppTextStyles.loraTitle(),
+                      maxLines: 1,
+                    ),
+                  ),
                 ),
                 const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.close,
-                    color: AppColors.sageGreen,
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.sageGreen,
+                    ),
                   ),
                 ),
               ],
@@ -100,12 +111,16 @@ class TranslationPickerWidget extends ConsumerWidget {
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(
                   translation.author,
                   style: AppTextStyles.loraBodySmall().copyWith(
                     color: AppColors.deepUmber.withOpacity(0.6),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 trailing: isSelected
                     ? Container(

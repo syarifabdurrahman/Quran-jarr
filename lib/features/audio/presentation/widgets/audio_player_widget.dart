@@ -72,11 +72,18 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              Text(
-                'Verse Recitation',
-                style: AppTextStyles.loraBodySmall().copyWith(
-                  color: AppColors.sageGreen,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Verse Recitation',
+                    style: AppTextStyles.loraBodySmall().copyWith(
+                      color: AppColors.sageGreen,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                  ),
                 ),
               ),
               if (isThisDownloaded) ...[
@@ -140,6 +147,8 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
               style: AppTextStyles.loraBodySmall().copyWith(
                 color: Colors.red.shade700,
               ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
 

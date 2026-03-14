@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/config/constants.dart';
-import 'package:quran_jarr/core/utils/responsive_utils.dart';
 
 /// Jar Widget
 /// A beautiful glass jar visualization with pull interaction
@@ -73,16 +72,23 @@ class _JarWidgetState extends State<JarWidget>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        _handleTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedBuilder(
-        animation: _shakeController,
-        builder: (context, child) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final maxJarHeight = screenHeight * 0.4;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: maxJarHeight,
+      ),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          _handleTap();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
           // Create shake effect
           double rotation = 0;
           if (_shakeController.value > 0) {
@@ -167,6 +173,7 @@ class _JarWidgetState extends State<JarWidget>
           },
         ),
       ),
+    ),
     );
   }
 }

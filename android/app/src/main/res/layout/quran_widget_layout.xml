@@ -1,47 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_container"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#FFF5F0E8">
+    android:background="@drawable/widget_bg"
+    android:padding="16dp">
 
-    <TextView
-        android:id="@+id/widget_surah_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Al-Fatiha (1:1)"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="#FF7CB342"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:id="@+id/widget_arabic_text"
+    <!-- Header with Icon and Surah Name -->
+    <LinearLayout
+        android:id="@+id/header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
-        android:textSize="18sp"
-        android:textAlignment="textEnd"
-        android:layout_marginBottom="12dp"
-        android:textColor="#FF5D4E37" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#FF7CB342"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="8dp" />
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:tint="@color/jar_sage_accent" />
 
-    <TextView
-        android:id="@+id/widget_translation"
+        <TextView
+            android:id="@+id/widget_surah_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Al-Ghashiyah (88:4)"
+            android:textColor="@color/jar_sage_accent"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Center Content - Arabic and Translation -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="In the name of Allah, the Most Gracious, the Most Merciful"
-        android:textSize="14sp"
-        android:textAlignment="center"
-        android:textColor="#FF5D4E37" />
+        android:layout_below="@id/header_layout"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:gravity="center">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/widget_arabic_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="تَصْلَىٰ نَارًا حَامِيَةً"
+            android:textColor="@color/jar_text_dark"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/widget_translation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mereka memasuki api (neraka) yang sangat panas."
+            android:textColor="@color/jar_text_muted"
+            android:textSize="14sp"
+            android:gravity="center" />
+    </LinearLayout>
+
+</RelativeLayout>

@@ -41,15 +41,22 @@ class WidgetService {
     if (!_isAvailable) return;
 
     try {
+      // Sanitize input - limit length and ensure non-empty strings
+      final sanitizedArabic = arabicText.isNotEmpty ? arabicText.substring(0, arabicText.length.clamp(0, 500)) : "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+      final sanitizedTranslation = translation.isNotEmpty ? translation.substring(0, translation.length.clamp(0, 500)) : "In the name of Allah, the Most Gracious, the Most Merciful";
+      final sanitizedSurahName = surahName.isNotEmpty ? surahName.substring(0, surahName.length.clamp(0, 100)) : "Al-Fatiha";
+
       await _channel.invokeMethod('updateWidget', {
-        'arabicText': arabicText,
-        'translation': translation,
-        'surahName': surahName,
-        'surahNumber': surahNumber,
-        'ayahNumber': ayahNumber,
+        'arabicText': sanitizedArabic,
+        'translation': sanitizedTranslation,
+        'surahName': sanitizedSurahName,
+        'surahNumber': surahNumber.clamp(1, 114),
+        'ayahNumber': ayahNumber.clamp(1, 286),
       });
     } catch (e) {
-      // Ignore widget update errors
+      // Log but ignore widget update errors - don't let widget issues crash the app
+      // ignore: avoid_print
+      print('Widget update error: $e');
     }
   }
 }

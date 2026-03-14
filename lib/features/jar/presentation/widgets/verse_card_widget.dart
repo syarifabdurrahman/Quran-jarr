@@ -43,154 +43,184 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: glassBorder.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header with Surah name and actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Surah reference
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  verse.surahReference,
-                  style: AppTextStyles.surahName(arabicFontMultiplier),
-                ),
-              ),
-              // Action buttons
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.onSaveToggle != null)
-                    IconButton(
-                      onPressed: widget.onSaveToggle,
-                      icon: Icon(
-                        verse.isSaved
-                            ? Icons.bookmark
-                            : Icons.bookmark_border_outlined,
-                        color: verse.isSaved
-                            ? terracottaColor
-                            : primaryColor,
-                      ),
-                    ),
-                  if (widget.onShare != null)
-                    IconButton(
-                      onPressed: widget.onShare,
-                      icon: Icon(
-                        Icons.share_outlined,
-                        color: primaryColor,
-                      ),
-                    ),
-                ],
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: glassBorder.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          // Arabic verse
-          Text(
-            verse.arabicText,
-            style: AppTextStyles.amiriVerseLarge(arabicFontMultiplier),
-            textAlign: TextAlign.right,
-            textDirection: TextDirection.rtl,
-          ),
-          const SizedBox(height: 20),
-          // Divider
-          Container(
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  glassBorder.withValues(alpha: 0),
-                  glassBorder,
-                  glassBorder.withValues(alpha: 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with Surah name and actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Surah reference
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        verse.surahReference,
+                        style: AppTextStyles.surahName(arabicFontMultiplier),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Action buttons
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.onSaveToggle != null)
+                        IconButton(
+                          onPressed: widget.onSaveToggle,
+                          icon: Icon(
+                            verse.isSaved
+                                ? Icons.bookmark
+                                : Icons.bookmark_border_outlined,
+                            color: verse.isSaved
+                                ? terracottaColor
+                                : primaryColor,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                        ),
+                      if (widget.onShare != null)
+                        IconButton(
+                          onPressed: widget.onShare,
+                          icon: Icon(
+                            Icons.share_outlined,
+                            color: primaryColor,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                        ),
+                    ],
+                  ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Translation
-          Text(
-            verse.currentTranslation ?? verse.translation,
-            style: AppTextStyles.loraBodyLarge(englishFontMultiplier),
-            textAlign: TextAlign.center,
-          ),
-          // Audio player (if available)
-          if (verse.hasAudio) ...[
-            const SizedBox(height: 16),
-            AudioPlayerWidget(
-              audioUrl: verse.audioUrl!,
-              verseKey: verse.verseKey,
-            ),
-          ],
-          // Tafsir button at bottom
-          const SizedBox(height: 16),
-          // Tafsir button
-          InkWell(
-            onTap: _isLoadingTafsir
-                ? null
-                : () => _handleTafsirPress(context),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.3),
-                  width: 1,
+              const SizedBox(height: 16),
+              // Arabic verse
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  verse.arabicText,
+                  style: AppTextStyles.amiriVerseLarge(arabicFontMultiplier),
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  maxLines: 10,
                 ),
               ),
-              child: _isLoadingTafsir
-                  ? SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: primaryColor,
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          verse.hasTafsir
-                              ? Icons.menu_book
-                              : Icons.menu_book_outlined,
-                          size: 18,
-                          color: primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          verse.hasTafsir
-                              ? 'View Tafsir (Ibn Kathir)'
-                              : 'Load Tafsir',
-                          style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+              const SizedBox(height: 16),
+              // Divider
+              Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      glassBorder.withValues(alpha: 0),
+                      glassBorder,
+                      glassBorder.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Translation
+              Text(
+                verse.currentTranslation ?? verse.translation,
+                style: AppTextStyles.loraBodyLarge(englishFontMultiplier),
+                textAlign: TextAlign.center,
+                maxLines: 15,
+                overflow: TextOverflow.ellipsis,
+              ),
+              // Audio player (if available)
+              if (verse.hasAudio) ...[
+                const SizedBox(height: 16),
+                AudioPlayerWidget(
+                  audioUrl: verse.audioUrl!,
+                  verseKey: verse.verseKey,
+                ),
+              ],
+              // Tafsir button at bottom
+              const SizedBox(height: 16),
+              // Tafsir button
+              InkWell(
+                onTap: _isLoadingTafsir
+                    ? null
+                    : () => _handleTafsirPress(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.3),
+                      width: 1,
                     ),
-            ),
+                  ),
+                  child: _isLoadingTafsir
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primaryColor,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              verse.hasTafsir
+                                  ? Icons.menu_book
+                                  : Icons.menu_book_outlined,
+                              size: 18,
+                              color: primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                verse.hasTafsir
+                                    ? 'View Tafsir (Ibn Kathir)'
+                                    : 'Load Tafsir',
+                                style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
