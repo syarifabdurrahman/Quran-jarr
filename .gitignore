@@ -83,6 +83,23 @@ keystore.properties
 # Claude Code memory
 .claude/
 
+# Environment variables and secrets
+.env
+.env.*
+*.env
+secrets.yaml
+config/secrets.yaml
+
+# Firebase / Google Services
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+service-account.json
+
+# API keys and configs (if generated)
+api_keys.dart
+lib/config/api_keys.dart
+
 # Temporary files
 *.tmp
 *.bak
