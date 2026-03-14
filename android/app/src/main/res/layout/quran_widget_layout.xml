@@ -26,7 +26,7 @@
             android:layout_marginStart="8dp"
             android:text="Al-Ghashiyah (88:4)"
             android:textColor="@color/jar_sage_accent"
-            android:textSize="12sp"
+            android:textSize="12dp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:text="تَصْلَىٰ نَارًا حَامِيَةً"
             android:textColor="@color/jar_text_dark"
-            android:textSize="24sp"
+            android:textSize="24dp"
             android:gravity="center"
             android:layout_marginBottom="8dp" />
 
@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:text="Mereka memasuki api (neraka) yang sangat panas."
             android:textColor="@color/jar_text_muted"
-            android:textSize="14sp"
+            android:textSize="14dp"
             android:gravity="center" />
     </LinearLayout>
 
