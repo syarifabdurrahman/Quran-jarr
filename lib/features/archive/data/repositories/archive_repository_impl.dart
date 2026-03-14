@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:quran_jarr/core/network/api_exception.dart';
 import 'package:quran_jarr/features/archive/domain/repositories/archive_repository.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
+import 'package:quran_jarr/features/jar/data/models/verse_model.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 
 /// Archive Repository Implementation
@@ -72,6 +73,17 @@ class ArchiveRepositoryImpl implements ArchiveRepository {
       return Right(count);
     } catch (e) {
       return Left(ApiException('Failed to get verse count: $e'));
+    }
+  }
+
+  /// Update a verse in the archive with new data (e.g., merged tafsir)
+  Future<Either<ApiException, void>> updateVerse(Verse verse) async {
+    try {
+      final model = VerseModel.fromEntity(verse);
+      await _localStorage.saveVerseToArchive(model);
+      return const Right(null);
+    } catch (e) {
+      return Left(ApiException('Failed to update verse: $e'));
     }
   }
 }

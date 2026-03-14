@@ -50,6 +50,12 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- AdMob App ID -->
+        <!-- Replace with your actual AdMob App ID before releasing to production -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8500075420783419~2366432861"/>
+
         <!-- Notification Service -->
         <service
             android:name="com.dexterous.flutterlocalnotifications.LocalNotificationService"

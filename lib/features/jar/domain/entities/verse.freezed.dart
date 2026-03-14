@@ -32,6 +32,8 @@ mixin _$Verse {
   String? get audioUrl => throw _privateConstructorUsedError;
   Map<String, String>? get tafsirByTranslation =>
       throw _privateConstructorUsedError; // Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
+  Map<String, String>? get translationByLanguage =>
+      throw _privateConstructorUsedError; // Translation text by language ID (e.g., {'english': '...', 'indonesian': '...'})
   bool get isSaved => throw _privateConstructorUsedError;
   DateTime? get savedAt => throw _privateConstructorUsedError;
 
@@ -56,6 +58,7 @@ abstract class $VerseCopyWith<$Res> {
       String translationId,
       String? audioUrl,
       Map<String, String>? tafsirByTranslation,
+      Map<String, String>? translationByLanguage,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -83,6 +86,7 @@ class _$VerseCopyWithImpl<$Res, $Val extends Verse>
     Object? translationId = null,
     Object? audioUrl = freezed,
     Object? tafsirByTranslation = freezed,
+    Object? translationByLanguage = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -127,6 +131,10 @@ class _$VerseCopyWithImpl<$Res, $Val extends Verse>
           ? _value.tafsirByTranslation
           : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
               as Map<String, String>?,
+      translationByLanguage: freezed == translationByLanguage
+          ? _value.translationByLanguage
+          : translationByLanguage // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -157,6 +165,7 @@ abstract class _$$VerseImplCopyWith<$Res> implements $VerseCopyWith<$Res> {
       String translationId,
       String? audioUrl,
       Map<String, String>? tafsirByTranslation,
+      Map<String, String>? translationByLanguage,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -182,6 +191,7 @@ class __$$VerseImplCopyWithImpl<$Res>
     Object? translationId = null,
     Object? audioUrl = freezed,
     Object? tafsirByTranslation = freezed,
+    Object? translationByLanguage = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -226,6 +236,10 @@ class __$$VerseImplCopyWithImpl<$Res>
           ? _value._tafsirByTranslation
           : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
               as Map<String, String>?,
+      translationByLanguage: freezed == translationByLanguage
+          ? _value._translationByLanguage
+          : translationByLanguage // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -252,9 +266,11 @@ class _$VerseImpl extends _Verse {
       this.translationId = 'english',
       this.audioUrl,
       final Map<String, String>? tafsirByTranslation,
+      final Map<String, String>? translationByLanguage,
       this.isSaved = false,
       this.savedAt})
       : _tafsirByTranslation = tafsirByTranslation,
+        _translationByLanguage = translationByLanguage,
         super._();
 
   factory _$VerseImpl.fromJson(Map<String, dynamic> json) =>
@@ -293,6 +309,19 @@ class _$VerseImpl extends _Verse {
   }
 
 // Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
+  final Map<String, String>? _translationByLanguage;
+// Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
+  @override
+  Map<String, String>? get translationByLanguage {
+    final value = _translationByLanguage;
+    if (value == null) return null;
+    if (_translationByLanguage is EqualUnmodifiableMapView)
+      return _translationByLanguage;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+// Translation text by language ID (e.g., {'english': '...', 'indonesian': '...'})
   @override
   @JsonKey()
   final bool isSaved;
@@ -301,7 +330,7 @@ class _$VerseImpl extends _Verse {
 
   @override
   String toString() {
-    return 'Verse(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsirByTranslation: $tafsirByTranslation, isSaved: $isSaved, savedAt: $savedAt)';
+    return 'Verse(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsirByTranslation: $tafsirByTranslation, translationByLanguage: $translationByLanguage, isSaved: $isSaved, savedAt: $savedAt)';
   }
 
   @override
@@ -329,6 +358,8 @@ class _$VerseImpl extends _Verse {
                 other.audioUrl == audioUrl) &&
             const DeepCollectionEquality()
                 .equals(other._tafsirByTranslation, _tafsirByTranslation) &&
+            const DeepCollectionEquality()
+                .equals(other._translationByLanguage, _translationByLanguage) &&
             (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
             (identical(other.savedAt, savedAt) || other.savedAt == savedAt));
   }
@@ -347,6 +378,7 @@ class _$VerseImpl extends _Verse {
       translationId,
       audioUrl,
       const DeepCollectionEquality().hash(_tafsirByTranslation),
+      const DeepCollectionEquality().hash(_translationByLanguage),
       isSaved,
       savedAt);
 
@@ -376,6 +408,7 @@ abstract class _Verse extends Verse {
       final String translationId,
       final String? audioUrl,
       final Map<String, String>? tafsirByTranslation,
+      final Map<String, String>? translationByLanguage,
       final bool isSaved,
       final DateTime? savedAt}) = _$VerseImpl;
   const _Verse._() : super._();
@@ -403,6 +436,8 @@ abstract class _Verse extends Verse {
   @override
   Map<String, String>? get tafsirByTranslation;
   @override // Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
+  Map<String, String>? get translationByLanguage;
+  @override // Translation text by language ID (e.g., {'english': '...', 'indonesian': '...'})
   bool get isSaved;
   @override
   DateTime? get savedAt;

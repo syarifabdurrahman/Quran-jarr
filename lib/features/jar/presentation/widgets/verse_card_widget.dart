@@ -127,7 +127,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           const SizedBox(height: 20),
           // Translation
           Text(
-            verse.translation,
+            verse.currentTranslation ?? verse.translation,
             style: AppTextStyles.loraBodyLarge(englishFontMultiplier),
             textAlign: TextAlign.center,
           ),
@@ -198,10 +198,19 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   Future<void> _handleTafsirPress(BuildContext context) async {
     final verse = widget.verse;
 
-    if (!verse.hasTafsir) {
-      // Load tafsir first
+    // Check if verse has tafsir for current translation
+    final hasTafsirForCurrentTranslation = verse.tafsirByTranslation != null &&
+        verse.tafsirByTranslation!.containsKey(verse.translationId);
+
+    if (!hasTafsirForCurrentTranslation) {
+      // Only try to load from API if we don't have tafsir locally
       setState(() => _isLoadingTafsir = true);
-      await ref.read(jarNotifierProvider.notifier).loadTafsir();
+      try {
+        await ref.read(jarNotifierProvider.notifier).loadTafsir();
+      } catch (e) {
+        // If loading fails (e.g., offline), check if we have any other tafsir
+        // Silently handle error - will show tafsir if available locally
+      }
       setState(() => _isLoadingTafsir = false);
     }
 
@@ -212,11 +221,38 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   }
 
   void _showTafsirSheet(BuildContext context) {
-    // Get the latest verse from state (in case tafsir was just loaded)
-    final jarState = ref.watch(jarNotifierProvider);
-    final verse = jarState.currentVerse;
+    // Use the verse from widget directly (supports archive verses)
+    final verse = widget.verse;
 
-    if (verse == null || !verse.hasTafsir) return;
+    // Check if verse has tafsir for any translation
+    if (verse.tafsirByTranslation == null || verse.tafsirByTranslation!.isEmpty) {
+      // No tafsir available at all
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tafsir not available. Please connect to internet and try again.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Get tafsir for current translation
+    final tafsirText = verse.getTafsirForTranslation(verse.translationId);
+
+    if (tafsirText == null || tafsirText.isEmpty) {
+      // Tafsir not available for current translation, but available for others
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tafsir not available for ${verse.translationId} translation. Available for: ${verse.tafsirByTranslation!.keys.join(", ")}'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
 
     final cardColor = AppColors.softSand;
     final primaryColor = AppColors.sageGreen;
@@ -287,7 +323,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  verse.tafsir!,
+                  tafsirText,
                   style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
                     color: tafsirTextColor,
                     height: 1.8,

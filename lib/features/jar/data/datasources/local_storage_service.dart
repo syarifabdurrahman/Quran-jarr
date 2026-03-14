@@ -20,6 +20,23 @@ class LocalStorageService {
     _appDataBox = await Hive.openBox('app_data');
   }
 
+  /// Helper method to convert `Map<dynamic, dynamic>` to `Map<String, dynamic>`
+  /// Handles nested Maps recursively
+  Map<String, dynamic> _convertMap(Map<Object?, Object?> map) {
+    final result = <String, dynamic>{};
+    for (final entry in map.entries) {
+      final key = entry.key.toString();
+      final value = entry.value;
+      if (value is Map) {
+        // Recursively convert nested Maps
+        result[key] = _convertMap(value as Map<Object?, Object?>);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
   /// Save today's verse with timestamp
   Future<void> saveTodayVerse(VerseModel verse) async {
     await _appDataBox.put(AppConstants.keyTodayVerse, verse.toJson());
@@ -45,7 +62,7 @@ class LocalStorageService {
     }
 
     // Convert Map<dynamic, dynamic> to Map<String, dynamic>
-    final map = Map<String, dynamic>.from(json as Map);
+    final map = _convertMap(json as Map<Object?, Object?>);
     return VerseModel.fromJson(map);
   }
 
@@ -55,7 +72,12 @@ class LocalStorageService {
       isSaved: true,
       savedAt: DateTime.now(),
     );
-    await _versesBox.put(verse.verseKey, updatedVerse.toJson());
+    final json = updatedVerse.toJson();
+    await _versesBox.put(verse.verseKey, json);
+
+    if (!_versesBox.containsKey(verse.verseKey)) {
+      throw Exception('Failed to save verse to archive');
+    }
   }
 
   /// Remove a verse from archive
@@ -65,18 +87,23 @@ class LocalStorageService {
 
   /// Get all saved verses
   Future<List<VerseModel>> getSavedVerses() async {
-    final keys = _versesBox.keys;
+    final keys = _versesBox.keys.toList();
     final verses = <VerseModel>[];
 
     for (final key in keys) {
-      final json = _versesBox.get(key);
-      if (json != null) {
-        // Convert Map<dynamic, dynamic> to Map<String, dynamic>
-        final map = Map<String, dynamic>.from(json as Map);
-        final verse = VerseModel.fromJson(map);
-        // Ensure all verses from archive are marked as saved
-        // This handles old data that might not have isSaved set
-        verses.add(verse.copyWith(isSaved: true));
+      try {
+        final json = _versesBox.get(key);
+        if (json != null) {
+          // Use helper to properly convert Map types including nested Maps
+          final map = _convertMap(json as Map<Object?, Object?>);
+          final verse = VerseModel.fromJson(map);
+          // Ensure all verses from archive are marked as saved
+          // This handles old data that might not have isSaved set
+          verses.add(verse.copyWith(isSaved: true));
+        }
+      } catch (e) {
+        // Skip corrupted entries but continue loading others
+        continue;
       }
     }
 
@@ -132,7 +159,7 @@ class LocalStorageService {
     }
 
     // Convert Map<dynamic, dynamic> to Map<String, dynamic>
-    final map = Map<String, dynamic>.from(json as Map);
+    final map = _convertMap(json as Map<Object?, Object?>);
     return VerseModel.fromJson(map);
   }
 
@@ -144,7 +171,19 @@ class LocalStorageService {
 
   /// Close all boxes
   Future<void> close() async {
-    await _versesBox.close();
-    await _appDataBox.close();
+    try {
+      if (_versesBox.isOpen) {
+        await _versesBox.close();
+      }
+    } catch (_) {
+      // Ignore errors when closing
+    }
+    try {
+      if (_appDataBox.isOpen) {
+        await _appDataBox.close();
+      }
+    } catch (_) {
+      // Ignore errors when closing
+    }
   }
 }

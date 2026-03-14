@@ -44,11 +44,33 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            // Read from keystore.properties if it exists
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val lines = keystorePropertiesFile.readLines()
+                val props = lines.associate {
+                    val parts = it.split("=")
+                    parts[0] to parts[1]
+                }
+                storeFile = file(props["storeFile"]!!)
+                storePassword = props["storePassword"]!!
+                keyAlias = props["keyAlias"]!!
+                keyPassword = props["keyPassword"]!!
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release signing config if keystore exists
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
 
             // Enable code shrinking and obfuscation
             isMinifyEnabled = true
@@ -59,6 +81,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    // Enable bundle optimization for smaller AAB size
+    bundle {
+        language {
+            // Enable language splitting for smaller downloads
+            enableSplit = false
+        }
+        density {
+            // Enable density splitting
+            enableSplit = true
+        }
+        abi {
+            // Enable ABI splitting
+            enableSplit = true
         }
     }
 }

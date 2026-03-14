@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/network/api_exception.dart';
+import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/features/archive/data/repositories/archive_repository_impl.dart';
 import 'package:quran_jarr/features/archive/domain/usecases/archive_usecases.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
@@ -159,13 +160,39 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Get the verse repository to fetch verses with new translation
+      // Check connectivity
+      final isConnected = _ref.read(connectivityProvider);
+
       final repository = _ref.read(verseRepositoryProvider);
+      final archiveRepo = _ref.read(archiveRepositoryProvider);
 
       final List<Verse> updatedVerses = [];
       String? firstError;
 
       for (final verse in currentVerses) {
+        // Check if we already have this translation saved locally
+        final hasLocalTranslation = verse.translationByLanguage != null &&
+            verse.translationByLanguage!.containsKey(translationId);
+
+        if (!isConnected && hasLocalTranslation) {
+          // Offline mode: use locally saved translation
+          final localTranslation = verse.translationByLanguage![translationId]!;
+          updatedVerses.add(verse.copyWith(
+            translationId: translationId,
+            translation: localTranslation,
+          ));
+          continue;
+        }
+
+        if (!isConnected) {
+          // Offline mode: no local translation available, keep current but update translationId
+          updatedVerses.add(verse.copyWith(
+            translationId: translationId,
+          ));
+          continue;
+        }
+
+        // Online: Fetch verse with new translation from API
         final result = await repository.getVerseByKey(
           verse.verseKey,
           translationId: translationId,
@@ -173,7 +200,7 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
 
         if (result.isLeft()) {
           // Keep the original verse if fetch fails, but note the error
-          updatedVerses.add(verse);
+          updatedVerses.add(verse.copyWith(translationId: translationId));
           firstError ??= result.swap().getOrElse(() => ApiException('Unknown error')).message;
           continue;
         }
@@ -187,10 +214,36 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
           translationId: translationId,
         );
 
+        // Merge translation maps - preserve existing, add new
+        final existingTranslationMap = verse.translationByLanguage ?? {};
+        final mergedTranslationMap = <String, String>{};
+
+        // Copy existing translation entries safely
+        try {
+          for (final entry in existingTranslationMap.entries) {
+            mergedTranslationMap[entry.key] = entry.value;
+          }
+        } catch (e) {
+          // Silently handle errors
+        }
+
+        // Add new translation
+        mergedTranslationMap[translationId] = newVerse.translation;
+
         // Merge tafsir maps - preserve existing, add new
         final existingTafsirMap = verse.tafsirByTranslation ?? {};
-        final mergedTafsirMap = Map<String, String>.from(existingTafsirMap);
+        final mergedTafsirMap = <String, String>{};
 
+        // Copy existing tafsir entries safely
+        try {
+          for (final entry in existingTafsirMap.entries) {
+            mergedTafsirMap[entry.key] = entry.value;
+          }
+        } catch (e) {
+          // Silently handle errors
+        }
+
+        // Add new tafsir if available
         if (tafsirResult.isRight()) {
           final tafsirText = tafsirResult.getOrElse(() => '');
           if (tafsirText.isNotEmpty) {
@@ -198,12 +251,18 @@ class ArchiveNotifier extends StateNotifier<ArchiveState> {
           }
         }
 
-        // Create updated verse with merged tafsir map
-        updatedVerses.add(newVerse.copyWith(
+        // Create updated verse with merged translation and tafsir maps
+        final updatedVerse = newVerse.copyWith(
           isSaved: verse.isSaved,
           savedAt: verse.savedAt,
+          translationByLanguage: mergedTranslationMap.isNotEmpty ? mergedTranslationMap : null,
           tafsirByTranslation: mergedTafsirMap.isNotEmpty ? mergedTafsirMap : null,
-        ));
+        );
+
+        // Save the updated verse back to storage (persist merged data for offline use)
+        await archiveRepo.updateVerse(updatedVerse);
+
+        updatedVerses.add(updatedVerse);
       }
 
       state = state.copyWith(

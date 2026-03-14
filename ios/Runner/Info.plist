@@ -21,6 +21,20 @@
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>This app needs access to save verse audio for offline listening.</string>
 
+	<!-- AdMob App ID -->
+	<!-- Replace with your actual AdMob App ID before releasing to production -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-8500075420783419~2366432861</string>
+
+	<!-- SKAdNetworkItems for AdMob -->
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

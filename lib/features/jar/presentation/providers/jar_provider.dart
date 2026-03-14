@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/data/curated_surahs.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
+import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/connectivity_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
@@ -116,6 +117,42 @@ class JarNotifier extends StateNotifier<JarState> {
         ? CuratedSurahs.surahNumbers
         : null;
 
+    // Check connectivity
+    final isConnected = _ref.read(connectivityProvider);
+
+    if (!isConnected) {
+      // Offline mode - try to get a random verse from local storage
+      try {
+        final localVerses = await _ref.read(localStorageServiceProvider).getSavedVerses();
+        if (localVerses.isNotEmpty) {
+          final randomIndex = DateTime.now().millisecondsSinceEpoch % localVerses.length;
+          final randomVerseModel = localVerses[randomIndex];
+          final verse = randomVerseModel.toEntity();
+
+          // Reset saved state since this is a new pull
+          state = state.copyWith(
+            currentVerse: verse.copyWith(
+              isSaved: false, // Reset saved state - user hasn't saved this specific pull yet
+              translationId: translationId,
+            ),
+            isLoading: false,
+          );
+          return;
+        }
+      } catch (e) {
+        // Silently handle errors
+      }
+
+      // No local verses available, show offline message
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: null,
+        currentVerse: null,
+      );
+      return;
+    }
+
+    // Online mode - fetch from API
     final result = await _getDailyVerseUseCase(
       translationId: translationId,
       surahNumbers: surahNumbers,
@@ -127,7 +164,8 @@ class JarNotifier extends StateNotifier<JarState> {
         errorMessage: error.message,
       ),
       (verse) => state = state.copyWith(
-        currentVerse: verse,
+        // Reset saved state - this is a new verse, user needs to explicitly save it
+        currentVerse: verse.copyWith(isSaved: false),
         isLoading: false,
       ),
     );
@@ -147,6 +185,45 @@ class JarNotifier extends StateNotifier<JarState> {
         ? CuratedSurahs.surahNumbers
         : null;
 
+    // Check connectivity before pulling verse
+    final isConnected = _ref.read(connectivityProvider);
+
+    if (!isConnected) {
+      // Offline mode - try to get a random verse from local storage
+      try {
+        final localVerses = await _ref.read(localStorageServiceProvider).getSavedVerses();
+        if (localVerses.isNotEmpty) {
+          // Get a random verse from saved verses
+          final randomIndex = DateTime.now().millisecondsSinceEpoch % localVerses.length;
+          final randomVerseModel = localVerses[randomIndex];
+
+          // Convert to Verse entity
+          final verse = randomVerseModel.toEntity();
+
+          // Reset saved state since this is a new random pull
+          state = state.copyWith(
+            currentVerse: verse.copyWith(
+              isSaved: false, // Reset saved state - user hasn't saved this specific pull yet
+              translationId: translationId,
+            ),
+            isLoading: false,
+          );
+          return;
+        }
+      } catch (e) {
+        // Silently handle errors
+      }
+
+      // No local verses available, show offline message
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: null, // Don't show error in offline mode
+        currentVerse: null,
+      );
+      return;
+    }
+
+    // Online mode - fetch from API
     final result = await _pullRandomVerseUseCase(
       translationId: translationId,
       surahNumbers: surahNumbers,
@@ -162,8 +239,9 @@ class JarNotifier extends StateNotifier<JarState> {
         );
       },
       (verse) async {
+        // Reset saved state since this is a new verse pull
         state = state.copyWith(
-          currentVerse: verse,
+          currentVerse: verse.copyWith(isSaved: false),
           isLoading: false,
         );
 
@@ -191,51 +269,99 @@ class JarNotifier extends StateNotifier<JarState> {
       currentVerse: verse.copyWith(isSaved: isSaving),
     );
 
-    // If saving, fetch tafsir in both English and Indonesian
+    // If saving, fetch tafsir and translations in both English and Indonesian
     Verse verseToSave = verse;
     if (isSaving) {
       final Map<String, String> tafsirMap = {};
+      final Map<String, String> translationMap = {};
+      final existingTafsirMap = verse.tafsirByTranslation ?? {};
+      final existingTranslationMap = verse.translationByLanguage ?? {};
+      tafsirMap.addAll(existingTafsirMap);
+      translationMap.addAll(existingTranslationMap);
 
-      // Fetch English tafsir
-      final enTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
-            verse.surahNumber,
-            verse.ayahNumber,
-            translationId: 'english',
-          );
+      // Add current translation to map
+      translationMap[verse.translationId] = verse.translation;
 
-      enTafsirResult.fold(
-        (error) {
-          // Continue even if English tafsir fails
-        },
-        (tafsirText) {
-          tafsirMap['english'] = tafsirText;
-        },
-      );
+      // Fetch English tafsir and translation if not already present
+      if (!tafsirMap.containsKey('english')) {
+        final enTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
+              verse.surahNumber,
+              verse.ayahNumber,
+              translationId: 'english',
+            );
 
-      // Fetch Indonesian tafsir
-      final idTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
-            verse.surahNumber,
-            verse.ayahNumber,
-            translationId: 'indonesian',
-          );
-
-      idTafsirResult.fold(
-        (error) {
-          // Continue even if Indonesian tafsir fails
-        },
-        (tafsirText) {
-          tafsirMap['indonesian'] = tafsirText;
-        },
-      );
-
-      // Update verse with tafsir map if we got any
-      if (tafsirMap.isNotEmpty) {
-        // Merge with existing tafsir map
-        final existingMap = verse.tafsirByTranslation ?? {};
-        final mergedMap = {...existingMap, ...tafsirMap};
-        verseToSave = verse.copyWith(tafsirByTranslation: mergedMap);
-        state = state.copyWith(currentVerse: verseToSave);
+        enTafsirResult.fold(
+          (error) {
+            // Silently handle error
+          },
+          (tafsirText) {
+            if (tafsirText.isNotEmpty) {
+              tafsirMap['english'] = tafsirText;
+            }
+          },
+        );
       }
+
+      // Fetch English translation if not current and not already present
+      if (!translationMap.containsKey('english') && verse.translationId != 'english') {
+        final enVerseResult = await _ref.read(verseRepositoryProvider).getVerseByKey(
+              verse.verseKey,
+              translationId: 'english',
+            );
+
+        enVerseResult.fold(
+          (error) {
+            // Silently handle error
+          },
+          (enVerse) {
+            translationMap['english'] = enVerse.translation;
+          },
+        );
+      }
+
+      // Fetch Indonesian tafsir and translation if not already present
+      if (!tafsirMap.containsKey('indonesian')) {
+        final idTafsirResult = await _ref.read(verseRepositoryProvider).getTafsir(
+              verse.surahNumber,
+              verse.ayahNumber,
+              translationId: 'indonesian',
+            );
+
+        idTafsirResult.fold(
+          (error) {
+            // Silently handle error
+          },
+          (tafsirText) {
+            if (tafsirText.isNotEmpty) {
+              tafsirMap['indonesian'] = tafsirText;
+            }
+          },
+        );
+      }
+
+      // Fetch Indonesian translation if not current and not already present
+      if (!translationMap.containsKey('indonesian') && verse.translationId != 'indonesian') {
+        final idVerseResult = await _ref.read(verseRepositoryProvider).getVerseByKey(
+              verse.verseKey,
+              translationId: 'indonesian',
+            );
+
+        idVerseResult.fold(
+          (error) {
+            // Silently handle error
+          },
+          (idVerse) {
+            translationMap['indonesian'] = idVerse.translation;
+          },
+        );
+      }
+
+      // Always update verse with tafsir and translation maps
+      verseToSave = verse.copyWith(
+        tafsirByTranslation: tafsirMap.isNotEmpty ? tafsirMap : null,
+        translationByLanguage: translationMap.isNotEmpty ? translationMap : null,
+      );
+      state = state.copyWith(currentVerse: verseToSave);
     }
 
     final result = await _saveVerseUseCase(verseToSave);
@@ -310,7 +436,36 @@ class JarNotifier extends StateNotifier<JarState> {
 
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    // Fetch the same verse with new translation
+    // Check connectivity
+    final isConnected = _ref.read(connectivityProvider);
+
+    // Check if we already have this translation saved locally
+    final hasLocalTranslation = verse.translationByLanguage != null &&
+        verse.translationByLanguage!.containsKey(translationId);
+
+    if (!isConnected && hasLocalTranslation) {
+      // Offline mode: use locally saved translation
+      final localTranslation = verse.translationByLanguage![translationId]!;
+      state = state.copyWith(
+        currentVerse: verse.copyWith(
+          translationId: translationId,
+          translation: localTranslation,
+        ),
+        isLoading: false,
+      );
+      return;
+    }
+
+    if (!isConnected) {
+      // Offline mode: no local translation available, just update translationId
+      state = state.copyWith(
+        isLoading: false,
+        currentVerse: verse.copyWith(translationId: translationId),
+      );
+      return;
+    }
+
+    // Online mode: fetch the same verse with new translation
     final result = await _ref.read(verseRepositoryProvider).getVerseByKey(
           verse.verseKey,
           translationId: translationId,
@@ -323,7 +478,7 @@ class JarNotifier extends StateNotifier<JarState> {
       ),
       (newVerse) => state = state.copyWith(
         currentVerse: newVerse.copyWith(
-          isSaved: verse.isSaved,
+          translationId: translationId,
           tafsirByTranslation: verse.tafsirByTranslation, // Preserve existing tafsir map
         ),
         isLoading: false,

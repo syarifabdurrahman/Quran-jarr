@@ -9,6 +9,7 @@ import 'package:quran_jarr/core/services/locale_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
+import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
 import 'package:quran_jarr/features/jar/presentation/screens/jar_screen.dart';
 import 'package:quran_jarr/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -23,6 +24,7 @@ void main() async {
   await PreferencesService.instance.initialize();
   await NotificationService.instance.initialize();
   await WidgetService.instance.initialize();
+  await AdService.instance.initialize();
 
   runApp(
     const ProviderScope(

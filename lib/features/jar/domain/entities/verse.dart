@@ -21,6 +21,7 @@ class Verse with _$Verse {
     @Default('english') String translationId, // Translation language ID
     String? audioUrl,
     Map<String, String>? tafsirByTranslation, // Tafsir by translation ID (e.g., {'english': '...', 'indonesian': '...'})
+    Map<String, String>? translationByLanguage, // Translation text by language ID (e.g., {'english': '...', 'indonesian': '...'})
     @Default(false) bool isSaved,
     DateTime? savedAt,
   }) = _Verse;
@@ -49,5 +50,11 @@ class Verse with _$Verse {
   String? getTafsirForTranslation(String translationId) {
     if (tafsirByTranslation == null) return null;
     return tafsirByTranslation![translationId];
+  }
+
+  /// Get translation text for current translation ID
+  String? get currentTranslation {
+    if (translationByLanguage == null) return null;
+    return translationByLanguage![translationId];
   }
 }

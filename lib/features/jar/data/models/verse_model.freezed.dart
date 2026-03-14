@@ -32,6 +32,8 @@ mixin _$VerseModel {
   String? get audioUrl => throw _privateConstructorUsedError;
   Map<String, String>? get tafsirByTranslation =>
       throw _privateConstructorUsedError; // Tafsir by translation ID
+  Map<String, String>? get translationByLanguage =>
+      throw _privateConstructorUsedError; // Translation text by language ID
   bool get isSaved => throw _privateConstructorUsedError;
   DateTime? get savedAt => throw _privateConstructorUsedError;
 
@@ -58,6 +60,7 @@ abstract class $VerseModelCopyWith<$Res> {
       String translationId,
       String? audioUrl,
       Map<String, String>? tafsirByTranslation,
+      Map<String, String>? translationByLanguage,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -85,6 +88,7 @@ class _$VerseModelCopyWithImpl<$Res, $Val extends VerseModel>
     Object? translationId = null,
     Object? audioUrl = freezed,
     Object? tafsirByTranslation = freezed,
+    Object? translationByLanguage = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -129,6 +133,10 @@ class _$VerseModelCopyWithImpl<$Res, $Val extends VerseModel>
           ? _value.tafsirByTranslation
           : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
               as Map<String, String>?,
+      translationByLanguage: freezed == translationByLanguage
+          ? _value.translationByLanguage
+          : translationByLanguage // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -160,6 +168,7 @@ abstract class _$$VerseModelImplCopyWith<$Res>
       String translationId,
       String? audioUrl,
       Map<String, String>? tafsirByTranslation,
+      Map<String, String>? translationByLanguage,
       bool isSaved,
       DateTime? savedAt});
 }
@@ -185,6 +194,7 @@ class __$$VerseModelImplCopyWithImpl<$Res>
     Object? translationId = null,
     Object? audioUrl = freezed,
     Object? tafsirByTranslation = freezed,
+    Object? translationByLanguage = freezed,
     Object? isSaved = null,
     Object? savedAt = freezed,
   }) {
@@ -229,6 +239,10 @@ class __$$VerseModelImplCopyWithImpl<$Res>
           ? _value._tafsirByTranslation
           : tafsirByTranslation // ignore: cast_nullable_to_non_nullable
               as Map<String, String>?,
+      translationByLanguage: freezed == translationByLanguage
+          ? _value._translationByLanguage
+          : translationByLanguage // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>?,
       isSaved: null == isSaved
           ? _value.isSaved
           : isSaved // ignore: cast_nullable_to_non_nullable
@@ -255,9 +269,11 @@ class _$VerseModelImpl extends _VerseModel {
       this.translationId = 'english',
       this.audioUrl,
       final Map<String, String>? tafsirByTranslation,
+      final Map<String, String>? translationByLanguage,
       this.isSaved = false,
       this.savedAt})
       : _tafsirByTranslation = tafsirByTranslation,
+        _translationByLanguage = translationByLanguage,
         super._();
 
   factory _$VerseModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -296,6 +312,19 @@ class _$VerseModelImpl extends _VerseModel {
   }
 
 // Tafsir by translation ID
+  final Map<String, String>? _translationByLanguage;
+// Tafsir by translation ID
+  @override
+  Map<String, String>? get translationByLanguage {
+    final value = _translationByLanguage;
+    if (value == null) return null;
+    if (_translationByLanguage is EqualUnmodifiableMapView)
+      return _translationByLanguage;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+// Translation text by language ID
   @override
   @JsonKey()
   final bool isSaved;
@@ -304,7 +333,7 @@ class _$VerseModelImpl extends _VerseModel {
 
   @override
   String toString() {
-    return 'VerseModel(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsirByTranslation: $tafsirByTranslation, isSaved: $isSaved, savedAt: $savedAt)';
+    return 'VerseModel(surahNumber: $surahNumber, ayahNumber: $ayahNumber, arabicText: $arabicText, translation: $translation, surahName: $surahName, surahNameTranslation: $surahNameTranslation, verseKey: $verseKey, translationId: $translationId, audioUrl: $audioUrl, tafsirByTranslation: $tafsirByTranslation, translationByLanguage: $translationByLanguage, isSaved: $isSaved, savedAt: $savedAt)';
   }
 
   @override
@@ -332,6 +361,8 @@ class _$VerseModelImpl extends _VerseModel {
                 other.audioUrl == audioUrl) &&
             const DeepCollectionEquality()
                 .equals(other._tafsirByTranslation, _tafsirByTranslation) &&
+            const DeepCollectionEquality()
+                .equals(other._translationByLanguage, _translationByLanguage) &&
             (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
             (identical(other.savedAt, savedAt) || other.savedAt == savedAt));
   }
@@ -350,6 +381,7 @@ class _$VerseModelImpl extends _VerseModel {
       translationId,
       audioUrl,
       const DeepCollectionEquality().hash(_tafsirByTranslation),
+      const DeepCollectionEquality().hash(_translationByLanguage),
       isSaved,
       savedAt);
 
@@ -379,6 +411,7 @@ abstract class _VerseModel extends VerseModel {
       final String translationId,
       final String? audioUrl,
       final Map<String, String>? tafsirByTranslation,
+      final Map<String, String>? translationByLanguage,
       final bool isSaved,
       final DateTime? savedAt}) = _$VerseModelImpl;
   const _VerseModel._() : super._();
@@ -407,6 +440,8 @@ abstract class _VerseModel extends VerseModel {
   @override
   Map<String, String>? get tafsirByTranslation;
   @override // Tafsir by translation ID
+  Map<String, String>? get translationByLanguage;
+  @override // Translation text by language ID
   bool get isSaved;
   @override
   DateTime? get savedAt;

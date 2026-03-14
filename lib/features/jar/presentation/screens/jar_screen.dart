@@ -20,6 +20,7 @@ import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
+import 'package:quran_jarr/core/services/ad_service.dart';
 
 /// Jar Screen
 /// Main screen with jar visualization and verse display
@@ -108,6 +109,9 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   void _showSettingsDialog(BuildContext context) {
+    // Show interstitial ad (respecting throttling/cooldown)
+    AdService.instance.showInterstitialAd();
+
     showDialog(
       context: context,
       builder: (context) => _SettingsDialog(),
