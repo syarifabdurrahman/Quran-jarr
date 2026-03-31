@@ -303,6 +303,18 @@ class PreferencesService {
     await _prefsBox.put('jar_type', type);
   }
 
+  // ==================== Rate Us Preferences ====================
+
+  /// Get last rate us shown date (ISO 8601 string)
+  String? getLastRateUsShown() {
+    return _prefsBox.get('last_rate_us_shown') as String?;
+  }
+
+  /// Set last rate us shown date
+  Future<void> setLastRateUsShown(String date) async {
+    await _prefsBox.put('last_rate_us_shown', date);
+  }
+
   // ==================== Clear Preferences ====================
 
   /// Clear all preferences

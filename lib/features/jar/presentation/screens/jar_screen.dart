@@ -8,6 +8,7 @@ import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/providers/streak_provider.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
+import 'package:quran_jarr/core/services/rate_us_service.dart';
 import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
@@ -182,6 +183,17 @@ class _JarScreenState extends ConsumerState<JarScreen>
             ),
           );
         }
+      }
+
+      // Show rate us dialog occasionally (after every 5 verses)
+      final versesReadToday = ref.read(streakProvider).versesReadToday;
+      if (versesReadToday % 5 == 0 && mounted) {
+        // Delay to not interrupt the verse reading experience
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            RateUsService.instance.showRateUsDialog(context);
+          }
+        });
       }
     }
 
