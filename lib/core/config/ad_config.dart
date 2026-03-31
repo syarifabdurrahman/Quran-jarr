@@ -17,8 +17,10 @@ class AdConfig {
   // Interstitial Ad Unit IDs
   // Replace with your actual Interstitial Ad Unit ID from AdMob dashboard
   // Format: ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
-  static const String androidInterstitialAdUnitId = 'ca-app-pub-8500075420783419/6070232941';
-  static const String iosInterstitialAdUnitId = 'ca-app-pub-8500075420783419/6070232941';
+  static const String androidInterstitialAdUnitId =
+      'ca-app-pub-8500075420783419/6070232941';
+  static const String iosInterstitialAdUnitId =
+      'ca-app-pub-8500075420783419/6070232941';
 
   /// Get the appropriate App ID based on the current platform
   static String get appId {
@@ -34,5 +36,8 @@ class AdConfig {
 
   /// Minimum time between interstitial ad shows (in seconds)
   /// This prevents ads from showing too rapidly
-  static const int minIntervalBetweenAds = 60; // 1 minute minimum
+  static const int minIntervalBetweenAds = 30; // 30 seconds minimum
+
+  /// Show interstitial ad every N verses read
+  static const int versesBetweenAds = 5;
 }

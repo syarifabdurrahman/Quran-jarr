@@ -6,6 +6,7 @@ import 'package:quran_jarr/core/config/translations.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
@@ -62,6 +63,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     await ref
         .read(preferencesNotifierProvider.notifier)
         .setOnboardingCompleted(true);
+
+    // Show interstitial ad after onboarding (delayed to not interrupt)
+    Future.delayed(const Duration(seconds: 1), () {
+      AdService.instance.showInterstitialAd();
+    });
 
     // Don't navigate - let the provider change trigger a rebuild of the main app
   }

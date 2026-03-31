@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/config/ad_config.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/providers/streak_provider.dart';
+import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/rate_us_service.dart';
@@ -36,6 +38,7 @@ class JarScreen extends ConsumerStatefulWidget {
 class _JarScreenState extends ConsumerState<JarScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  final GlobalKey _verseCardKey = GlobalKey();
 
   @override
   void initState() {
@@ -185,12 +188,21 @@ class _JarScreenState extends ConsumerState<JarScreen>
       }
 
       // Show rate us dialog occasionally (after every 5 verses, but not on 0)
-      final versesReadToday = ref.read(streakProvider).versesReadToday;
-      if (versesReadToday > 0 && versesReadToday % 5 == 0 && mounted) {
+      final streakState = ref.read(streakProvider);
+      final versesReadToday = streakState.versesReadToday;
+      if (versesReadToday > 0 &&
+          versesReadToday % AdConfig.versesBetweenAds == 0 &&
+          mounted) {
         // Delay to not interrupt the verse reading experience
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             RateUsService.instance.showRateUsDialog(context);
+          }
+        });
+        // Show interstitial ad after rate us dialog
+        Future.delayed(const Duration(seconds: 4), () {
+          if (mounted) {
+            AdService.instance.showInterstitialAd();
           }
         });
       }
@@ -200,7 +212,11 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   Future<void> _shareVerse(Verse verse) async {
-    await ShareService.instance.showShareOptions(context, verse);
+    await ShareService.instance.showShareOptions(
+      context,
+      verse,
+      cardKey: _verseCardKey,
+    );
   }
 
   @override
@@ -377,16 +393,19 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
                     // Verse Card with breath moment animation
                     if (jarState.currentVerse != null)
-                      VerseCardWidget(
-                            verse: jarState.currentVerse!,
-                            onSaveToggle: () {
-                              ref
-                                  .read(jarNotifierProvider.notifier)
-                                  .toggleSaveVerse();
-                            },
-                            onShare: () {
-                              _shareVerse(jarState.currentVerse!);
-                            },
+                      RepaintBoundary(
+                            key: _verseCardKey,
+                            child: VerseCardWidget(
+                              verse: jarState.currentVerse!,
+                              onSaveToggle: () {
+                                ref
+                                    .read(jarNotifierProvider.notifier)
+                                    .toggleSaveVerse();
+                              },
+                              onShare: () {
+                                _shareVerse(jarState.currentVerse!);
+                              },
+                            ),
                           )
                           .animate()
                           // Breath moment: fade in slowly

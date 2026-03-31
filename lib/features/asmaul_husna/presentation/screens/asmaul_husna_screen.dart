@@ -84,6 +84,13 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
         ),
         actions: [
           IconButton(
+            onPressed: () {
+              setState(() => _currentIndex = 0);
+            },
+            icon: Icon(Icons.refresh_rounded, color: primaryColor),
+            tooltip: 'Reset to first',
+          ),
+          IconButton(
             onPressed: () async {
               final translation = isIndonesian
                   ? AvailableTranslations.allTranslations.firstWhere(

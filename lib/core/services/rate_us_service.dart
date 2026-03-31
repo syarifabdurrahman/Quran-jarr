@@ -25,10 +25,15 @@ class RateUsService {
 
     final now = DateTime.now();
     final lastShownDate = DateTime.parse(lastShown);
-    final daysSinceLastShown = now.difference(lastShownDate).inDays;
 
-    // Show if at least 1 day has passed
-    return daysSinceLastShown >= 1;
+    // Check if it's a different day
+    final isDifferentDay =
+        now.year != lastShownDate.year ||
+        now.month != lastShownDate.month ||
+        now.day != lastShownDate.day;
+
+    // Show if it's a different day OR if never shown
+    return isDifferentDay || lastShown.isEmpty;
   }
 
   /// Mark rate us as shown today

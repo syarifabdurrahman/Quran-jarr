@@ -50,11 +50,8 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
       child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -133,16 +130,11 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               ),
               const SizedBox(height: 16),
               // Arabic verse
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Text(
-                  verse.arabicText,
-                  style: AppTextStyles.amiriVerseLarge(arabicFontMultiplier),
-                  textAlign: TextAlign.right,
-                  textDirection: TextDirection.rtl,
-                  maxLines: 10,
-                ),
+              Text(
+                verse.arabicText,
+                style: AppTextStyles.amiriVerseLarge(arabicFontMultiplier),
+                textAlign: TextAlign.right,
+                textDirection: TextDirection.rtl,
               ),
               const SizedBox(height: 16),
               // Divider

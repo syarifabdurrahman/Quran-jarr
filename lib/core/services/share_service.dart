@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:screenshot/screenshot.dart';
@@ -36,7 +37,11 @@ class ShareService {
   }
 
   /// Share verse as image to WhatsApp
-  Future<void> shareToWhatsApp(Verse verse, GlobalKey cardKey) async {
+  Future<void> shareToWhatsApp(
+    Verse verse,
+    GlobalKey cardKey,
+    BuildContext context,
+  ) async {
     final image = await _captureCard(cardKey);
     if (image != null) {
       await Share.shareXFiles(
@@ -44,21 +49,31 @@ class ShareService {
         subject:
             '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
+      _showSuccessSnackBar(context, 'Shared to WhatsApp!');
     }
   }
 
   /// Share verse as image to Facebook
-  Future<void> shareToFacebook(Verse verse, GlobalKey cardKey) async {
+  Future<void> shareToFacebook(
+    Verse verse,
+    GlobalKey cardKey,
+    BuildContext context,
+  ) async {
     final image = await _captureCard(cardKey);
     if (image != null) {
       await Share.shareXFiles([
         XFile(image.path, mimeType: 'image/png'),
       ], subject: 'Quran Verse - ${verse.arabicSurahName}');
+      _showSuccessSnackBar(context, 'Shared to Facebook!');
     }
   }
 
   /// Share verse as image with text
-  Future<void> shareAsImage(Verse verse, GlobalKey cardKey) async {
+  Future<void> shareAsImage(
+    Verse verse,
+    GlobalKey cardKey,
+    BuildContext context,
+  ) async {
     final image = await _captureCard(cardKey);
     if (image != null) {
       await Share.shareXFiles(
@@ -68,11 +83,28 @@ class ShareService {
         text:
             '${verse.translation}\n\n${verse.surahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
+      _showSuccessSnackBar(context, 'Image shared successfully!');
+    }
+  }
+
+  void _showSuccessSnackBar(BuildContext context, String message) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.sageGreen,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
   /// Share verse as text only
-  Future<void> shareAsText(Verse verse) async {
+  Future<void> shareAsText(Verse verse, BuildContext context) async {
     final shareText =
         '''
 ${verse.arabicText}
@@ -84,6 +116,66 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
 📱 Quran Jarr - Daily Quran Inspiration''';
 
     await Share.share(shareText.trim(), subject: 'Quran Verse');
+    _showSuccessSnackBar(context, 'Verse shared successfully!');
+  }
+
+  /// Save verse card image to gallery
+  Future<void> saveToGallery(
+    Verse verse,
+    GlobalKey cardKey,
+    BuildContext context,
+  ) async {
+    final image = await _captureCard(cardKey);
+    if (image != null) {
+      try {
+        final result = await ImageGallerySaverPlus.saveImage(
+          image.readAsBytesSync(),
+          quality: 100,
+          name: 'quran_verse_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Image saved to gallery!',
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: AppColors.sageGreen,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to save image',
+                style: AppTextStyles.loraBodySmall().copyWith(
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// Share to Instagram Stories
+  Future<void> shareToInstagramStory(Verse verse, GlobalKey cardKey) async {
+    final image = await _captureCard(cardKey);
+    if (image != null) {
+      await Share.shareXFiles([
+        XFile(image.path, mimeType: 'image/png'),
+      ], subject: 'Quran Verse - ${verse.arabicSurahName}');
+    }
   }
 
   /// Copy verse text to clipboard
@@ -159,114 +251,147 @@ class _ShareOptionsSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textColor.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textColor.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Text(
-                    'Share Verse',
-                    style: AppTextStyles.loraTitle().copyWith(color: textColor),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: iconColor),
-                  ),
-                ],
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Text(
+                      'Share Verse',
+                      style: AppTextStyles.loraTitle().copyWith(
+                        color: textColor,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: iconColor),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            // Share options
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // WhatsApp
-                  if (cardKey != null)
+              const Divider(height: 1),
+              // Share options
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // WhatsApp
+                    if (cardKey != null)
+                      _ShareOption(
+                        iconData: Icons.chat_bubble,
+                        title: 'WhatsApp',
+                        color: const Color(0xFF25D366),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ShareService.instance.shareToWhatsApp(
+                            verse,
+                            cardKey!,
+                            context,
+                          );
+                        },
+                      ),
+                    // Facebook
+                    if (cardKey != null)
+                      _ShareOption(
+                        iconData: Icons.facebook,
+                        title: 'Facebook',
+                        color: const Color(0xFF1877F2),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ShareService.instance.shareToFacebook(
+                            verse,
+                            cardKey!,
+                            context,
+                          );
+                        },
+                      ),
+                    // Instagram
+                    if (cardKey != null)
+                      _ShareOption(
+                        iconData: Icons.camera_alt,
+                        title: 'Instagram Stories',
+                        color: const Color(0xFFE4405F),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ShareService.instance.shareAsImage(
+                            verse,
+                            cardKey!,
+                            context,
+                          );
+                        },
+                      ),
+                    // Save to Gallery
+                    if (cardKey != null)
+                      _ShareOption(
+                        iconData: Icons.download,
+                        title: 'Save to Gallery',
+                        color: const Color(0xFF4CAF50),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ShareService.instance.saveToGallery(
+                            verse,
+                            cardKey!,
+                            context,
+                          );
+                        },
+                      ),
+                    // More (general share)
+                    if (cardKey != null)
+                      _ShareOption(
+                        iconData: Icons.share,
+                        title: 'Share as Image',
+                        color: AppColors.sageGreen,
+                        onTap: () {
+                          Navigator.pop(context);
+                          ShareService.instance.shareAsImage(
+                            verse,
+                            cardKey!,
+                            context,
+                          );
+                        },
+                      ),
+                    // Share as text
                     _ShareOption(
-                      icon: 'assets/icon-whatsapp.png',
-                      iconData: Icons.message,
-                      title: 'WhatsApp',
-                      color: const Color(0xFF25D366),
+                      iconData: Icons.text_snippet_outlined,
+                      title: 'Share as Text',
+                      color: AppColors.deepUmber,
                       onTap: () {
                         Navigator.pop(context);
-                        ShareService.instance.shareToWhatsApp(verse, cardKey!);
+                        ShareService.instance.shareAsText(verse, context);
                       },
                     ),
-                  // Facebook
-                  if (cardKey != null)
+                    // Copy to clipboard
                     _ShareOption(
-                      icon: 'assets/icon-facebook.png',
-                      iconData: Icons.facebook,
-                      title: 'Facebook',
-                      color: const Color(0xFF1877F2),
+                      iconData: Icons.copy,
+                      title: 'Copy to Clipboard',
+                      color: AppColors.terracotta,
                       onTap: () {
                         Navigator.pop(context);
-                        ShareService.instance.shareToFacebook(verse, cardKey!);
+                        ShareService.instance.copyToClipboard(verse, context);
                       },
                     ),
-                  // Instagram
-                  if (cardKey != null)
-                    _ShareOption(
-                      icon: 'assets/icon-instagram.png',
-                      iconData: Icons.camera_alt,
-                      title: 'Instagram Stories',
-                      color: const Color(0xFFE4405F),
-                      onTap: () {
-                        Navigator.pop(context);
-                        ShareService.instance.shareAsImage(verse, cardKey!);
-                      },
-                    ),
-                  // More (general share)
-                  if (cardKey != null)
-                    _ShareOption(
-                      iconData: Icons.share,
-                      title: 'Share as Image',
-                      color: AppColors.sageGreen,
-                      onTap: () {
-                        Navigator.pop(context);
-                        ShareService.instance.shareAsImage(verse, cardKey!);
-                      },
-                    ),
-                  // Share as text
-                  _ShareOption(
-                    iconData: Icons.text_snippet_outlined,
-                    title: 'Share as Text',
-                    color: AppColors.deepUmber,
-                    onTap: () {
-                      Navigator.pop(context);
-                      ShareService.instance.shareAsText(verse);
-                    },
-                  ),
-                  // Copy to clipboard
-                  _ShareOption(
-                    iconData: Icons.copy,
-                    title: 'Copy to Clipboard',
-                    color: AppColors.terracotta,
-                    onTap: () {
-                      Navigator.pop(context);
-                      ShareService.instance.copyToClipboard(verse, context);
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
