@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/archive/presentation/providers/archive_provider.dart';
@@ -61,6 +62,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
 
   void _deleteVerse(Verse verse) {
     ref.read(archiveNotifierProvider.notifier).deleteVerse(verse.verseKey);
+    ref.read(jarShakeTriggerProvider.notifier).state++;
   }
 
   List<Verse> _getThisDayLastMonth(List<Verse> verses) {

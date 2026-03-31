@@ -220,3 +220,6 @@ final reducedMotionProvider = Provider<bool>((ref) {
 final jarTypeProvider = Provider<int>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getJarType();
 });
+
+/// Jar Shake Trigger Provider - triggers shake animation when verse is removed
+final jarShakeTriggerProvider = StateProvider<int>((ref) => 0);

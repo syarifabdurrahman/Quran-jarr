@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,12 +13,14 @@ class JarWidget extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
   final bool isEmpty;
   final bool isAnimating;
+  final bool shouldShake;
 
   const JarWidget({
     super.key,
     this.onTap,
     this.isEmpty = false,
     this.isAnimating = false,
+    this.shouldShake = false,
   });
 
   @override
@@ -36,7 +39,7 @@ class _JarWidgetState extends ConsumerState<JarWidget>
     super.initState();
     _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 100),
     );
     _paperController = AnimationController(
       vsync: this,
@@ -51,13 +54,27 @@ class _JarWidgetState extends ConsumerState<JarWidget>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(JarWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.shouldShake && !oldWidget.shouldShake) {
+      _triggerShakeAnimation();
+    }
+  }
+
+  Future<void> _triggerShakeAnimation() async {
+    await _shakeController.forward();
+    await _shakeController.reverse();
+  }
+
   Future<void> _handleTap() async {
     if (_showPaperSlip) return;
 
     setState(() => _showPaperSlip = true);
 
-    // Shake animation
+    // Simple shake
     await _shakeController.forward();
+    await _shakeController.reverse();
 
     // Paper slip comes out
     await _paperController.forward();
@@ -107,15 +124,29 @@ class _JarWidgetState extends ConsumerState<JarWidget>
                       scale: _isPressed ? 0.95 : 1.0,
                       duration: const Duration(milliseconds: 100),
                       curve: Curves.easeInOut,
-                      child: SizedBox(
-                        width: jarWidth,
-                        height: jarHeight,
-                        child: CustomPaint(
-                          painter: JarPainterFactory.create(
-                            type: JarType.values[ref.watch(jarTypeProvider)],
-                            isEmpty: widget.isEmpty,
-                            isDark:
-                                Theme.of(context).brightness == Brightness.dark,
+                      child: AnimatedBuilder(
+                        animation: _shakeController,
+                        builder: (context, child) {
+                          final shake =
+                              sin(_shakeController.value * 3.14159 * 4) *
+                              10 *
+                              (1 - _shakeController.value);
+                          return Transform.translate(
+                            offset: Offset(shake, 0),
+                            child: child,
+                          );
+                        },
+                        child: SizedBox(
+                          width: jarWidth,
+                          height: jarHeight,
+                          child: CustomPaint(
+                            painter: JarPainterFactory.create(
+                              type: JarType.values[ref.watch(jarTypeProvider)],
+                              isEmpty: widget.isEmpty,
+                              isDark:
+                                  Theme.of(context).brightness ==
+                                  Brightness.dark,
+                            ),
                           ),
                         ),
                       ),

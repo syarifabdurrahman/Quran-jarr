@@ -78,6 +78,10 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
         title: Text('Asmaul Husna', style: AppTextStyles.loraHeading()),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryColor),
+        ),
         actions: [
           IconButton(
             onPressed: () async {
@@ -270,8 +274,8 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
         : (isDark ? AppColors.darkElevated : const Color(0xFFE5E0D8));
 
     return Container(
-      width: 180,
-      height: 270,
+      width: 170,
+      height: 250,
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -301,49 +305,61 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
     int index,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Asmaul Husna (${index + 1}/99)',
             style: AppTextStyles.loraCaption().copyWith(
               color: primaryColor.withValues(alpha: 0.7),
-            ),
-          ),
-          const Spacer(),
-
-          Text(
-            data['arabic']!,
-            style: const TextStyle(
-              fontSize: 38,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Amiri',
-            ),
-            textAlign: TextAlign.center,
-            textDirection: TextDirection.rtl,
-          ),
-          const SizedBox(height: 12),
-
-          Text(
-            data['latin']!,
-            style: AppTextStyles.loraBodyLarge().copyWith(
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
+              fontSize: 10,
             ),
           ),
           const SizedBox(height: 8),
 
-          Text(
-            meaning,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.loraBodySmall().copyWith(
-              color: AppColors.textSecondary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              data['arabic']!,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Amiri',
+              ),
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
-          const Spacer(),
+          const SizedBox(height: 6),
+
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              data['latin']!,
+              style: AppTextStyles.loraBodyMedium().copyWith(
+                fontWeight: FontWeight.w600,
+                color: primaryColor,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          Flexible(
+            child: Text(
+              meaning,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.loraCaption().copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
