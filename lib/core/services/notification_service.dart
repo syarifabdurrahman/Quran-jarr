@@ -7,6 +7,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
+import 'package:quran_jarr/core/services/notification_messages.dart';
+import 'package:quran_jarr/core/utils/timezone_helper.dart';
 import 'package:quran_jarr/core/data/surah_names.dart';
 import 'package:quran_jarr/features/jar/data/datasources/quran_api_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
@@ -66,12 +68,8 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // Initialize timezone with latest data
-    tz_data.initializeTimeZones();
-
-    // Set local timezone to device's timezone
-    final localTimeZone = _getTimeZoneByOffset(DateTime.now().timeZoneOffset);
-    tz.setLocalLocation(tz.getLocation(localTimeZone));
+    // Initialize timezone using helper
+    await TimezoneHelper.initialize();
 
     // Android initialization settings
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -80,10 +78,10 @@ class NotificationService {
     // iOS/macOS initialization settings
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     // Linux initialization settings
     final LinuxInitializationSettings initializationSettingsLinux =
@@ -92,11 +90,11 @@ class NotificationService {
     // Combined initialization settings
     final InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-      macOS: initializationSettingsDarwin,
-      linux: initializationSettingsLinux,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+          macOS: initializationSettingsDarwin,
+          linux: initializationSettingsLinux,
+        );
 
     // Initialize the plugin
     await _notifications.initialize(
@@ -140,8 +138,10 @@ class NotificationService {
   /// Request Android permissions
   Future<void> _requestAndroidPermissions() async {
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        _notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+        _notifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
 
     await androidImplementation?.requestNotificationsPermission();
     await androidImplementation?.requestExactAlarmsPermission();
@@ -164,7 +164,8 @@ class NotificationService {
   Future<bool> requestPermission() async {
     final android = _notifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (android != null) {
       final result = await android.requestNotificationsPermission();
@@ -178,7 +179,8 @@ class NotificationService {
   Future<bool> isPermissionGranted() async {
     final android = _notifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     if (android == null) return true;
 
@@ -215,7 +217,10 @@ class NotificationService {
   }
 
   /// Schedule daily notification
-  Future<void> scheduleDailyNotification(TimeOfDay time, {bool testMode = false}) async {
+  Future<void> scheduleDailyNotification(
+    TimeOfDay time, {
+    bool testMode = false,
+  }) async {
     if (!_initialized) await initialize();
 
     // Ensure permission is granted
@@ -243,37 +248,40 @@ class NotificationService {
 
     await verseResult.fold(
       (error) async {
-        // If fetch fails, schedule with a default message
-        await _scheduleNotification(
-          time,
-          'Quran Jarr',
-          'Tap to receive your daily verse from the Quran',
-          testMode: testMode,
-        );
+        // If fetch fails, schedule with personalized fallback message
+        final (title, body) = NotificationMessages.getFallbackNotification();
+        await _scheduleNotification(time, title, body, testMode: testMode);
       },
       (verse) async {
         // Save the verse to local storage for retrieval when notification is tapped
         await LocalStorageService.instance.saveNotificationVerse(verse);
 
-        // Create notification details with verse
-        final title = getArabicSurahName(verse.surahNumber);
+        // Create personalized notification with verse preview
+        final surahName = getArabicSurahName(verse.surahNumber);
         final reference = '${verse.surahNumber}:${verse.ayahNumber}';
-        final body = verse.translation.length > 100
+        final preview = verse.translation.length > 100
             ? '${verse.translation.substring(0, 100)}...'
             : verse.translation;
+
+        // Get personalized notification content
+        final (title, body) = NotificationMessages.getPersonalizedNotification(
+          surahName: surahName,
+          verseReference: reference,
+          versePreview: preview,
+        );
 
         // Update the widget with the new verse
         await WidgetService.instance.updateWidget(
           arabicText: verse.arabicText,
           translation: verse.translation,
-          surahName: title,
+          surahName: surahName,
           surahNumber: verse.surahNumber,
           ayahNumber: verse.ayahNumber,
         );
 
         await _scheduleNotification(
           time,
-          '$title ($reference)',
+          title,
           body,
           payload: 'daily_verse_${verse.surahNumber}_${verse.ayahNumber}',
           testMode: testMode,
@@ -290,13 +298,12 @@ class NotificationService {
     String? payload,
     bool testMode = false,
   }) async {
-    final now = tz.TZDateTime.now(tz.local);
+    final now = TimezoneHelper.now();
 
     // For test mode, schedule every 5 minutes from now
     final scheduledTime = testMode
         ? now.add(const Duration(minutes: 5))
-        : tz.TZDateTime(
-            tz.local,
+        : TimezoneHelper.createDateTime(
             now.year,
             now.month,
             now.day,
@@ -309,19 +316,22 @@ class NotificationService {
         ? scheduledTime.add(const Duration(days: 1))
         : scheduledTime;
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      testMode ? 'test_verse_channel' : 'daily_verse_channel',
-      testMode ? 'Test Verse' : 'Daily Verse',
-      channelDescription: testMode
-          ? 'Test notifications (every 5 minutes)'
-          : 'Daily verse notifications from Quran Jarr',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: false,
-      icon: '@mipmap/ic_launcher',
-      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      styleInformation: const BigTextStyleInformation(''),
-    );
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          testMode ? 'test_verse_channel' : 'daily_verse_channel',
+          testMode ? 'Test Verse' : 'Daily Verse',
+          channelDescription: testMode
+              ? 'Test notifications (every 5 minutes)'
+              : 'Daily verse notifications from Quran Jarr',
+          importance: Importance.defaultImportance, // Gentler notification
+          priority: Priority.defaultPriority, // Gentler priority
+          showWhen: false,
+          icon: '@mipmap/ic_launcher',
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          styleInformation: const BigTextStyleInformation(''),
+          enableVibration: true,
+          playSound: true,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,

@@ -13,6 +13,7 @@ import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/utils/responsive_utils.dart';
+import 'package:quran_jarr/core/utils/timezone_helper.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
@@ -1479,36 +1480,23 @@ class _CountdownTimerState extends State<_CountdownTimer> {
   void initState() {
     super.initState();
     _calculateTimeUntilMidnight();
-    // Update every minute
+    // Update every 30 seconds for more accuracy
     _startTimer();
   }
 
   void _calculateTimeUntilMidnight() {
-    final now = DateTime.now();
-    final midnight = DateTime(now.year, now.month, now.day + 1);
     setState(() {
-      _timeUntilMidnight = midnight.difference(now);
+      _timeUntilMidnight = TimezoneHelper.timeUntilMidnight();
     });
   }
 
   void _startTimer() {
-    Future.delayed(const Duration(minutes: 1), () {
+    Future.delayed(const Duration(seconds: 30), () {
       if (mounted) {
         _calculateTimeUntilMidnight();
         _startTimer();
       }
     });
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else {
-      return '${minutes}m';
-    }
   }
 
   @override
@@ -1540,7 +1528,7 @@ class _CountdownTimerState extends State<_CountdownTimer> {
           ),
           const SizedBox(width: 8),
           Text(
-            'Next verse in: ${_formatDuration(_timeUntilMidnight)}',
+            'Next verse in: ${TimezoneHelper.formatDuration(_timeUntilMidnight)}',
             style: AppTextStyles.loraBodySmall().copyWith(
               color: textColor,
               fontWeight: FontWeight.w500,

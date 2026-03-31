@@ -64,27 +64,27 @@ A daily motivation jar for Quran verses - users tap a jar to receive a verse eac
 - [ ] Achievement badges
 - [ ] Share streak progress
 
-### 9. Archive Enhancement
-- [ ] "This day last month" feature
-- [ ] Verse of the week/month
-- [ ] Sort by mood/topic
-- [ ] Search by surah or keyword
+### 9. Archive Enhancement ✅
+- [x] "This day last month" feature
+- [x] Verse of the week/month
+- [x] Sort by date/surah
+- [x] Search by surah or keyword
 
-### 10. Notification Experience
-- [ ] Personalized notification messages
-- [ ] Time-aware notifications
-- [ ] Gentle reminder style
-- [ ] Notification with verse preview
+### 10. Notification Experience ✅
+- [x] Personalized notification messages
+- [x] Time-aware notifications
+- [x] Gentle reminder style
+- [x] Notification with verse preview
 
 ---
 
 ## Low Priority
 
-### 11. Visual Polish
+### 11. Visual Polish ✅
 - [ ] Jar fills up with paper slips over time
-- [ ] Different jar themes/seasons
+- [x] Different jar themes/seasons (4 jar types)
 - [ ] Animated background
-- [ ] Particle effects on tap
+- [x] Particle effects on tap
 
 ### 12. Social Features
 - [ ] Share streak with friends
@@ -115,6 +115,7 @@ A daily motivation jar for Quran verses - users tap a jar to receive a verse eac
 - Appearance section with theme selector
 - Accessibility section with reduced motion toggle
 - Full settings screen in navbar
+- Jar style selector (4 types)
 
 ### ✅ Interaction Polish
 - Haptic feedback on jar tap
@@ -170,6 +171,22 @@ A daily motivation jar for Quran verses - users tap a jar to receive a verse eac
 - Home, Stats, Archive, Settings, About
 - Style7 navbar with theme-aware colors
 
+### ✅ Jar Customization
+- 4 jar styles: Classic, Vintage, Modern, Ornate
+- Jar type selector in settings
+- Theme-aware jar colors
+
+### ✅ Visual Polish
+- Particle effects on jar tap
+- Different jar themes/designs
+- Smoother animations
+
+### ✅ Archive Enhancement
+- "This day last month" feature
+- Verse of the week
+- Sort options (newest, oldest, by surah)
+- Enhanced search
+
 ---
 
 ## Metrics to Track
@@ -185,6 +202,7 @@ A daily motivation jar for Quran verses - users tap a jar to receive a verse eac
 - Share rate
 - Tafsir view rate
 - Notification click rate
+- Jar type preference distribution
 
 ---
 

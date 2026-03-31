@@ -8,8 +8,26 @@ import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
 
+/// Sort options for archive
+enum SortOption {
+  newest,
+  oldest,
+  surah;
+
+  String get displayName {
+    switch (this) {
+      case SortOption.newest:
+        return 'Newest First';
+      case SortOption.oldest:
+        return 'Oldest First';
+      case SortOption.surah:
+        return 'By Surah';
+    }
+  }
+}
+
 /// Archive Screen
-/// Displays all saved/favorite verses
+/// Displays all saved/favorite verses with enhanced features
 class ArchiveScreen extends ConsumerStatefulWidget {
   const ArchiveScreen({super.key});
 
@@ -19,6 +37,7 @@ class ArchiveScreen extends ConsumerStatefulWidget {
 
 class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   final TextEditingController _searchController = TextEditingController();
+  SortOption _currentSort = SortOption.newest;
 
   @override
   void dispose() {
@@ -85,6 +104,61 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     );
   }
 
+  /// Get verses from this day last month
+  List<Verse> _getThisDayLastMonth(List<Verse> verses) {
+    final now = DateTime.now();
+    final lastMonth = DateTime(now.year, now.month - 1, now.day);
+
+    return verses.where((verse) {
+      if (verse.savedAt == null) return false;
+      final savedDate = verse.savedAt!;
+      return savedDate.year == lastMonth.year &&
+          savedDate.month == lastMonth.month &&
+          savedDate.day == lastMonth.day;
+    }).toList();
+  }
+
+  /// Get verse of the week (most recent from this week)
+  Verse? _getVerseOfTheWeek(List<Verse> verses) {
+    if (verses.isEmpty) return null;
+
+    final now = DateTime.now();
+    final weekAgo = now.subtract(const Duration(days: 7));
+
+    final thisWeekVerses = verses.where((verse) {
+      if (verse.savedAt == null) return false;
+      return verse.savedAt!.isAfter(weekAgo);
+    }).toList();
+
+    if (thisWeekVerses.isEmpty) return null;
+    return thisWeekVerses.first;
+  }
+
+  /// Get sorted verses
+  List<Verse> _getSortedVerses(List<Verse> verses) {
+    final sorted = List<Verse>.from(verses);
+
+    switch (_currentSort) {
+      case SortOption.newest:
+        sorted.sort((a, b) {
+          if (a.savedAt == null || b.savedAt == null) return 0;
+          return b.savedAt!.compareTo(a.savedAt!);
+        });
+        break;
+      case SortOption.oldest:
+        sorted.sort((a, b) {
+          if (a.savedAt == null || b.savedAt == null) return 0;
+          return a.savedAt!.compareTo(b.savedAt!);
+        });
+        break;
+      case SortOption.surah:
+        sorted.sort((a, b) => a.surahNumber.compareTo(b.surahNumber));
+        break;
+    }
+
+    return sorted;
+  }
+
   @override
   Widget build(BuildContext context) {
     final archiveState = ref.watch(archiveNotifierProvider);
@@ -97,6 +171,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
         ? AppColors.darkElevated
         : AppColors.softSand;
     final errorColor = AppColors.error;
+
+    final sortedVerses = _getSortedVerses(archiveState.savedVerses);
+    final thisDayLastMonth = _getThisDayLastMonth(archiveState.savedVerses);
+    final verseOfTheWeek = _getVerseOfTheWeek(archiveState.savedVerses);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -113,19 +191,6 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 ),
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.arrow_back_ios_new,
-                          color: primaryColor,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ),
                     Expanded(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
@@ -153,6 +218,36 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                         constraints: const BoxConstraints(),
                       ),
                     ),
+                    // Sort button
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: PopupMenuButton<SortOption>(
+                        icon: Icon(Icons.sort, color: primaryColor),
+                        onSelected: (option) {
+                          setState(() => _currentSort = option);
+                        },
+                        itemBuilder: (context) =>
+                            SortOption.values.map((option) {
+                              return PopupMenuItem(
+                                value: option,
+                                child: Row(
+                                  children: [
+                                    if (option == _currentSort)
+                                      Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: primaryColor,
+                                      ),
+                                    if (option == _currentSort)
+                                      const SizedBox(width: 8),
+                                    Text(option.displayName),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                    ),
                     // Clear all button
                     if (archiveState.savedVerses.isNotEmpty)
                       SizedBox(
@@ -178,7 +273,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 controller: _searchController,
                 onChanged: _onSearchChanged,
                 decoration: InputDecoration(
-                  hintText: 'Search verses...',
+                  hintText: 'Search by verse, surah, or topic...',
                   hintStyle: AppTextStyles.loraBodySmall(),
                   prefixIcon: Icon(Icons.search, color: primaryColor),
                   suffixIcon: _searchController.text.isNotEmpty
@@ -218,21 +313,33 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${archiveState.savedVerses.length} verse${archiveState.savedVerses.length != 1 ? 's' : ''} saved',
+                    '${sortedVerses.length} verse${sortedVerses.length != 1 ? 's' : ''} saved',
                     style: AppTextStyles.loraBodySmall(),
                   ),
                 ),
               ),
 
             // Content
-            Expanded(child: _buildContent(archiveState)),
+            Expanded(
+              child: _buildContent(
+                archiveState,
+                sortedVerses,
+                thisDayLastMonth,
+                verseOfTheWeek,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(ArchiveState state) {
+  Widget _buildContent(
+    ArchiveState state,
+    List<Verse> sortedVerses,
+    List<Verse> thisDayLastMonth,
+    Verse? verseOfTheWeek,
+  ) {
     final primaryColor = AppColors.sageGreen;
     final errorColor = AppColors.error;
 
@@ -294,44 +401,103 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
       color: primaryColor,
       onRefresh: () =>
           ref.read(archiveNotifierProvider.notifier).loadSavedVerses(),
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.only(bottom: 20),
-        itemCount: state.savedVerses.length,
-        itemBuilder: (context, index) {
-          final verse = state.savedVerses[index];
-          return Dismissible(
-            key: Key(verse.verseKey),
-            direction: DismissDirection.endToStart,
-            onDismissed: (_) {
-              ref
-                  .read(archiveNotifierProvider.notifier)
-                  .deleteVerse(verse.verseKey);
-            },
-            background: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              decoration: BoxDecoration(
-                color: errorColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
+        children: [
+          // This Day Last Month Section
+          if (thisDayLastMonth.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'This Day Last Month',
+              icon: Icons.calendar_month,
+              color: primaryColor,
+            ),
+            ...thisDayLastMonth.map(
+              (verse) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 5,
+                ),
+                child: VerseCardWidget(
+                  verse: verse,
+                  onSaveToggle: () => _deleteVerse(verse),
+                ),
+              ).animate().fade().slideX(begin: 0.1),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Verse of the Week Section
+          if (verseOfTheWeek != null) ...[
+            _SectionHeader(
+              title: 'Verse of the Week',
+              icon: Icons.star,
+              color: AppColors.mutedGold,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: VerseCardWidget(
+                verse: verseOfTheWeek,
+                onSaveToggle: () => _deleteVerse(verseOfTheWeek),
               ),
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 20),
-              child: Icon(Icons.delete_outline, color: errorColor),
+            ).animate().fade().scale(begin: const Offset(0.95, 0.95)),
+            const SizedBox(height: 16),
+          ],
+
+          // All Saved Verses
+          if (sortedVerses.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'All Saved Verses',
+              icon: Icons.bookmark,
+              color: primaryColor,
             ),
-            child: VerseCardWidget(
-              verse: verse,
-              onSaveToggle: () {
-                _deleteVerse(verse);
-              },
-            ),
-          ).animate().fade(delay: (index * 50).ms).slideX(begin: 0.1);
-        },
+            ...sortedVerses.asMap().entries.map((entry) {
+              final index = entry.key;
+              final verse = entry.value;
+              return Dismissible(
+                key: Key(verse.verseKey),
+                direction: DismissDirection.endToStart,
+                onDismissed: (_) {
+                  ref
+                      .read(archiveNotifierProvider.notifier)
+                      .deleteVerse(verse.verseKey);
+                },
+                background: Container(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: errorColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Icon(Icons.delete_outline, color: errorColor),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 5,
+                  ),
+                  child: VerseCardWidget(
+                    verse: verse,
+                    onSaveToggle: () => _deleteVerse(verse),
+                  ),
+                ),
+              ).animate().fade(delay: (index * 50).ms).slideX(begin: 0.1);
+            }),
+          ],
+        ],
       ),
     );
   }
 
   void _showClearDialog(ArchiveState state) {
-    final bgColor = AppColors.softSand;
-    final primaryColor = AppColors.sageGreen;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.softSand;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
     final errorColor = AppColors.error;
 
     showDialog(
@@ -361,6 +527,39 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             child: Text(
               'Clear All',
               style: AppTextStyles.loraBodyMedium().copyWith(color: errorColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Section Header Widget
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: AppTextStyles.loraBodyMedium().copyWith(
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
