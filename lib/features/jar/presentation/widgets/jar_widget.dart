@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/features/jar/presentation/widgets/particle_effect.dart';
 
 /// Jar Widget
 /// A beautiful glass jar visualization with pull interaction
@@ -27,6 +28,7 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
   late AnimationController _paperController;
   bool _isPressed = false;
   bool _showPaperSlip = false;
+  bool _showParticles = false;
 
   @override
   void initState() {
@@ -53,7 +55,10 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
   Future<void> _handleTap() async {
     if (_showPaperSlip) return; // Prevent double tap
 
-    setState(() => _showPaperSlip = true);
+    setState(() {
+      _showPaperSlip = true;
+      _showParticles = true; // Show particle effect
+    });
 
     // Shake animation (left-right-left) - smoother with longer duration
     await _shakeController.forward();
@@ -67,6 +72,10 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
     setState(() => _showPaperSlip = false);
     _shakeController.reset();
     await _paperController.reverse();
+
+    // Hide particles after animation
+    await Future.delayed(const Duration(milliseconds: 400));
+    setState(() => _showParticles = false);
 
     // Call the onTap callback
     widget.onTap?.call();
@@ -173,7 +182,7 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
                               // Phase 1: Slow start (anticipation)
                               translateY =
                                   Curves.easeIn.transform(value / 0.3) *
-                                  40 *
+                                  20 *
                                   jarScale;
                               rotation = -0.15;
                               opacity = Curves.easeIn.transform(value / 0.3);
@@ -181,9 +190,9 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
                               // Phase 2: Main slide out (more dramatic)
                               final t = (value - 0.3) / 0.4;
                               translateY =
-                                  40 * jarScale +
+                                  20 * jarScale +
                                   Curves.easeOutCubic.transform(t) *
-                                      100 *
+                                      50 *
                                       jarScale;
                               rotation = -0.15 + (t * 0.12);
                               opacity = 1.0;
@@ -191,9 +200,9 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
                               // Phase 3: Settle with slight bounce
                               final t = ((value - 0.7) / 0.3).clamp(0.0, 1.0);
                               translateY =
-                                  140 * jarScale +
+                                  70 * jarScale +
                                   Curves.easeOutCubic.transform(t) *
-                                      20 *
+                                      10 *
                                       jarScale;
                               rotation = -0.03 + (t * 0.05);
                               opacity = 1.0;
@@ -208,6 +217,17 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
                             );
                           },
                           child: _PaperSlipWidget(scale: jarScale),
+                        ),
+                      ),
+
+                    // Particle effect on tap
+                    if (_showParticles)
+                      Positioned(
+                        left: jarWidth / 2 - 80,
+                        top: 30 * jarScale,
+                        child: ParticleEffect(
+                          color: AppColors.terracotta,
+                          particleCount: 10,
                         ),
                       ),
                   ],
