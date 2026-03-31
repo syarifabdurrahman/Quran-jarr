@@ -291,6 +291,18 @@ class PreferencesService {
     await _prefsBox.put('reduced_motion', enabled);
   }
 
+  // ==================== Jar Type Preferences ====================
+
+  /// Get jar type (0 = classic, 1 = vintage, 2 = modern, 3 = ornate)
+  int getJarType() {
+    return _prefsBox.get('jar_type', defaultValue: 0) as int;
+  }
+
+  /// Set jar type
+  Future<void> setJarType(int type) async {
+    await _prefsBox.put('jar_type', type);
+  }
+
   // ==================== Clear Preferences ====================
 
   /// Clear all preferences

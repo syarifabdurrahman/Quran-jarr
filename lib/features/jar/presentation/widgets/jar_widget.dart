@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/config/constants.dart';
+import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/particle_effect.dart';
+import 'package:quran_jarr/features/jar/domain/models/jar_type.dart';
 
 /// Jar Widget
 /// A beautiful glass jar visualization with pull interaction
 /// Features shake animation and paper slip coming out effect
-class JarWidget extends StatefulWidget {
+class JarWidget extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
   final bool isEmpty;
   final bool isAnimating;
@@ -20,10 +23,11 @@ class JarWidget extends StatefulWidget {
   });
 
   @override
-  State<JarWidget> createState() => _JarWidgetState();
+  ConsumerState<JarWidget> createState() => _JarWidgetState();
 }
 
-class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
+class _JarWidgetState extends ConsumerState<JarWidget>
+    with TickerProviderStateMixin {
   late AnimationController _shakeController;
   late AnimationController _paperController;
   bool _isPressed = false;
@@ -156,9 +160,7 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
                         child: SizedBox(
                           width: jarWidth,
                           height: jarHeight,
-                          child: CustomPaint(
-                            painter: _JarPainter(isEmpty: widget.isEmpty),
-                          ),
+                          child: CustomPaint(painter: _getJarPainter()),
                         ),
                       ).animate().then(delay: 100.ms).fade(duration: 400.ms),
                     ),
@@ -237,6 +239,18 @@ class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+
+  CustomPainter _getJarPainter() {
+    final jarTypeIndex = ref.watch(jarTypeProvider);
+    final jarType = JarType.values[jarTypeIndex];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return JarPainterFactory.create(
+      type: jarType,
+      isEmpty: widget.isEmpty,
+      isDark: isDark,
     );
   }
 }

@@ -134,6 +134,12 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     await _prefs.setReducedMotion(enabled);
     _notify();
   }
+
+  /// Set jar type (0 = classic, 1 = vintage, 2 = modern, 3 = ornate)
+  Future<void> setJarType(int type) async {
+    await _prefs.setJarType(type);
+    _notify();
+  }
 }
 
 /// Preferences Provider
@@ -208,4 +214,9 @@ final themeModeProvider = Provider<int>((ref) {
 /// Reduced Motion Provider
 final reducedMotionProvider = Provider<bool>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getReducedMotion();
+});
+
+/// Jar Type Provider (0 = classic, 1 = vintage, 2 = modern, 3 = ornate)
+final jarTypeProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getJarType();
 });

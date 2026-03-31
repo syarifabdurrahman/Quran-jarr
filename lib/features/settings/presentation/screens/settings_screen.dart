@@ -106,6 +106,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final englishFontSize = ref.watch(englishFontSizeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final reducedMotion = ref.watch(reducedMotionProvider);
+    final jarType = ref.watch(jarTypeProvider);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -143,6 +144,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     .setReducedMotion(value);
               },
               primaryColor: primaryColor,
+            ),
+            const SizedBox(height: 8),
+            _JarTypeSelector(
+              currentJarType: jarType,
+              onJarTypeChanged: (type) {
+                ref.read(preferencesNotifierProvider.notifier).setJarType(type);
+              },
+              primaryColor: primaryColor,
+              isDark: isDark,
             ),
 
             const SizedBox(height: 24),
@@ -650,6 +660,143 @@ class _ThemeOption extends StatelessWidget {
                 size: 24,
               ),
               const SizedBox(height: 4),
+              Text(
+                label,
+                style: AppTextStyles.loraCaption().copyWith(
+                  color: isSelected ? primaryColor : null,
+                  fontWeight: isSelected ? FontWeight.w600 : null,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Jar Type Selector Widget
+class _JarTypeSelector extends StatelessWidget {
+  final int currentJarType;
+  final ValueChanged<int> onJarTypeChanged;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _JarTypeSelector({
+    required this.currentJarType,
+    required this.onJarTypeChanged,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.local_drink, size: 18, color: primaryColor),
+            const SizedBox(width: 8),
+            Text('Jar Style', style: AppTextStyles.loraBodyMedium()),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _JarOption(
+              label: 'Classic',
+              icon: Icons.local_drink,
+              isSelected: currentJarType == 0,
+              onTap: () => onJarTypeChanged(0),
+              primaryColor: primaryColor,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _JarOption(
+              label: 'Vintage',
+              icon: Icons.wine_bar,
+              isSelected: currentJarType == 1,
+              onTap: () => onJarTypeChanged(1),
+              primaryColor: primaryColor,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _JarOption(
+              label: 'Modern',
+              icon: Icons.water_drop,
+              isSelected: currentJarType == 2,
+              onTap: () => onJarTypeChanged(2),
+              primaryColor: primaryColor,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _JarOption(
+              label: 'Ornate',
+              icon: Icons.liquor,
+              isSelected: currentJarType == 3,
+              onTap: () => onJarTypeChanged(3),
+              primaryColor: primaryColor,
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Individual Jar Option Button
+class _JarOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _JarOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? primaryColor.withValues(alpha: 0.15)
+                : (isDark ? AppColors.darkElevated : AppColors.softSand),
+            border: Border.all(
+              color: isSelected
+                  ? primaryColor
+                  : primaryColor.withValues(alpha: 0.3),
+              width: isSelected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected
+                    ? primaryColor
+                    : primaryColor.withValues(alpha: 0.7),
+                size: 28,
+              ),
+              const SizedBox(height: 6),
               Text(
                 label,
                 style: AppTextStyles.loraCaption().copyWith(
