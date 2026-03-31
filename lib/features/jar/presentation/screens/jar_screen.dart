@@ -23,7 +23,6 @@ import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
-import 'package:quran_jarr/core/services/ad_service.dart';
 
 /// Jar Screen
 /// Main screen with jar visualization and verse display
@@ -185,9 +184,9 @@ class _JarScreenState extends ConsumerState<JarScreen>
         }
       }
 
-      // Show rate us dialog occasionally (after every 5 verses)
+      // Show rate us dialog occasionally (after every 5 verses, but not on 0)
       final versesReadToday = ref.read(streakProvider).versesReadToday;
-      if (versesReadToday % 5 == 0 && mounted) {
+      if (versesReadToday > 0 && versesReadToday % 5 == 0 && mounted) {
         // Delay to not interrupt the verse reading experience
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
@@ -198,13 +197,6 @@ class _JarScreenState extends ConsumerState<JarScreen>
     }
 
     _animationController.reset();
-  }
-
-  void _showSettingsDialog(BuildContext context) {
-    // Show interstitial ad (respecting throttling/cooldown)
-    AdService.instance.showInterstitialAd();
-
-    showDialog(context: context, builder: (context) => _SettingsDialog());
   }
 
   Future<void> _shareVerse(Verse verse) async {
@@ -254,20 +246,40 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: IconButton(
-                        onPressed: () {
-                          showTranslationPicker(context);
-                        },
-                        icon: Icon(
-                          Icons.translate_outlined,
-                          color: primaryColor,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            onPressed: () {
+                              showTranslationPicker(context);
+                            },
+                            icon: Icon(
+                              Icons.translate_outlined,
+                              color: primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            onPressed: () {
+                              RateUsService.instance.showRateUsDialog(context);
+                            },
+                            icon: Icon(
+                              Icons.star_outline_rounded,
+                              color: primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1344,8 +1356,6 @@ class _StreakDisplay extends ConsumerWidget {
     final dailyProgress = dailyLimit >= 9999
         ? 0.0
         : (versesToday / dailyLimit).clamp(0.0, 1.0);
-    final totalVerses = streakState.totalVersesRead;
-    final motivationalMessage = streakNotifier.motivationalMessage;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

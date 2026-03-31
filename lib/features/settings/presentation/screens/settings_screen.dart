@@ -6,7 +6,6 @@ import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
-import 'package:quran_jarr/core/utils/responsive_utils.dart';
 
 /// Settings Screen
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -17,79 +16,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  Future<bool?> _showExactAlarmDialog(BuildContext context) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.midnightPeriwinkle
-        : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.darkCard : AppColors.cream;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
-
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: bgColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            ResponsiveUtils.getBorderRadius(context),
-          ),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.alarm,
-              color: primaryColor,
-              size: ResponsiveUtils.getIconSize(context),
-            ),
-            SizedBox(width: ResponsiveUtils.getSpacing(context) * 0.75),
-            Expanded(
-              child: Text(
-                'Enable Alarms & Reminders',
-                style: AppTextStyles.loraHeading().copyWith(color: textColor),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
-              style: AppTextStyles.loraBodyMedium().copyWith(color: textColor),
-            ),
-            SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
-            Text(
-              'This is required on Android 12+ for exact timing of notifications.',
-              style: AppTextStyles.loraBodySmall().copyWith(
-                color: isDark ? AppColors.darkTextSecondary : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel', style: TextStyle(color: primaryColor)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await NotificationService.instance.openNotificationSettings();
-              if (context.mounted) Navigator.of(context).pop(true);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: Text(
-              'Settings',
-              style: TextStyle(
-                color: isDark ? AppColors.darkSurface : AppColors.cream,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -257,11 +183,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-/// Section Header Widget
+// All the helper widgets below...
+
 class _SectionHeader extends StatelessWidget {
   final String title;
   final Color color;
-
   const _SectionHeader({required this.title, required this.color});
 
   @override
@@ -276,14 +202,12 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Settings Toggle Widget
 class _SettingsToggle extends StatelessWidget {
   final IconData icon;
   final String title;
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color primaryColor;
-
   const _SettingsToggle({
     required this.icon,
     required this.title,
@@ -300,14 +224,7 @@ class _SettingsToggle extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: primaryColor),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.loraBodyMedium(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          Expanded(child: Text(title, style: AppTextStyles.loraBodyMedium())),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -320,12 +237,10 @@ class _SettingsToggle extends StatelessWidget {
   }
 }
 
-/// Notification Time Picker Widget
 class _NotificationTimePicker extends StatelessWidget {
   final TimeOfDay time;
   final ValueChanged<TimeOfDay> onTimeChanged;
   final Color primaryColor;
-
   const _NotificationTimePicker({
     required this.time,
     required this.onTimeChanged,
@@ -340,9 +255,7 @@ class _NotificationTimePicker extends StatelessWidget {
           context: context,
           initialTime: time,
         );
-        if (picked != null) {
-          onTimeChanged(picked);
-        }
+        if (picked != null) onTimeChanged(picked);
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -378,7 +291,6 @@ class _NotificationTimePicker extends StatelessWidget {
   }
 }
 
-/// Font Size Slider Widget
 class _FontSizeSlider extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -387,7 +299,6 @@ class _FontSizeSlider extends StatelessWidget {
   final double max;
   final ValueChanged<double> onChanged;
   final Color primaryColor;
-
   const _FontSizeSlider({
     required this.icon,
     required this.title,
@@ -443,12 +354,10 @@ class _FontSizeSlider extends StatelessWidget {
   }
 }
 
-/// Verses Per Day Selector Widget
 class _VersesPerDaySelector extends StatelessWidget {
   final int versesPerDay;
   final ValueChanged<int> onValueChanged;
   final Color primaryColor;
-
   const _VersesPerDaySelector({
     required this.versesPerDay,
     required this.onValueChanged,
@@ -458,7 +367,6 @@ class _VersesPerDaySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isUnlimited = versesPerDay >= 9999;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
@@ -469,7 +377,6 @@ class _VersesPerDaySelector extends StatelessWidget {
             child: Text(
               'Jar Taps Per Day',
               style: AppTextStyles.loraBodyMedium(),
-              maxLines: 1,
             ),
           ),
           Row(
@@ -478,18 +385,13 @@ class _VersesPerDaySelector extends StatelessWidget {
               _TapButton(
                 icon: Icons.remove,
                 onTap: () {
-                  if (versesPerDay > 1) {
-                    onValueChanged(versesPerDay - 1);
-                  }
+                  if (versesPerDay > 1) onValueChanged(versesPerDay - 1);
                 },
                 primaryColor: primaryColor,
-                isSmall: true,
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () {
-                  onValueChanged(isUnlimited ? 3 : 9999);
-                },
+                onTap: () => onValueChanged(isUnlimited ? 3 : 9999),
                 child: Container(
                   width: 50,
                   height: 36,
@@ -512,12 +414,9 @@ class _VersesPerDaySelector extends StatelessWidget {
               _TapButton(
                 icon: Icons.add,
                 onTap: () {
-                  if (!isUnlimited) {
-                    onValueChanged(versesPerDay + 1);
-                  }
+                  if (!isUnlimited) onValueChanged(versesPerDay + 1);
                 },
                 primaryColor: primaryColor,
-                isSmall: true,
               ),
             ],
           ),
@@ -527,18 +426,14 @@ class _VersesPerDaySelector extends StatelessWidget {
   }
 }
 
-/// Small Tap Button
 class _TapButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final Color primaryColor;
-  final bool isSmall;
-
   const _TapButton({
     required this.icon,
     required this.onTap,
     required this.primaryColor,
-    this.isSmall = false,
   });
 
   @override
@@ -546,28 +441,26 @@ class _TapButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: isSmall ? 32 : 40,
-        height: isSmall ? 32 : 40,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(isSmall ? 8 : 10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: primaryColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
-        child: Icon(icon, size: isSmall ? 16 : 20, color: primaryColor),
+        child: Icon(icon, size: 16, color: primaryColor),
       ),
     );
   }
 }
 
-/// Theme Selector Widget
 class _ThemeSelector extends StatelessWidget {
   final int currentThemeMode;
   final ValueChanged<int> onThemeChanged;
   final Color primaryColor;
-
   const _ThemeSelector({
     required this.currentThemeMode,
     required this.onThemeChanged,
@@ -577,7 +470,6 @@ class _ThemeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Row(
       children: [
         _ThemeOption(
@@ -611,7 +503,6 @@ class _ThemeSelector extends StatelessWidget {
   }
 }
 
-/// Individual Theme Option Button
 class _ThemeOption extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -619,7 +510,6 @@ class _ThemeOption extends StatelessWidget {
   final VoidCallback onTap;
   final Color primaryColor;
   final bool isDark;
-
   const _ThemeOption({
     required this.icon,
     required this.label,
@@ -666,8 +556,6 @@ class _ThemeOption extends StatelessWidget {
                   color: isSelected ? primaryColor : null,
                   fontWeight: isSelected ? FontWeight.w600 : null,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -677,13 +565,11 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-/// Jar Type Selector Widget
 class _JarTypeSelector extends StatelessWidget {
   final int currentJarType;
   final ValueChanged<int> onJarTypeChanged;
   final Color primaryColor;
   final bool isDark;
-
   const _JarTypeSelector({
     required this.currentJarType,
     required this.onJarTypeChanged,
@@ -748,7 +634,6 @@ class _JarTypeSelector extends StatelessWidget {
   }
 }
 
-/// Individual Jar Option Button
 class _JarOption extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -756,7 +641,6 @@ class _JarOption extends StatelessWidget {
   final VoidCallback onTap;
   final Color primaryColor;
   final bool isDark;
-
   const _JarOption({
     required this.label,
     required this.icon,
@@ -803,8 +687,6 @@ class _JarOption extends StatelessWidget {
                   color: isSelected ? primaryColor : null,
                   fontWeight: isSelected ? FontWeight.w600 : null,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

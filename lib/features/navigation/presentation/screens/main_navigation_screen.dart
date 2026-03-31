@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
-import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/asmaul_husna/presentation/screens/asmaul_husna_screen.dart';
 import 'package:quran_jarr/features/jar/presentation/screens/jar_screen.dart';
@@ -64,15 +63,6 @@ class MainNavigationScreen extends StatelessWidget {
         item: ItemConfig(
           icon: const Icon(Icons.settings_rounded),
           title: 'Settings',
-          activeForegroundColor: primaryColor,
-          inactiveForegroundColor: inactiveColor,
-        ),
-      ),
-      PersistentTabConfig(
-        screen: const AboutScreen(),
-        item: ItemConfig(
-          icon: const Icon(Icons.info_outline_rounded),
-          title: 'About',
           activeForegroundColor: primaryColor,
           inactiveForegroundColor: inactiveColor,
         ),

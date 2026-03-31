@@ -47,6 +47,11 @@ class AdService {
     if (_isInitialized) return;
 
     try {
+      final appId = _getAppId();
+      if (appId.isEmpty) {
+        _isInitialized = false;
+        return;
+      }
       await MobileAds.instance.initialize();
       _isInitialized = true;
       // Load the first interstitial ad

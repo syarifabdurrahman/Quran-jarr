@@ -20,16 +20,27 @@ import 'package:quran_jarr/core/network/dio_client.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services
+  // Critical services - initialize immediately
   DioClient.instance.initialize();
   await LocalStorageService.instance.initialize();
   await PreferencesService.instance.initialize();
-  await NotificationService.instance.initialize();
   await StreakService.instance.initialize();
-  await WidgetService.instance.initialize();
-  await AdService.instance.initialize();
 
+  // Start the app immediately
   runApp(const ProviderScope(child: QuranJarrApp()));
+
+  // Defer non-critical services to after first frame
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _initializeNonCriticalServices();
+  });
+}
+
+/// Initialize non-critical services after first frame
+void _initializeNonCriticalServices() {
+  // Run in background without blocking UI
+  NotificationService.instance.initialize();
+  WidgetService.instance.initialize();
+  AdService.instance.initialize();
 }
 
 class QuranJarrApp extends ConsumerWidget {
@@ -44,11 +55,9 @@ class QuranJarrApp extends ConsumerWidget {
 
     return Builder(
       builder: (context) {
-        // Get the system text scale factor and clamp it
         final systemTextScale = MediaQuery.of(context).textScaler.scale(1.0);
         final clampedTextScale = systemTextScale.clamp(1.0, 1.3);
 
-        // Determine theme based on preference
         ThemeData currentTheme;
         switch (themeMode) {
           case 1:
@@ -61,10 +70,8 @@ class QuranJarrApp extends ConsumerWidget {
             currentTheme = ThemeConfig.lightTheme;
         }
 
-        // Determine effective brightness for system theme
-        Brightness? systemBrightness;
         if (themeMode == 0) {
-          systemBrightness = MediaQuery.platformBrightnessOf(context);
+          final systemBrightness = MediaQuery.platformBrightnessOf(context);
           currentTheme = systemBrightness == Brightness.dark
               ? ThemeConfig.darkTheme
               : ThemeConfig.lightTheme;
@@ -73,7 +80,6 @@ class QuranJarrApp extends ConsumerWidget {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.linear(clampedTextScale),
-            // Disable animations if reduced motion is enabled
             disableAnimations: reducedMotion,
           ),
           child: AnimatedTheme(
@@ -102,7 +108,6 @@ class QuranJarrApp extends ConsumerWidget {
   }
 }
 
-/// Provider for checking onboarding status (reacts to preference changes)
 final _onboardingProvider = Provider<bool>((ref) {
   final prefs = ref.watch(preferencesNotifierProvider).prefs;
   return prefs.isOnboardingCompleted();

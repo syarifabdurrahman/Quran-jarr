@@ -361,7 +361,7 @@ class ModernJarPainter extends CustomPainter {
   }
 }
 
-/// Ornate Jar Painter
+/// Ornate Jar Painter - Elegant decorative jar with intricate details
 class OrnateJarPainter extends CustomPainter {
   final bool isEmpty;
   final Color jarColor;
@@ -377,109 +377,136 @@ class OrnateJarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final jarPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 2.5
+      ..color = jarColor;
 
-    // Jar body (decorative shape)
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = jarColor.withValues(alpha: 0.08);
+
+    // Jar body - elegant curved shape
     final jarPath = Path();
-    jarPath.moveTo(size.width * 0.3, size.height * 0.3);
+    jarPath.moveTo(size.width * 0.25, size.height * 0.28);
     jarPath.quadraticBezierTo(
-      size.width * 0.15,
-      size.height * 0.4,
-      size.width * 0.2,
-      size.height * 0.6,
+      size.width * 0.12,
+      size.height * 0.45,
+      size.width * 0.18,
+      size.height * 0.75,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.15,
-      size.height * 0.85,
+      size.width * 0.22,
+      size.height * 0.95,
       size.width * 0.5,
       size.height * 0.95,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.85,
-      size.height * 0.85,
-      size.width * 0.8,
-      size.height * 0.6,
+      size.width * 0.78,
+      size.height * 0.95,
+      size.width * 0.82,
+      size.height * 0.75,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.85,
-      size.height * 0.4,
-      size.width * 0.7,
-      size.height * 0.3,
+      size.width * 0.88,
+      size.height * 0.45,
+      size.width * 0.75,
+      size.height * 0.28,
     );
     jarPath.close();
 
-    paint.color = jarColor;
-    canvas.drawPath(jarPath, paint);
+    canvas.drawPath(jarPath, fillPaint);
+    canvas.drawPath(jarPath, jarPaint);
 
-    // Decorative patterns
-    final decorPaint = Paint()
+    // Decorative neck ring
+    final neckPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = lidColor.withValues(alpha: 0.6);
+      ..strokeWidth = 3
+      ..color = lidColor.withValues(alpha: 0.4);
 
-    // Top decoration
-    canvas.drawArc(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.5, size.height * 0.35),
-        width: size.width * 0.3,
-        height: size.height * 0.1,
-      ),
-      0,
-      3.14,
-      false,
-      decorPaint,
+    canvas.drawLine(
+      Offset(size.width * 0.28, size.height * 0.35),
+      Offset(size.width * 0.72, size.height * 0.35),
+      neckPaint,
     );
 
-    // Bottom decoration
-    canvas.drawArc(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.5, size.height * 0.85),
-        width: size.width * 0.4,
-        height: size.height * 0.08,
-      ),
-      3.14,
-      3.14,
-      false,
-      decorPaint,
+    // Decorative base ring
+    canvas.drawLine(
+      Offset(size.width * 0.25, size.height * 0.88),
+      Offset(size.width * 0.75, size.height * 0.88),
+      neckPaint,
     );
 
-    // Ornate lid
+    // Ornate lid with dome shape
     final lidPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = lidColor;
 
     // Lid base
-    canvas.drawOval(
-      Rect.fromLTWH(
-        size.width * 0.25,
-        size.height * 0.15,
-        size.width * 0.5,
-        size.height * 0.15,
-      ),
-      lidPaint,
+    final lidPath = Path();
+    lidPath.moveTo(size.width * 0.28, size.height * 0.28);
+    lidPath.lineTo(size.width * 0.72, size.height * 0.28);
+    lidPath.lineTo(size.width * 0.68, size.height * 0.18);
+    lidPath.lineTo(size.width * 0.32, size.height * 0.18);
+    lidPath.close();
+
+    canvas.drawPath(lidPath, lidPaint);
+
+    // Lid dome
+    final domePath = Path();
+    domePath.moveTo(size.width * 0.32, size.height * 0.18);
+    domePath.quadraticBezierTo(
+      size.width * 0.5,
+      size.height * 0.08,
+      size.width * 0.68,
+      size.height * 0.18,
     );
+    domePath.close();
+
+    canvas.drawPath(domePath, lidPaint);
 
     // Lid knob
+    final knobPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = lidColor.withValues(alpha: 0.8);
+
     canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.1),
-      size.width * 0.08,
-      lidPaint,
+      Offset(size.width * 0.5, size.height * 0.12),
+      size.width * 0.05,
+      knobPaint,
     );
 
-    // Papers
+    // Decorative filigree lines on jar body
+    final filigreePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = jarColor.withValues(alpha: 0.25);
+
+    // Left filigree
+    canvas.drawLine(
+      Offset(size.width * 0.3, size.height * 0.45),
+      Offset(size.width * 0.35, size.height * 0.75),
+      filigreePaint,
+    );
+    // Right filigree
+    canvas.drawLine(
+      Offset(size.width * 0.7, size.height * 0.45),
+      Offset(size.width * 0.65, size.height * 0.75),
+      filigreePaint,
+    );
+
+    // Papers inside (if not empty)
     if (!isEmpty) {
       final paperPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = paperColor.withValues(alpha: 0.25);
+        ..color = paperColor.withValues(alpha: 0.3);
 
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 4; i++) {
         canvas.save();
-        canvas.translate(size.width * (0.3 + i * 0.07), size.height * 0.55);
-        canvas.rotate(0.3 - i * 0.15);
+        canvas.translate(size.width * (0.35 + i * 0.1), size.height * 0.6);
+        canvas.rotate(0.15 - i * 0.1);
         canvas.drawRect(
-          Rect.fromLTWH(0, 0, size.width * 0.05, size.height * 0.3),
+          Rect.fromLTWH(0, 0, size.width * 0.06, size.height * 0.25),
           paperPaint,
         );
         canvas.restore();

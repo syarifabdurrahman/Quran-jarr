@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/core/services/notification_messages.dart';
@@ -110,29 +108,6 @@ class NotificationService {
     // Check if app was launched from a notification (terminated state)
     // This MUST be called AFTER initialization and BEFORE getPendingVerseKey()
     await _checkNotificationAppLaunch();
-  }
-
-  /// Get timezone by offset (Indonesia timezones)
-  String _getTimeZoneByOffset(Duration offset) {
-    // Indonesia timezones (common ones)
-    // WIB (Western Indonesia Time) = UTC+7
-    // WITA (Central Indonesia Time) = UTC+8
-    // WIT (Eastern Indonesia Time) = UTC+9
-
-    final int hours = offset.inHours;
-
-    // Map offset to IANA timezone names
-    switch (hours) {
-      case 7:
-        return 'Asia/Jakarta'; // WIB - Western Indonesia Time
-      case 8:
-        return 'Asia/Makassar'; // WITA - Central Indonesia Time
-      case 9:
-        return 'Asia/Jayapura'; // WIT - Eastern Indonesia Time
-      default:
-        // Fallback for other timezones
-        return 'UTC';
-    }
   }
 
   /// Request Android permissions

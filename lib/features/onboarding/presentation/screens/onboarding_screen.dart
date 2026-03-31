@@ -8,7 +8,6 @@ import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
-import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
 
 /// Onboarding Screen
@@ -29,6 +28,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // Verses per day selection
   int _selectedVersesPerDay = 1;
 
+  // Jar type selection (0 = classic)
+  int _selectedJarType = 0;
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -39,22 +41,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _onLanguageChanged(String translationId) async {
     setState(() => _selectedTranslationId = translationId);
     final translation = AvailableTranslations.getById(translationId);
-    await ref.read(preferencesNotifierProvider.notifier).setTranslation(translation);
+    await ref
+        .read(preferencesNotifierProvider.notifier)
+        .setTranslation(translation);
   }
 
   Future<void> _completeOnboarding() async {
     // Translation is already saved when selected, no need to save again here
     // Save other preferences using the notifier
-    await ref.read(preferencesNotifierProvider.notifier).setVersesPerDay(_selectedVersesPerDay);
+    await ref
+        .read(preferencesNotifierProvider.notifier)
+        .setVersesPerDay(_selectedVersesPerDay);
+
+    // Save jar type selection
+    await ref
+        .read(preferencesNotifierProvider.notifier)
+        .setJarType(_selectedJarType);
 
     // Save onboarding completed LAST - this will trigger the app to rebuild and show JarScreen
-    await ref.read(preferencesNotifierProvider.notifier).setOnboardingCompleted(true);
+    await ref
+        .read(preferencesNotifierProvider.notifier)
+        .setOnboardingCompleted(true);
 
     // Don't navigate - let the provider change trigger a rebuild of the main app
   }
 
   void _nextPage() {
-    if (_currentPage < 4) {
+    if (_currentPage < 5) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -112,6 +125,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onSelectionChanged: (value) {
                       setState(() => _selectedVersesPerDay = value);
                     },
+                    onComplete: _nextPage,
+                  ),
+                  _JarTypeSelectionPage(
+                    selectedJarType: _selectedJarType,
+                    onSelectionChanged: (value) {
+                      setState(() => _selectedJarType = value);
+                    },
                     onComplete: _completeOnboarding,
                   ),
                 ],
@@ -124,7 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  5,
+                  6,
                   (index) => AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -175,120 +195,126 @@ class _LanguageSelectionPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.language_outlined,
-              size: 60,
-              color: AppColors.sageGreen,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+              // Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.language_outlined,
+                  size: 60,
+                  color: AppColors.sageGreen,
+                ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Title
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              l10n.chooseYourLanguage,
-              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+              // Title
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.chooseYourLanguage,
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.selectYourPreferredLanguage,
-              style: AppTextStyles.loraBodyMedium(),
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.selectYourPreferredLanguage,
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // English Card
-          _LanguageCard(
-            languageName: l10n.english,
-            languageCode: 'en',
-            translationAuthor: 'Quran API',
-            isSelected: selectedTranslationId == 'english',
-            onTap: () => onSelectionChanged('english'),
-          ).animate().fade(delay: 500.ms).slideY(begin: 0.3),
+              // English Card
+              _LanguageCard(
+                languageName: l10n.english,
+                languageCode: 'en',
+                translationAuthor: 'Quran API',
+                isSelected: selectedTranslationId == 'english',
+                onTap: () => onSelectionChanged('english'),
+              ).animate().fade(delay: 500.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Indonesian Card
-          _LanguageCard(
-            languageName: l10n.bahasaIndonesia,
-            languageCode: 'id',
-            translationAuthor: 'Kemenag RI',
-            isSelected: selectedTranslationId == 'indonesian',
-            onTap: () => onSelectionChanged('indonesian'),
-          ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
+              // Indonesian Card
+              _LanguageCard(
+                languageName: l10n.bahasaIndonesia,
+                languageCode: 'id',
+                translationAuthor: 'Kemenag RI',
+                isSelected: selectedTranslationId == 'indonesian',
+                onTap: () => onSelectionChanged('indonesian'),
+              ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Action Buttons
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Skip Button
-                TextButton(
-                  onPressed: onSkip,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    l10n.cancel,
-                    style: AppTextStyles.loraBodyMedium().copyWith(
-                      color: AppColors.sageGreen,
-                    ),
-                  ),
-                ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
+              // Action Buttons
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Skip Button
+                    TextButton(
+                      onPressed: onSkip,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        l10n.cancel,
+                        style: AppTextStyles.loraBodyMedium().copyWith(
+                          color: AppColors.sageGreen,
+                        ),
+                      ),
+                    ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
 
-                const SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
-                // OK Button
-                ElevatedButton(
-                  onPressed: onNext,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.sageGreen,
-                    foregroundColor: AppColors.cream,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    l10n.ok,
-                    style: AppTextStyles.loraBodyMedium(),
-                  ),
-                ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
-              ],
-            ),
-          ),
-        ],
+                    // OK Button
+                    ElevatedButton(
+                      onPressed: onNext,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.sageGreen,
+                        foregroundColor: AppColors.cream,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        l10n.ok,
+                        style: AppTextStyles.loraBodyMedium(),
+                      ),
+                    ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -384,11 +410,7 @@ class _LanguageCard extends StatelessWidget {
 
             // Selection indicator
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                size: 24,
-                color: AppColors.sageGreen,
-              )
+              Icon(Icons.check_circle, size: 24, color: AppColors.sageGreen)
             else
               Icon(
                 Icons.arrow_forward_ios,
@@ -422,78 +444,78 @@ class _InternetCheckPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.wifi_outlined,
-              size: 60,
-              color: AppColors.sageGreen,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+              // Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.wifi_outlined,
+                  size: 60,
+                  color: AppColors.sageGreen,
+                ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Title
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              l10n.internetConnectionRequired,
-              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+              // Title
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.internetConnectionRequired,
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.internetConnectionDesc,
-              style: AppTextStyles.loraBodyMedium(),
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.internetConnectionDesc,
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 48),
+              const SizedBox(height: 48),
 
-          // Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _OnboardingButton(
-                text: l10n.maybeLater,
-                isPrimary: false,
-                onPressed: () {
-                  PreferencesService.instance.setInternetAccepted(false);
-                  onNext();
-                },
-              ).animate().fade(delay: 600.ms).slideX(begin: -0.3),
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _OnboardingButton(
+                    text: l10n.maybeLater,
+                    isPrimary: false,
+                    onPressed: () {
+                      PreferencesService.instance.setInternetAccepted(false);
+                      onNext();
+                    },
+                  ).animate().fade(delay: 600.ms).slideX(begin: -0.3),
 
-              const SizedBox(width: 16),
+                  const SizedBox(width: 16),
 
-              _OnboardingButton(
-                text: l10n.iUnderstand,
-                isPrimary: true,
-                onPressed: () {
-                  PreferencesService.instance.setInternetAccepted(true);
-                  onNext();
-                },
-              ).animate().fade(delay: 600.ms).slideX(begin: 0.3),
+                  _OnboardingButton(
+                    text: l10n.iUnderstand,
+                    isPrimary: true,
+                    onPressed: () {
+                      PreferencesService.instance.setInternetAccepted(true);
+                      onNext();
+                    },
+                  ).animate().fade(delay: 600.ms).slideX(begin: 0.3),
+                ],
+              ),
             ],
-          ),
-        ],
           ),
         ),
       ),
@@ -521,63 +543,65 @@ class _ModeSelectionPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Title
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              l10n.chooseYourExperience,
-              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+              // Title
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.chooseYourExperience,
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.selectYourExperienceDesc,
-              style: AppTextStyles.loraBodyMedium(),
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.selectYourExperienceDesc,
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Curated Mode Card
-          _ModeCard(
-            icon: Icons.auto_awesome_outlined,
-            title: l10n.curatedSurahs,
-            description: l10n.curatedSurahsDesc,
-            isSelected: false,
-            onTap: () async {
-              await PreferencesService.instance
-                  .setVerseSelectionMode(VerseSelectionMode.curated);
-              onNext();
-            },
-          ).animate().fade(delay: 500.ms).slideY(begin: 0.3),
+              // Curated Mode Card
+              _ModeCard(
+                icon: Icons.auto_awesome_outlined,
+                title: l10n.curatedSurahs,
+                description: l10n.curatedSurahsDesc,
+                isSelected: false,
+                onTap: () async {
+                  await PreferencesService.instance.setVerseSelectionMode(
+                    VerseSelectionMode.curated,
+                  );
+                  onNext();
+                },
+              ).animate().fade(delay: 500.ms).slideY(begin: 0.3),
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Random Mode Card
-          _ModeCard(
-            icon: Icons.shuffle_outlined,
-            title: l10n.randomVerses,
-            description: l10n.randomVersesDesc,
-            isSelected: true,
-            onTap: () async {
-              await PreferencesService.instance
-                  .setVerseSelectionMode(VerseSelectionMode.random);
-              onNext();
-            },
-          ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
-        ],
+              // Random Mode Card
+              _ModeCard(
+                icon: Icons.shuffle_outlined,
+                title: l10n.randomVerses,
+                description: l10n.randomVersesDesc,
+                isSelected: true,
+                onTap: () async {
+                  await PreferencesService.instance.setVerseSelectionMode(
+                    VerseSelectionMode.random,
+                  );
+                  onNext();
+                },
+              ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
+            ],
           ),
         ),
       ),
@@ -609,81 +633,85 @@ class _NotificationPermissionPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.notifications_outlined,
-              size: 60,
-              color: AppColors.sageGreen,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+              // Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  size: 60,
+                  color: AppColors.sageGreen,
+                ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-          // Title
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              l10n.dailyNotification,
-              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
-
-          const SizedBox(height: 16),
-
-          // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.dailyNotificationDesc,
-              style: AppTextStyles.loraBodyMedium(),
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
-
-          const SizedBox(height: 48),
-
-          // Buttons
-          Column(
-            children: [
-              _OnboardingButton(
-                text: l10n.enableNotifications,
-                isPrimary: true,
-                onPressed: () async {
-                  await NotificationService.instance.requestPermission();
-                  await NotificationService.instance.scheduleDailyNotification(
-                    const TimeOfDay(hour: 7, minute: 0),
-                  );
-                  await PreferencesService.instance.setDailyNotificationEnabled(true);
-                  onNext();
-                },
-              ).animate().fade(delay: 600.ms).slideX(begin: 0.3),
+              // Title
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.dailyNotification,
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
 
               const SizedBox(height: 16),
 
-              _OnboardingButton(
-                text: l10n.maybeLater,
-                isPrimary: false,
-                onPressed: () {
-                  PreferencesService.instance.setDailyNotificationEnabled(false);
-                  onNext();
-                },
-              ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.dailyNotificationDesc,
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+
+              const SizedBox(height: 48),
+
+              // Buttons
+              Column(
+                children: [
+                  _OnboardingButton(
+                    text: l10n.enableNotifications,
+                    isPrimary: true,
+                    onPressed: () async {
+                      await NotificationService.instance.requestPermission();
+                      await NotificationService.instance
+                          .scheduleDailyNotification(
+                            const TimeOfDay(hour: 7, minute: 0),
+                          );
+                      await PreferencesService.instance
+                          .setDailyNotificationEnabled(true);
+                      onNext();
+                    },
+                  ).animate().fade(delay: 600.ms).slideX(begin: 0.3),
+
+                  const SizedBox(height: 16),
+
+                  _OnboardingButton(
+                    text: l10n.maybeLater,
+                    isPrimary: false,
+                    onPressed: () {
+                      PreferencesService.instance.setDailyNotificationEnabled(
+                        false,
+                      );
+                      onNext();
+                    },
+                  ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
+                ],
+              ),
             ],
-          ),
-        ],
           ),
         ),
       ),
@@ -717,177 +745,394 @@ class _VersesPerDayPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.format_list_numbered_outlined,
-              size: 60,
-              color: AppColors.sageGreen,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-
-          const SizedBox(height: 40),
-
-          // Title
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              l10n.jarTapsPerDay,
-              style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-          ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
-
-          const SizedBox(height: 16),
-
-          // Description
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.jarTapsPerDayDesc,
-              style: AppTextStyles.loraBodyMedium(),
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
-
-          const SizedBox(height: 40),
-
-          // Verse count selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Decrease button
-              GestureDetector(
-                onTap: () => onSelectionChanged(selectedVersesPerDay > 1 ? selectedVersesPerDay - 1 : 1),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.sageGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.sageGreen.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.remove,
-                    color: AppColors.sageGreen,
-                    size: 28,
-                  ),
+              // Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-              ).animate().fade(delay: 500.ms).scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1, 1),
-                  ),
-              const SizedBox(width: 24),
-              // Number display
-              GestureDetector(
-                onTap: () => onSelectionChanged(selectedVersesPerDay >= 9999 ? 1 : selectedVersesPerDay + 1),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 100,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.sageGreen,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.sageGreen,
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      selectedVersesPerDay >= 9999 ? '∞' : selectedVersesPerDay.toString(),
-                      style: AppTextStyles.loraTitle().copyWith(
-                        color: AppColors.cream,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
+                child: const Icon(
+                  Icons.format_list_numbered_outlined,
+                  size: 60,
+                  color: AppColors.sageGreen,
+                ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+
+              const SizedBox(height: 40),
+
+              // Title
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.jarTapsPerDay,
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+
+              const SizedBox(height: 16),
+
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.jarTapsPerDayDesc,
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+
+              const SizedBox(height: 40),
+
+              // Verse count selector
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Decrease button
+                  GestureDetector(
+                        onTap: () => onSelectionChanged(
+                          selectedVersesPerDay > 1
+                              ? selectedVersesPerDay - 1
+                              : 1,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.sageGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.sageGreen.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.remove,
+                            color: AppColors.sageGreen,
+                            size: 28,
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fade(delay: 500.ms)
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1, 1),
                       ),
-                    ),
-                  ),
-                ),
-              ).animate().fade(delay: 600.ms).scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1, 1),
-                  ),
-              const SizedBox(width: 24),
-              // Increase button
-              GestureDetector(
-                onTap: () => onSelectionChanged(selectedVersesPerDay + 1),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.sageGreen,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.sageGreen,
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: AppColors.cream,
-                    size: 28,
-                  ),
-                ),
-              ).animate().fade(delay: 700.ms).scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1, 1),
-                  ),
-              const SizedBox(width: 12),
-              // Infinity button
-              GestureDetector(
-                onTap: () => onSelectionChanged(selectedVersesPerDay >= 9999 ? 10 : 9999),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: selectedVersesPerDay >= 9999 ? AppColors.sageGreen : AppColors.sageGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.sageGreen,
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.all_inclusive,
-                    color: selectedVersesPerDay >= 9999 ? AppColors.cream : AppColors.sageGreen,
-                    size: 28,
-                  ),
-                ),
-              ).animate().fade(delay: 800.ms).scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1, 1),
-                  ),
+                  const SizedBox(width: 24),
+                  // Number display
+                  GestureDetector(
+                        onTap: () => onSelectionChanged(
+                          selectedVersesPerDay >= 9999
+                              ? 1
+                              : selectedVersesPerDay + 1,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 100,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.sageGreen,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.sageGreen,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              selectedVersesPerDay >= 9999
+                                  ? '∞'
+                                  : selectedVersesPerDay.toString(),
+                              style: AppTextStyles.loraTitle().copyWith(
+                                color: AppColors.cream,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 32,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fade(delay: 600.ms)
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1, 1),
+                      ),
+                  const SizedBox(width: 24),
+                  // Increase button
+                  GestureDetector(
+                        onTap: () =>
+                            onSelectionChanged(selectedVersesPerDay + 1),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.sageGreen,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.sageGreen,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: AppColors.cream,
+                            size: 28,
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fade(delay: 700.ms)
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1, 1),
+                      ),
+                  const SizedBox(width: 12),
+                  // Infinity button
+                  GestureDetector(
+                        onTap: () => onSelectionChanged(
+                          selectedVersesPerDay >= 9999 ? 10 : 9999,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: selectedVersesPerDay >= 9999
+                                ? AppColors.sageGreen
+                                : AppColors.sageGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.sageGreen,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.all_inclusive,
+                            color: selectedVersesPerDay >= 9999
+                                ? AppColors.cream
+                                : AppColors.sageGreen,
+                            size: 28,
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fade(delay: 800.ms)
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1, 1),
+                      ),
+                ],
+              ),
+
+              const SizedBox(height: 48),
+
+              // Complete button
+              _OnboardingButton(
+                text: l10n.getStarted,
+                isPrimary: true,
+                onPressed: onComplete,
+              ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 48),
+/// Jar Type Selection Page
+class _JarTypeSelectionPage extends StatelessWidget {
+  final int selectedJarType;
+  final ValueChanged<int> onSelectionChanged;
+  final VoidCallback onComplete;
 
-          // Complete button
-          _OnboardingButton(
-            text: l10n.getStarted,
-            isPrimary: true,
-            onPressed: onComplete,
-          ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
-        ],
+  const _JarTypeSelectionPage({
+    required this.selectedJarType,
+    required this.onSelectionChanged,
+    required this.onComplete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 120,
           ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.local_drink, size: 60, color: primaryColor),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+
+              const SizedBox(height: 40),
+
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Choose Your Jar',
+                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                ),
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
+
+              const SizedBox(height: 16),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Select a jar style that speaks to you. You can change this anytime in settings.',
+                  style: AppTextStyles.loraBodyMedium(),
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
+
+              const SizedBox(height: 40),
+
+              GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.2,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _JarTypeOption(
+                    label: 'Classic',
+                    icon: Icons.local_drink,
+                    isSelected: selectedJarType == 0,
+                    onTap: () => onSelectionChanged(0),
+                    primaryColor: primaryColor,
+                    isDark: isDark,
+                  ),
+                  _JarTypeOption(
+                    label: 'Vintage',
+                    icon: Icons.wine_bar,
+                    isSelected: selectedJarType == 1,
+                    onTap: () => onSelectionChanged(1),
+                    primaryColor: primaryColor,
+                    isDark: isDark,
+                  ),
+                  _JarTypeOption(
+                    label: 'Modern',
+                    icon: Icons.water_drop,
+                    isSelected: selectedJarType == 2,
+                    onTap: () => onSelectionChanged(2),
+                    primaryColor: primaryColor,
+                    isDark: isDark,
+                  ),
+                  _JarTypeOption(
+                    label: 'Ornate',
+                    icon: Icons.liquor,
+                    isSelected: selectedJarType == 3,
+                    onTap: () => onSelectionChanged(3),
+                    primaryColor: primaryColor,
+                    isDark: isDark,
+                  ),
+                ],
+              ).animate().fade(delay: 600.ms).slideY(begin: 0.2),
+
+              const SizedBox(height: 48),
+
+              _OnboardingButton(
+                text: 'Continue',
+                isPrimary: true,
+                onPressed: onComplete,
+              ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JarTypeOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _JarTypeOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? primaryColor.withValues(alpha: 0.15)
+              : (isDark ? AppColors.darkElevated : AppColors.softSand),
+          border: Border.all(
+            color: isSelected
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? primaryColor
+                  : primaryColor.withValues(alpha: 0.7),
+              size: 36,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: AppTextStyles.loraBodyMedium().copyWith(
+                color: isSelected ? primaryColor : null,
+                fontWeight: isSelected ? FontWeight.w600 : null,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -916,17 +1161,11 @@ class _OnboardingButton extends StatelessWidget {
             : AppColors.sageGreen.withValues(alpha: 0.1),
         foregroundColor: isPrimary ? AppColors.cream : AppColors.sageGreen,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(
-          text,
-          style: AppTextStyles.loraBodyMedium(),
-          maxLines: 1,
-        ),
+        child: Text(text, style: AppTextStyles.loraBodyMedium(), maxLines: 1),
       ),
     );
   }
@@ -977,11 +1216,7 @@ class _ModeCard extends StatelessWidget {
                 color: AppColors.sageGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 28,
-                color: AppColors.sageGreen,
-              ),
+              child: Icon(icon, size: 28, color: AppColors.sageGreen),
             ),
 
             const SizedBox(width: 16),
@@ -1015,11 +1250,7 @@ class _ModeCard extends StatelessWidget {
             ),
 
             // Arrow icon
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: AppColors.sageGreen,
-            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.sageGreen),
           ],
         ),
       ),
