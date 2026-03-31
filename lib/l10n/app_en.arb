@@ -59,5 +59,13 @@
   "jarTapsPerDayDesc": "Choose how many jar taps you'd like per day. Tap the number to increase, or use +/- buttons. You can change this later in settings.",
   "getStarted": "Get Started",
   "soundEffects": "Sound Effects",
-  "alhamdulillahLimitReached": "Alhamdulillah you reached limit today! Want more? You can change this in settings."
+  "limitReached": "Alhamdulillah you reached your daily limit! Want more? You can change this in settings.",
+  "theme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "appearance": "Appearance",
+  "accessibility": "Accessibility",
+  "reducedMotion": "Reduced Motion",
+  "reducedMotionDesc": "Disable animations for a calmer experience"
 }

@@ -452,11 +452,59 @@ abstract class AppLocalizations {
   /// **'Sound Effects'**
   String get soundEffects;
 
-  /// No description provided for @alhamdulillahLimitReached.
+  /// No description provided for @limitReached.
   ///
   /// In en, this message translates to:
-  /// **'Alhamdulillah you reached limit today! Want more? You can change this in settings.'**
-  String get alhamdulillahLimitReached;
+  /// **'Alhamdulillah you reached your daily limit! Want more? You can change this in settings.'**
+  String get limitReached;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @accessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibility;
+
+  /// No description provided for @reducedMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced Motion'**
+  String get reducedMotion;
+
+  /// No description provided for @reducedMotionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable animations for a calmer experience'**
+  String get reducedMotionDesc;
 }
 
 class _AppLocalizationsDelegate

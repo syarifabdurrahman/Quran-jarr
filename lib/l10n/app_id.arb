@@ -59,5 +59,13 @@
   "jarTapsPerDayDesc": "Pilih berapa banyak ketukan toples yang Anda inginkan per hari. Ketuk nomor untuk menambah, atau gunakan tombol +/-. Anda bisa mengubahnya nanti di pengaturan.",
   "getStarted": "Mulai",
   "soundEffects": "Efek Suara",
-  "alhamdulillahLimitReached": "Alhamdulillah Anda telah mencapai batas hari ini! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan."
+  "limitReached": "Alhamdulillah Anda telah mencapai batas harian! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan.",
+  "theme": "Tema",
+  "themeSystem": "Sistem",
+  "themeLight": "Terang",
+  "themeDark": "Gelap",
+  "appearance": "Tampilan",
+  "accessibility": "Aksesibilitas",
+  "reducedMotion": "Kurangi Animasi",
+  "reducedMotionDesc": "Nonaktifkan animasi untuk pengalaman yang lebih tenang"
 }

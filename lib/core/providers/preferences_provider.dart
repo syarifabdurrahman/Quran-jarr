@@ -17,7 +17,8 @@ class _PreferencesState {
 /// Preferences Notifier
 /// Manages app preferences like selected translation
 class PreferencesNotifier extends StateNotifier<_PreferencesState> {
-  PreferencesNotifier() : super(_PreferencesState(PreferencesService.instance, 0));
+  PreferencesNotifier()
+    : super(_PreferencesState(PreferencesService.instance, 0));
 
   PreferencesService get _prefs => state.prefs;
 
@@ -121,6 +122,18 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
   bool canTapJarToday() {
     return _prefs.canTapJarToday();
   }
+
+  /// Set theme mode (0 = system, 1 = light, 2 = dark)
+  Future<void> setThemeMode(int mode) async {
+    await _prefs.setThemeMode(mode);
+    _notify();
+  }
+
+  /// Set reduced motion preference
+  Future<void> setReducedMotion(bool enabled) async {
+    await _prefs.setReducedMotion(enabled);
+    _notify();
+  }
 }
 
 /// Preferences Provider
@@ -131,8 +144,8 @@ final preferencesServiceProvider = Provider<PreferencesService>((ref) {
 /// Preferences Notifier Provider
 final preferencesNotifierProvider =
     StateNotifierProvider<PreferencesNotifier, _PreferencesState>((ref) {
-  return PreferencesNotifier();
-});
+      return PreferencesNotifier();
+    });
 
 /// Selected Translation Provider
 final selectedTranslationProvider = Provider<Translation>((ref) {
@@ -141,23 +154,35 @@ final selectedTranslationProvider = Provider<Translation>((ref) {
 
 /// Daily Notification Enabled Provider
 final dailyNotificationEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(preferencesNotifierProvider).prefs.isDailyNotificationEnabled();
+  return ref
+      .watch(preferencesNotifierProvider)
+      .prefs
+      .isDailyNotificationEnabled();
 });
 
 /// Notification Time Provider
 final notificationTimeProvider = Provider<TimeOfDay>((ref) {
-  final (hour, minute) = ref.watch(preferencesNotifierProvider).prefs.getNotificationTime();
+  final (hour, minute) = ref
+      .watch(preferencesNotifierProvider)
+      .prefs
+      .getNotificationTime();
   return TimeOfDay(hour: hour, minute: minute);
 });
 
 /// Arabic Font Size Multiplier Provider
 final arabicFontSizeProvider = Provider<double>((ref) {
-  return ref.watch(preferencesNotifierProvider).prefs.getArabicFontSizeMultiplier();
+  return ref
+      .watch(preferencesNotifierProvider)
+      .prefs
+      .getArabicFontSizeMultiplier();
 });
 
 /// English Font Size Multiplier Provider
 final englishFontSizeProvider = Provider<double>((ref) {
-  return ref.watch(preferencesNotifierProvider).prefs.getEnglishFontSizeMultiplier();
+  return ref
+      .watch(preferencesNotifierProvider)
+      .prefs
+      .getEnglishFontSizeMultiplier();
 });
 
 /// Verses Per Day Provider
@@ -173,4 +198,14 @@ final remainingJarTapsProvider = Provider<int>((ref) {
 /// Daily Jar Tap Limit Provider (for easy access to the limit)
 final jarTapLimitProvider = Provider<int>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getVersesPerDay();
+});
+
+/// Theme Mode Provider (0 = system, 1 = light, 2 = dark)
+final themeModeProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getThemeMode();
+});
+
+/// Reduced Motion Provider
+final reducedMotionProvider = Provider<bool>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getReducedMotion();
 });

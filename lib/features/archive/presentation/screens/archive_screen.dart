@@ -34,24 +34,26 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     showTranslationPicker(
       context,
       onTranslationChanged: (translationId) {
-        return ref.read(archiveNotifierProvider.notifier).reloadVersesWithTranslation(translationId);
+        return ref
+            .read(archiveNotifierProvider.notifier)
+            .reloadVersesWithTranslation(translationId);
       },
     );
   }
 
   void _deleteVerse(Verse verse) {
-    final bgColor = AppColors.softSand;
-    final primaryColor = AppColors.sageGreen;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.softSand;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
     final errorColor = AppColors.error;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: bgColor,
-        title: Text(
-          'Remove Verse',
-          style: AppTextStyles.loraHeading(),
-        ),
+        title: Text('Remove Verse', style: AppTextStyles.loraHeading()),
         content: Text(
           'Remove this verse from your archive?',
           style: AppTextStyles.loraBodyMedium(),
@@ -61,8 +63,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: AppTextStyles.loraBodyMedium()
-                  .copyWith(color: primaryColor),
+              style: AppTextStyles.loraBodyMedium().copyWith(
+                color: primaryColor,
+              ),
             ),
           ),
           TextButton(
@@ -74,8 +77,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             },
             child: Text(
               'Remove',
-              style: AppTextStyles.loraBodyMedium()
-                  .copyWith(color: errorColor),
+              style: AppTextStyles.loraBodyMedium().copyWith(color: errorColor),
             ),
           ),
         ],
@@ -86,9 +88,14 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   @override
   Widget build(BuildContext context) {
     final archiveState = ref.watch(archiveNotifierProvider);
-    final bgColor = AppColors.cream;
-    final primaryColor = AppColors.sageGreen;
-    final searchFillColor = AppColors.softSand;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.midnightBlue : AppColors.cream;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+    final searchFillColor = isDark
+        ? AppColors.darkElevated
+        : AppColors.softSand;
     final errorColor = AppColors.error;
 
     return Scaffold(
@@ -153,10 +160,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                         height: 40,
                         child: IconButton(
                           onPressed: () => _showClearDialog(archiveState),
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: errorColor,
-                          ),
+                          icon: Icon(Icons.delete_outline, color: errorColor),
                           tooltip: 'Clear all',
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -176,16 +180,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search verses...',
                   hintStyle: AppTextStyles.loraBodySmall(),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: primaryColor,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: primaryColor),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: primaryColor,
-                          ),
+                          icon: Icon(Icons.clear, color: primaryColor),
                           onPressed: () {
                             _searchController.clear();
                             _onSearchChanged('');
@@ -213,7 +211,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             // Verse Count
             if (archiveState.savedVerses.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -224,9 +225,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ),
 
             // Content
-            Expanded(
-              child: _buildContent(archiveState),
-            ),
+            Expanded(child: _buildContent(archiveState)),
           ],
         ),
       ),
@@ -238,9 +237,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     final errorColor = AppColors.error;
 
     if (state.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: primaryColor),
-      );
+      return Center(child: CircularProgressIndicator(color: primaryColor));
     }
 
     if (state.errorMessage != null) {
@@ -250,11 +247,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                color: errorColor,
-                size: 48,
-              ),
+              Icon(Icons.error_outline, color: errorColor, size: 48),
               const SizedBox(height: 16),
               Text(
                 state.errorMessage!,
@@ -286,10 +279,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               size: 64,
             ),
             const SizedBox(height: 16),
-            Text(
-              'No saved verses yet',
-              style: AppTextStyles.loraHeading(),
-            ),
+            Text('No saved verses yet', style: AppTextStyles.loraHeading()),
             const SizedBox(height: 8),
             Text(
               'Tap the bookmark icon on a verse to save it here',
@@ -325,10 +315,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ),
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 20),
-              child: Icon(
-                Icons.delete_outline,
-                color: errorColor,
-              ),
+              child: Icon(Icons.delete_outline, color: errorColor),
             ),
             child: VerseCardWidget(
               verse: verse,
@@ -351,10 +338,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: bgColor,
-        title: Text(
-          'Clear Archive',
-          style: AppTextStyles.loraHeading(),
-        ),
+        title: Text('Clear Archive', style: AppTextStyles.loraHeading()),
         content: Text(
           'Remove all ${state.savedVerses.length} saved verses from your archive?',
           style: AppTextStyles.loraBodyMedium(),
@@ -364,8 +348,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: AppTextStyles.loraBodyMedium()
-                  .copyWith(color: primaryColor),
+              style: AppTextStyles.loraBodyMedium().copyWith(
+                color: primaryColor,
+              ),
             ),
           ),
           TextButton(
@@ -375,8 +360,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             },
             child: Text(
               'Clear All',
-              style: AppTextStyles.loraBodyMedium()
-                  .copyWith(color: errorColor),
+              style: AppTextStyles.loraBodyMedium().copyWith(color: errorColor),
             ),
           ),
         ],

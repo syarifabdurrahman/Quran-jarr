@@ -31,10 +31,7 @@ class ShareService {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ShareOptionsSheet(
-        verse: verse,
-        cardKey: cardKey,
-      ),
+      builder: (context) => _ShareOptionsSheet(verse: verse, cardKey: cardKey),
     );
   }
 
@@ -44,7 +41,8 @@ class ShareService {
     if (image != null) {
       await Share.shareXFiles(
         [XFile(image.path, mimeType: 'image/png')],
-        subject: '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
+        subject:
+            '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
     }
   }
@@ -53,10 +51,9 @@ class ShareService {
   Future<void> shareToFacebook(Verse verse, GlobalKey cardKey) async {
     final image = await _captureCard(cardKey);
     if (image != null) {
-      await Share.shareXFiles(
-        [XFile(image.path, mimeType: 'image/png')],
-        subject: 'Quran Verse - ${verse.arabicSurahName}',
-      );
+      await Share.shareXFiles([
+        XFile(image.path, mimeType: 'image/png'),
+      ], subject: 'Quran Verse - ${verse.arabicSurahName}');
     }
   }
 
@@ -66,32 +63,33 @@ class ShareService {
     if (image != null) {
       await Share.shareXFiles(
         [XFile(image.path, mimeType: 'image/png')],
-        subject: '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
-        text: '${verse.translation}\n\n${verse.surahName} (${verse.surahNumber}:${verse.ayahNumber})',
+        subject:
+            '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
+        text:
+            '${verse.translation}\n\n${verse.surahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
     }
   }
 
   /// Share verse as text only
   Future<void> shareAsText(Verse verse) async {
-    final shareText = '''
+    final shareText =
+        '''
 ${verse.arabicText}
 
 "${verse.translation}"
 
 ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
 
-— Shared via Quran Jarr''';
+📱 Quran Jarr - Daily Quran Inspiration''';
 
     await Share.share(shareText.trim(), subject: 'Quran Verse');
   }
 
   /// Copy verse text to clipboard
-  Future<void> copyToClipboard(
-    Verse verse,
-    BuildContext context,
-  ) async {
-    final shareText = '''
+  Future<void> copyToClipboard(Verse verse, BuildContext context) async {
+    final shareText =
+        '''
 ${verse.arabicText}
 
 "${verse.translation}"
@@ -121,7 +119,9 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})''';
       RenderRepaintBoundary boundary =
           cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
 
       if (byteData == null) return null;
 
@@ -142,17 +142,21 @@ class _ShareOptionsSheet extends StatelessWidget {
   final Verse verse;
   final GlobalKey? cardKey;
 
-  const _ShareOptionsSheet({
-    required this.verse,
-    this.cardKey,
-  });
+  const _ShareOptionsSheet({required this.verse, this.cardKey});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.softSand;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+    final iconColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.softSand,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Column(
@@ -164,7 +168,7 @@ class _ShareOptionsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.glassBorder.withOpacity(0.3),
+                color: textColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -175,15 +179,12 @@ class _ShareOptionsSheet extends StatelessWidget {
                 children: [
                   Text(
                     'Share Verse',
-                    style: AppTextStyles.loraTitle(),
+                    style: AppTextStyles.loraTitle().copyWith(color: textColor),
                   ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppColors.sageGreen,
-                    ),
+                    icon: Icon(Icons.close, color: iconColor),
                   ),
                 ],
               ),
@@ -290,6 +291,9 @@ class _ShareOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -307,18 +311,14 @@ class _ShareOption extends StatelessWidget {
               ),
               child: icon != null
                   ? Image.asset(icon!, width: 24, height: 24)
-                  : Icon(
-                      iconData,
-                      color: color,
-                      size: 24,
-                    ),
+                  : Icon(iconData, color: color, size: 24),
             ),
             const SizedBox(width: 16),
             // Title
             Text(
               title,
               style: AppTextStyles.loraBodyLarge().copyWith(
-                color: AppColors.deepUmber,
+                color: textColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -327,7 +327,7 @@ class _ShareOption extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: AppColors.deepUmber.withValues(alpha: 0.5),
+              color: textColor.withValues(alpha: 0.5),
             ),
           ],
         ),

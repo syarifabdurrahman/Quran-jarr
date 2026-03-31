@@ -76,6 +76,9 @@ dependencies:
 
   # Ads
   google_mobile_ads: ^5.1.0
+  
+  # Bottom Navigation
+  persistent_bottom_nav_bar_v2: ^6.3.2
 
 dev_dependencies:
   flutter_test:

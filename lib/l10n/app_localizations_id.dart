@@ -193,6 +193,31 @@ class AppLocalizationsId extends AppLocalizations {
   String get soundEffects => 'Efek Suara';
 
   @override
-  String get alhamdulillahLimitReached =>
-      'Alhamdulillah Anda telah mencapai batas hari ini! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan.';
+  String get limitReached =>
+      'Alhamdulillah Anda telah mencapai batas harian! Ingin lebih banyak? Anda bisa mengubahnya di pengaturan.';
+
+  @override
+  String get theme => 'Tema';
+
+  @override
+  String get themeSystem => 'Sistem';
+
+  @override
+  String get themeLight => 'Terang';
+
+  @override
+  String get themeDark => 'Gelap';
+
+  @override
+  String get appearance => 'Tampilan';
+
+  @override
+  String get accessibility => 'Aksesibilitas';
+
+  @override
+  String get reducedMotion => 'Kurangi Animasi';
+
+  @override
+  String get reducedMotionDesc =>
+      'Nonaktifkan animasi untuk pengalaman yang lebih tenang';
 }

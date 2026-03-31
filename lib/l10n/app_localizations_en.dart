@@ -194,6 +194,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soundEffects => 'Sound Effects';
 
   @override
-  String get alhamdulillahLimitReached =>
-      'Alhamdulillah you reached limit today! Want more? You can change this in settings.';
+  String get limitReached =>
+      'Alhamdulillah you reached your daily limit! Want more? You can change this in settings.';
+
+  @override
+  String get theme => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get accessibility => 'Accessibility';
+
+  @override
+  String get reducedMotion => 'Reduced Motion';
+
+  @override
+  String get reducedMotionDesc => 'Disable animations for a calmer experience';
 }

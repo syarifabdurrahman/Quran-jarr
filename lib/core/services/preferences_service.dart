@@ -22,7 +22,11 @@ class PreferencesService {
 
   /// Check if onboarding is completed
   bool isOnboardingCompleted() {
-    return _prefsBox.get(AppConstants.keyOnboardingCompleted, defaultValue: false) as bool;
+    return _prefsBox.get(
+          AppConstants.keyOnboardingCompleted,
+          defaultValue: false,
+        )
+        as bool;
   }
 
   /// Set onboarding as completed
@@ -32,7 +36,8 @@ class PreferencesService {
 
   /// Check if internet requirement is accepted
   bool isInternetAccepted() {
-    return _prefsBox.get(AppConstants.keyInternetAccepted, defaultValue: false) as bool;
+    return _prefsBox.get(AppConstants.keyInternetAccepted, defaultValue: false)
+        as bool;
   }
 
   /// Set internet requirement acceptance
@@ -42,7 +47,12 @@ class PreferencesService {
 
   /// Get verse selection mode
   VerseSelectionMode getVerseSelectionMode() {
-    final value = _prefsBox.get(AppConstants.keyVerseSelectionMode, defaultValue: VerseSelectionMode.random.value) as String;
+    final value =
+        _prefsBox.get(
+              AppConstants.keyVerseSelectionMode,
+              defaultValue: VerseSelectionMode.random.value,
+            )
+            as String;
     return VerseSelectionMode.fromValue(value);
   }
 
@@ -55,8 +65,10 @@ class PreferencesService {
 
   /// Get the selected translation ID
   String getTranslationId() {
-    return _prefsBox.get(AppConstants.keySelectedTranslation,
-            defaultValue: AvailableTranslations.defaultTranslation.id)
+    return _prefsBox.get(
+          AppConstants.keySelectedTranslation,
+          defaultValue: AvailableTranslations.defaultTranslation.id,
+        )
         as String;
   }
 
@@ -95,11 +107,20 @@ class PreferencesService {
   int getTodayJarTapCount() {
     final now = DateTime.now();
     final (hour, minute) = getNotificationTime();
-    final lastResetDate = _prefsBox.get('last_reset_date', defaultValue: '') as String;
+    final lastResetDate =
+        _prefsBox.get('last_reset_date', defaultValue: '') as String;
 
     // Calculate the notification time for today and yesterday
-    final todayNotificationTime = DateTime(now.year, now.month, now.day, hour, minute);
-    final yesterdayNotificationTime = todayNotificationTime.subtract(const Duration(days: 1));
+    final todayNotificationTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    final yesterdayNotificationTime = todayNotificationTime.subtract(
+      const Duration(days: 1),
+    );
 
     // Determine the most recent reset time
     DateTime lastReset;
@@ -112,7 +133,8 @@ class PreferencesService {
 
     // Check if we should reset (current time is after today's notification time
     // and last reset was before today's notification time)
-    if (now.isAfter(todayNotificationTime) && lastReset.isBefore(todayNotificationTime)) {
+    if (now.isAfter(todayNotificationTime) &&
+        lastReset.isBefore(todayNotificationTime)) {
       // New cycle - reset count
       return 0;
     }
@@ -125,8 +147,15 @@ class PreferencesService {
   Future<void> incrementJarTapCount() async {
     final now = DateTime.now();
     final (hour, minute) = getNotificationTime();
-    final todayNotificationTime = DateTime(now.year, now.month, now.day, hour, minute);
-    final lastResetDate = _prefsBox.get('last_reset_date', defaultValue: '') as String;
+    final todayNotificationTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    final lastResetDate =
+        _prefsBox.get('last_reset_date', defaultValue: '') as String;
 
     int newCount;
     DateTime lastReset;
@@ -137,13 +166,15 @@ class PreferencesService {
     }
 
     // Check if we need to reset (new cycle)
-    if (now.isAfter(todayNotificationTime) && lastReset.isBefore(todayNotificationTime)) {
+    if (now.isAfter(todayNotificationTime) &&
+        lastReset.isBefore(todayNotificationTime)) {
       // New cycle, reset count to 1
       newCount = 1;
       await _prefsBox.put('last_reset_date', now.toIso8601String());
     } else {
       // Same cycle, increment count
-      final currentCount = _prefsBox.get('today_tap_count', defaultValue: 0) as int;
+      final currentCount =
+          _prefsBox.get('today_tap_count', defaultValue: 0) as int;
       newCount = currentCount + 1;
     }
 
@@ -171,7 +202,8 @@ class PreferencesService {
 
   /// Check if daily notification is enabled
   bool isDailyNotificationEnabled() {
-    return _prefsBox.get('daily_notification_enabled', defaultValue: false) as bool;
+    return _prefsBox.get('daily_notification_enabled', defaultValue: false)
+        as bool;
   }
 
   /// Set daily notification enabled
@@ -201,7 +233,8 @@ class PreferencesService {
 
   /// Get and clear pending verse key from storage
   String? getAndClearPendingVerseKey() {
-    final key = _prefsBox.get('pending_verse_key', defaultValue: null) as String?;
+    final key =
+        _prefsBox.get('pending_verse_key', defaultValue: null) as String?;
     // Clear immediately after reading
     _prefsBox.delete('pending_verse_key');
     return key;
@@ -223,7 +256,8 @@ class PreferencesService {
 
   /// Get English font size multiplier (0.8 to 1.5, default 1.0)
   double getEnglishFontSizeMultiplier() {
-    return _prefsBox.get('english_font_multiplier', defaultValue: 1.0) as double;
+    return _prefsBox.get('english_font_multiplier', defaultValue: 1.0)
+        as double;
   }
 
   /// Set English font size multiplier
@@ -231,6 +265,30 @@ class PreferencesService {
     // Clamp between 0.8 and 1.5
     final clamped = multiplier.clamp(0.8, 1.5);
     await _prefsBox.put('english_font_multiplier', clamped);
+  }
+
+  // ==================== Theme Preferences ====================
+
+  /// Get theme mode (0 = system, 1 = light, 2 = dark)
+  int getThemeMode() {
+    return _prefsBox.get('theme_mode', defaultValue: 0) as int;
+  }
+
+  /// Set theme mode
+  Future<void> setThemeMode(int mode) async {
+    await _prefsBox.put('theme_mode', mode);
+  }
+
+  // ==================== Accessibility Preferences ====================
+
+  /// Get reduced motion preference
+  bool getReducedMotion() {
+    return _prefsBox.get('reduced_motion', defaultValue: false) as bool;
+  }
+
+  /// Set reduced motion preference
+  Future<void> setReducedMotion(bool enabled) async {
+    await _prefsBox.put('reduced_motion', enabled);
   }
 
   // ==================== Clear Preferences ====================

@@ -31,10 +31,17 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   @override
   Widget build(BuildContext context) {
     final verse = widget.verse;
-    final cardColor = AppColors.softSand;
-    final primaryColor = AppColors.sageGreen;
-    final terracottaColor = AppColors.terracotta;
-    final glassBorder = AppColors.glassBorder;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : AppColors.softSand;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+    final terracottaColor = isDark
+        ? AppColors.midnightGold
+        : AppColors.terracotta;
+    final glassBorder = isDark
+        ? AppColors.midnightSlate
+        : AppColors.glassBorder;
 
     // Font size multipliers
     final arabicFontMultiplier = ref.watch(arabicFontSizeProvider);
@@ -72,7 +79,10 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                   // Surah reference
                   Flexible(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: primaryColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
@@ -102,17 +112,20 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                                 : primaryColor,
                           ),
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
                         ),
                       if (widget.onShare != null)
                         IconButton(
                           onPressed: widget.onShare,
-                          icon: Icon(
-                            Icons.share_outlined,
-                            color: primaryColor,
-                          ),
+                          icon: Icon(Icons.share_outlined, color: primaryColor),
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
                         ),
                     ],
                   ),
@@ -171,7 +184,10 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                     : () => _handleTafsirPress(context),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -206,10 +222,13 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                                 verse.hasTafsir
                                     ? 'View Tafsir (Ibn Kathir)'
                                     : 'Load Tafsir',
-                                style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
-                                  color: primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style:
+                                    AppTextStyles.loraBodyMedium(
+                                      englishFontMultiplier,
+                                    ).copyWith(
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -229,7 +248,8 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     final verse = widget.verse;
 
     // Check if verse has tafsir for current translation
-    final hasTafsirForCurrentTranslation = verse.tafsirByTranslation != null &&
+    final hasTafsirForCurrentTranslation =
+        verse.tafsirByTranslation != null &&
         verse.tafsirByTranslation!.containsKey(verse.translationId);
 
     if (!hasTafsirForCurrentTranslation) {
@@ -255,12 +275,15 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     final verse = widget.verse;
 
     // Check if verse has tafsir for any translation
-    if (verse.tafsirByTranslation == null || verse.tafsirByTranslation!.isEmpty) {
+    if (verse.tafsirByTranslation == null ||
+        verse.tafsirByTranslation!.isEmpty) {
       // No tafsir available at all
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Tafsir not available. Please connect to internet and try again.'),
+            content: Text(
+              'Tafsir not available. Please connect to internet and try again.',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -276,7 +299,9 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Tafsir not available for ${verse.translationId} translation. Available for: ${verse.tafsirByTranslation!.keys.join(", ")}'),
+            content: Text(
+              'Tafsir not available for ${verse.translationId} translation. Available for: ${verse.tafsirByTranslation!.keys.join(", ")}',
+            ),
             duration: const Duration(seconds: 4),
           ),
         );
@@ -284,10 +309,17 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
       return;
     }
 
-    final cardColor = AppColors.softSand;
-    final primaryColor = AppColors.sageGreen;
-    final glassBorder = AppColors.glassBorder;
-    final tafsirTextColor = AppColors.deepUmber;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.darkCard : AppColors.softSand;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+    final glassBorder = isDark
+        ? AppColors.midnightSlate
+        : AppColors.glassBorder;
+    final tafsirTextColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.deepUmber;
 
     // Font size multipliers
     final englishFontMultiplier = ref.read(englishFontSizeProvider);
@@ -319,10 +351,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.menu_book,
-                    color: primaryColor,
-                  ),
+                  Icon(Icons.menu_book, color: primaryColor),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -332,10 +361,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.close,
-                      color: primaryColor,
-                    ),
+                    icon: Icon(Icons.close, color: primaryColor),
                   ),
                 ],
               ),
@@ -354,10 +380,9 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   tafsirText,
-                  style: AppTextStyles.loraBodyMedium(englishFontMultiplier).copyWith(
-                    color: tafsirTextColor,
-                    height: 1.8,
-                  ),
+                  style: AppTextStyles.loraBodyMedium(
+                    englishFontMultiplier,
+                  ).copyWith(color: tafsirTextColor, height: 1.8),
                 ),
               ),
             ),
