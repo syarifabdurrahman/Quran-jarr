@@ -36,8 +36,8 @@ class AdConfig {
 
   /// Minimum time between interstitial ad shows (in seconds)
   /// This prevents ads from showing too rapidly
-  static const int minIntervalBetweenAds = 30; // 30 seconds minimum
+  static const int minIntervalBetweenAds = 120; // 2 minutes minimum
 
   /// Show interstitial ad every N verses read
-  static const int versesBetweenAds = 5;
+  static const int versesBetweenAds = 15;
 }

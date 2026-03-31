@@ -102,7 +102,7 @@ class AdService {
         onAdFailedToLoad: (error) {
           // Failed to load ad - try loading again after a delay
           _isInterstitialAdReady = false;
-          Future.delayed(const Duration(seconds: 30), () {
+          Future.delayed(const Duration(seconds: 60), () {
             _loadInterstitialAd();
           });
         },
