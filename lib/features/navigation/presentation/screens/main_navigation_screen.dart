@@ -4,9 +4,11 @@ import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/jar/presentation/screens/jar_screen.dart';
+import 'package:quran_jarr/features/settings/presentation/screens/settings_screen.dart';
+import 'package:quran_jarr/features/statistics/presentation/screens/statistics_screen.dart';
 
 /// Main Navigation Screen with Bottom Navigation Bar
-/// Uses Style9 for a modern look
+/// Uses Style7 for a modern look
 class MainNavigationScreen extends StatelessWidget {
   const MainNavigationScreen({super.key});
 
@@ -30,10 +32,28 @@ class MainNavigationScreen extends StatelessWidget {
         ),
       ),
       PersistentTabConfig(
+        screen: const StatisticsScreen(),
+        item: ItemConfig(
+          icon: const Icon(Icons.bar_chart_rounded),
+          title: 'Stats',
+          activeForegroundColor: primaryColor,
+          inactiveForegroundColor: inactiveColor,
+        ),
+      ),
+      PersistentTabConfig(
         screen: const ArchiveScreen(),
         item: ItemConfig(
           icon: const Icon(Icons.bookmark_rounded),
           title: 'Archive',
+          activeForegroundColor: primaryColor,
+          inactiveForegroundColor: inactiveColor,
+        ),
+      ),
+      PersistentTabConfig(
+        screen: const SettingsScreen(),
+        item: ItemConfig(
+          icon: const Icon(Icons.settings_rounded),
+          title: 'Settings',
           activeForegroundColor: primaryColor,
           inactiveForegroundColor: inactiveColor,
         ),
@@ -57,7 +77,7 @@ class MainNavigationScreen extends StatelessWidget {
 
     return PersistentTabView(
       tabs: _tabs(context),
-      navBarBuilder: (navBarConfig) => Style9BottomNavBar(
+      navBarBuilder: (navBarConfig) => Style7BottomNavBar(
         navBarConfig: navBarConfig,
         navBarDecoration: NavBarDecoration(color: bgColor),
       ),

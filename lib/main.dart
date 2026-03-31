@@ -9,6 +9,7 @@ import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
+import 'package:quran_jarr/core/services/streak_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
@@ -24,6 +25,7 @@ void main() async {
   await LocalStorageService.instance.initialize();
   await PreferencesService.instance.initialize();
   await NotificationService.instance.initialize();
+  await StreakService.instance.initialize();
   await WidgetService.instance.initialize();
   await AdService.instance.initialize();
 

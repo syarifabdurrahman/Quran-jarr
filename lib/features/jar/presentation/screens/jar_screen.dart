@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/providers/streak_provider.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/share_service.dart';
@@ -13,14 +14,12 @@ import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/utils/responsive_utils.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
-import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
-import 'package:quran_jarr/l10n/app_localizations.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
 
@@ -66,31 +65,43 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
   Future<void> _handleJarTap() async {
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Check if user can tap the jar today
     if (!ref.read(preferencesNotifierProvider.notifier).canTapJarToday()) {
       // Haptic feedback for limit reached
       HapticFeedback.mediumImpact();
-      // Show limit reached message
+      // Show limit reached message with softer colors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              l10n.limitReached,
-              style: AppTextStyles.loraBodySmall().copyWith(
-                color: Colors.white,
-              ),
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.limitReached,
+                    style: AppTextStyles.loraBodySmall().copyWith(
+                      color: Colors.white.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            backgroundColor: AppColors.sageGreen,
+            // Softer color for limit reached state
+            backgroundColor: isDark
+                ? AppColors.midnightSlate
+                : AppColors.sageGreen.withValues(alpha: 0.85),
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: l10n.settings,
-              textColor: Colors.white,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                _showSettingsDialog(context);
-              },
+            duration: const Duration(seconds: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
@@ -106,17 +117,73 @@ class _JarScreenState extends ConsumerState<JarScreen>
   }
 
   Future<void> _pullVerseAnimation() async {
+    // Phase 1: Jar shake animation (smoother, longer)
     await _animationController.forward();
+
+    // Phase 2: Anticipation delay (1.5 seconds) - creates ritual moment
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Phase 3: Pull the verse (this is when the "paper slip" comes out)
     await ref.read(jarNotifierProvider.notifier).pullRandomVerse();
+
+    // Phase 4: Breath moment - pause before showing actions
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Play whoosh sound when verse appears
+    SoundEffectsService.instance.playWhoosh();
+
+    // Haptic feedback for verse reveal
+    HapticFeedback.mediumImpact();
+
     // Only increment tap count if connected to internet
     final isConnected = ref.read(connectivityProvider);
     if (isConnected) {
       await ref
           .read(preferencesNotifierProvider.notifier)
           .incrementJarTapCount();
+
+      // Record verse read for streak
+      final isNewStreak = await ref
+          .read(streakProvider.notifier)
+          .recordVerseRead();
+
+      // Check for milestone celebration
+      if (isNewStreak && mounted) {
+        final milestoneMessage = ref
+            .read(streakProvider.notifier)
+            .milestoneMessage;
+        if (milestoneMessage != null) {
+          // Show milestone celebration
+          HapticFeedback.heavyImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.celebration, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      milestoneMessage,
+                      style: AppTextStyles.loraBodyMedium().copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.mutedGold,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      }
     }
-    // Play whoosh sound when verse appears
-    SoundEffectsService.instance.playWhoosh();
+
     _animationController.reset();
   }
 
@@ -174,40 +241,20 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              showTranslationPicker(context);
-                            },
-                            icon: Icon(
-                              Icons.translate_outlined,
-                              color: primaryColor,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        onPressed: () {
+                          showTranslationPicker(context);
+                        },
+                        icon: Icon(
+                          Icons.translate_outlined,
+                          color: primaryColor,
                         ),
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              _showSettingsDialog(context);
-                            },
-                            icon: Icon(
-                              Icons.settings_outlined,
-                              color: primaryColor,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                      ],
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
                   ],
                 ),
@@ -290,13 +337,20 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       primaryColor: primaryColor,
                     ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
 
+                    // Countdown Timer (show when limit reached)
+                    if (remainingTaps <= 0 && dailyLimit < 9999)
+                      _CountdownTimer(
+                        primaryColor: primaryColor,
+                        isDark: isDark,
+                      ).animate().fade(delay: 400.ms),
+
                     const SizedBox(height: 20),
 
                     // Loading indicator
                     if (jarState.isLoading && jarState.currentVerse == null)
                       const VerseSkeletonLoader(),
 
-                    // Verse Card
+                    // Verse Card with breath moment animation
                     if (jarState.currentVerse != null)
                       VerseCardWidget(
                             verse: jarState.currentVerse!,
@@ -310,8 +364,21 @@ class _JarScreenState extends ConsumerState<JarScreen>
                             },
                           )
                           .animate()
-                          .fade(duration: 400.ms)
-                          .slideY(begin: 0.3, curve: Curves.easeOut),
+                          // Breath moment: fade in slowly
+                          .fade(duration: 800.ms, curve: Curves.easeOut)
+                          // Slide up smoothly
+                          .slideY(
+                            begin: 0.4,
+                            duration: 600.ms,
+                            curve: Curves.easeOutCubic,
+                          )
+                          // Subtle scale effect for emphasis
+                          .scale(
+                            begin: const Offset(0.95, 0.95),
+                            end: const Offset(1.0, 1.0),
+                            duration: 600.ms,
+                            curve: Curves.easeOut,
+                          ),
 
                     // Error message
                     if (jarState.errorMessage != null)
@@ -343,6 +410,14 @@ class _JarScreenState extends ConsumerState<JarScreen>
                           ],
                         ),
                       ).animate().shake(),
+
+                    // Streak Display at the bottom
+                    const SizedBox(height: 16),
+                    _StreakDisplay(
+                      primaryColor: primaryColor,
+                      isDark: isDark,
+                    ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -365,10 +440,17 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
   /// Show dialog explaining exact alarm permission is needed
   Future<bool?> _showExactAlarmDialog(BuildContext context) async {
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.cream;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cream,
+        backgroundColor: bgColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
             ResponsiveUtils.getBorderRadius(context),
@@ -378,14 +460,14 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           children: [
             Icon(
               Icons.alarm,
-              color: AppColors.sageGreen,
+              color: primaryColor,
               size: ResponsiveUtils.getIconSize(context),
             ),
             SizedBox(width: ResponsiveUtils.getSpacing(context) * 0.75),
             Expanded(
               child: Text(
                 'Enable Alarms & Reminders',
-                style: AppTextStyles.loraHeading(),
+                style: AppTextStyles.loraHeading().copyWith(color: textColor),
               ),
             ),
           ],
@@ -396,13 +478,13 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           children: [
             Text(
               'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
-              style: AppTextStyles.loraBodyMedium(),
+              style: AppTextStyles.loraBodyMedium().copyWith(color: textColor),
             ),
             SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
             Text(
               'This is required on Android 12+ for exact timing of notifications.',
               style: AppTextStyles.loraBodySmall().copyWith(
-                color: Colors.grey[600],
+                color: isDark ? AppColors.darkTextSecondary : Colors.grey[600],
               ),
             ),
           ],
@@ -410,22 +492,19 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              l10n.cancel,
-              style: TextStyle(color: AppColors.sageGreen),
-            ),
+            child: Text(l10n.cancel, style: TextStyle(color: primaryColor)),
           ),
           ElevatedButton(
             onPressed: () async {
               await NotificationService.instance.openNotificationSettings();
               Navigator.of(context).pop(true);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.sageGreen,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text(
               l10n.settings,
-              style: TextStyle(color: AppColors.cream),
+              style: TextStyle(
+                color: isDark ? AppColors.darkSurface : AppColors.cream,
+              ),
             ),
           ),
         ],
@@ -447,8 +526,11 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
     final soundEffectsEnabled = SoundEffectsService.instance.isEnabled;
     final arabicFontSize = ref.watch(arabicFontSizeProvider);
     final englishFontSize = ref.watch(englishFontSizeProvider);
-    final primaryColor = AppColors.sageGreen;
-    final bgColor = AppColors.cream;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.midnightPeriwinkle
+        : AppColors.sageGreen;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.cream;
 
     // Use responsive sizing
     final dialogMaxWidth = ResponsiveUtils.getDialogMaxWidth(context);
@@ -1221,6 +1303,247 @@ class _RemainingTapsIndicator extends StatelessWidget {
                 ),
                 maxLines: 1,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Streak Display Widget
+/// Shows current streak, daily verse counter, and progress towards next milestone
+class _StreakDisplay extends ConsumerWidget {
+  final Color primaryColor;
+  final bool isDark;
+
+  const _StreakDisplay({required this.primaryColor, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final streakState = ref.watch(streakProvider);
+    final streakNotifier = ref.watch(streakProvider.notifier);
+    final streak = streakState.currentStreak;
+    final nextMilestone = streakNotifier.nextMilestone;
+    final progress = streakNotifier.progressToNextMilestone;
+    final versesToday = streakState.versesReadToday;
+    final dailyLimit = ref.watch(jarTapLimitProvider);
+    final dailyProgress = dailyLimit >= 9999
+        ? 0.0
+        : (versesToday / dailyLimit).clamp(0.0, 1.0);
+    final totalVerses = streakState.totalVersesRead;
+    final motivationalMessage = streakNotifier.motivationalMessage;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.softSand,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Top row: Streak and Daily Counter
+          Row(
+            children: [
+              // Streak icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.local_fire_department_rounded,
+                    color: primaryColor,
+                    size: 24,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Streak info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      streakNotifier.streakStatus,
+                      style: AppTextStyles.loraBodyMedium().copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Daily verse counter
+                    if (dailyLimit < 9999)
+                      Text(
+                        '$versesToday/$dailyLimit verses today',
+                        style: AppTextStyles.loraBodySmall().copyWith(
+                          color: primaryColor.withValues(alpha: 0.8),
+                        ),
+                      )
+                    else
+                      Text(
+                        '$versesToday verses today',
+                        style: AppTextStyles.loraBodySmall().copyWith(
+                          color: primaryColor.withValues(alpha: 0.8),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Daily Progress Bar
+          if (dailyLimit < 9999)
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: dailyProgress,
+                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                      minHeight: 8,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${(dailyProgress * 100).round()}%',
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          // Streak Progress to Milestone
+          if (streak > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        primaryColor.withValues(alpha: 0.6),
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$streak/$nextMilestone',
+                  style: AppTextStyles.loraBodySmall().copyWith(
+                    color: primaryColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Countdown Timer Widget
+/// Shows time until next verse is available
+class _CountdownTimer extends StatefulWidget {
+  final Color primaryColor;
+  final bool isDark;
+
+  const _CountdownTimer({required this.primaryColor, required this.isDark});
+
+  @override
+  State<_CountdownTimer> createState() => _CountdownTimerState();
+}
+
+class _CountdownTimerState extends State<_CountdownTimer> {
+  Duration _timeUntilMidnight = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeUntilMidnight();
+    // Update every minute
+    _startTimer();
+  }
+
+  void _calculateTimeUntilMidnight() {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    setState(() {
+      _timeUntilMidnight = midnight.difference(now);
+    });
+  }
+
+  void _startTimer() {
+    Future.delayed(const Duration(minutes: 1), () {
+      if (mounted) {
+        _calculateTimeUntilMidnight();
+        _startTimer();
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = widget.isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.textSecondary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: widget.isDark
+            ? AppColors.darkElevated
+            : AppColors.softSand.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.primaryColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.timer_outlined,
+            color: widget.primaryColor.withValues(alpha: 0.6),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Next verse in: ${_formatDuration(_timeUntilMidnight)}',
+            style: AppTextStyles.loraBodySmall().copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

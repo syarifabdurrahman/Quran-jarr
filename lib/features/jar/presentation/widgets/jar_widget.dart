@@ -22,8 +22,7 @@ class JarWidget extends StatefulWidget {
   State<JarWidget> createState() => _JarWidgetState();
 }
 
-class _JarWidgetState extends State<JarWidget>
-    with TickerProviderStateMixin {
+class _JarWidgetState extends State<JarWidget> with TickerProviderStateMixin {
   late AnimationController _shakeController;
   late AnimationController _paperController;
   bool _isPressed = false;
@@ -34,11 +33,13 @@ class _JarWidgetState extends State<JarWidget>
     super.initState();
     _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(
+        milliseconds: 800,
+      ), // Longer shake for ritual feel
     );
     _paperController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 1000), // Slower paper slip
     );
   }
 
@@ -54,14 +55,15 @@ class _JarWidgetState extends State<JarWidget>
 
     setState(() => _showPaperSlip = true);
 
-    // Shake animation (left-right-left)
+    // Shake animation (left-right-left) - smoother with longer duration
     await _shakeController.forward();
 
-    // Paper slip comes out
+    // Paper slip comes out - slower, more dramatic
     await _paperController.forward();
 
-    // Reset after animation
-    await Future.delayed(const Duration(milliseconds: 200));
+    // Ritual moment - pause before closing
+    await Future.delayed(const Duration(milliseconds: 800));
+
     setState(() => _showPaperSlip = false);
     _shakeController.reset();
     await _paperController.reverse();
@@ -76,9 +78,7 @@ class _JarWidgetState extends State<JarWidget>
     final maxJarHeight = screenHeight * 0.4;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: maxJarHeight,
-      ),
+      constraints: BoxConstraints(maxHeight: maxJarHeight),
       child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
@@ -89,91 +89,134 @@ class _JarWidgetState extends State<JarWidget>
         child: AnimatedBuilder(
           animation: _shakeController,
           builder: (context, child) {
-          // Create shake effect
-          double rotation = 0;
-          if (_shakeController.value > 0) {
-            final shakeCurve = Curves.easeInOut;
-            final t = shakeCurve.transform(_shakeController.value);
-            // Shake left-right-left pattern
-            if (t < 0.33) {
-              rotation = -(t / 0.33) * 0.15;
-            } else if (t < 0.66) {
-              rotation = ((t - 0.33) / 0.33) * 0.15;
-            } else {
-              rotation = -((t - 0.66) / 0.34) * 0.08;
-            }
-          }
-          return Transform.rotate(
-            angle: rotation,
-            child: child,
-          );
-        },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Calculate responsive jar scale based on screen width
-            final screenWidth = MediaQuery.of(context).size.width;
-            final jarScale = (screenWidth / 375).clamp(0.7, 1.3);
-            final jarWidth = AppConstants.jarWidth * jarScale;
-            final jarHeight = AppConstants.jarHeight * jarScale;
+            // Create smoother, more ritualistic shake effect
+            double rotation = 0;
+            if (_shakeController.value > 0) {
+              // Use easing curve for more natural movement
+              final t = _shakeController.value;
 
-            return SizedBox(
-              width: jarWidth + 60 * jarScale,
-              height: jarHeight + 80 * jarScale,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Jar (centered with offset)
-                  Positioned(
-                    left: 30 * jarScale,
-                    top: 40 * jarScale,
-                    child: AnimatedScale(
-                      scale: _isPressed ? 0.95 : 1.0,
-                      duration: const Duration(milliseconds: 100),
-                      curve: Curves.easeInOut,
-                      child: SizedBox(
-                        width: jarWidth,
-                        height: jarHeight,
-                        child: CustomPaint(
-                          painter: _JarPainter(
-                            isEmpty: widget.isEmpty,
+              // Multi-phase shake with decreasing amplitude
+              if (t < 0.2) {
+                // Initial gentle tilt
+                rotation = Curves.easeInOut.transform(t / 0.2) * 0.12;
+              } else if (t < 0.4) {
+                // Return to center
+                rotation =
+                    0.12 - Curves.easeInOut.transform((t - 0.2) / 0.2) * 0.12;
+              } else if (t < 0.6) {
+                // Tilt to other side
+                rotation = -Curves.easeInOut.transform((t - 0.4) / 0.2) * 0.12;
+              } else if (t < 0.8) {
+                // Return with slight overshoot
+                rotation =
+                    -0.12 +
+                    Curves.easeOutBack.transform((t - 0.6) / 0.2) * 0.14;
+              } else {
+                // Settle with micro-movements
+                final settleT = (t - 0.8) / 0.2;
+                rotation =
+                    0.02 *
+                    Curves.easeOut.transform(1 - settleT) *
+                    (settleT * 3 % 2 == 0 ? 1 : -1);
+              }
+            }
+            return Transform.rotate(angle: rotation, child: child);
+          },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate responsive jar scale based on screen width
+              final screenWidth = MediaQuery.of(context).size.width;
+              final jarScale = (screenWidth / 375).clamp(0.7, 1.3);
+              final jarWidth = AppConstants.jarWidth * jarScale;
+              final jarHeight = AppConstants.jarHeight * jarScale;
+
+              return SizedBox(
+                width: jarWidth + 60 * jarScale,
+                height: jarHeight + 80 * jarScale,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Jar (centered with offset)
+                    Positioned(
+                      left: 30 * jarScale,
+                      top: 40 * jarScale,
+                      child: AnimatedScale(
+                        scale: _isPressed ? 0.95 : 1.0,
+                        duration: const Duration(milliseconds: 100),
+                        curve: Curves.easeInOut,
+                        child: SizedBox(
+                          width: jarWidth,
+                          height: jarHeight,
+                          child: CustomPaint(
+                            painter: _JarPainter(isEmpty: widget.isEmpty),
                           ),
                         ),
-                      ),
-                    ).animate().then(delay: 100.ms).fade(duration: 400.ms),
-                  ),
-
-                  // Paper slip that comes out
-                  if (_showPaperSlip)
-                    Positioned(
-                      left: jarWidth / 2 + 5 * jarScale,
-                      top: 90 * jarScale,
-                      child: AnimatedBuilder(
-                        animation: _paperController,
-                        builder: (context, child) {
-                          final curve = Curves.easeOutCubic;
-                          final t = curve.transform(_paperController.value);
-
-                          return Transform.translate(
-                            offset: Offset(0, -t * 120 * jarScale),
-                            child: Transform.rotate(
-                              angle: -0.15 + (t * 0.08),
-                              child: Opacity(
-                                opacity: t,
-                                child: child,
-                              ),
-                            ),
-                          );
-                        },
-                        child: _PaperSlipWidget(scale: jarScale),
-                      ).animate().fade(duration: 150.ms),
+                      ).animate().then(delay: 100.ms).fade(duration: 400.ms),
                     ),
-                ],
-              ),
-            );
-          },
+
+                    // Paper slip that comes out - smoother, more ritualistic
+                    if (_showPaperSlip)
+                      Positioned(
+                        left: jarWidth / 2 + 5 * jarScale,
+                        top: 90 * jarScale,
+                        child: AnimatedBuilder(
+                          animation: _paperController,
+                          builder: (context, child) {
+                            final value = _paperController.value;
+
+                            // Multi-phase paper slip animation
+                            double translateY;
+                            double rotation;
+                            double opacity;
+
+                            if (value < 0.3) {
+                              // Phase 1: Slow start (anticipation)
+                              translateY =
+                                  Curves.easeIn.transform(value / 0.3) *
+                                  40 *
+                                  jarScale;
+                              rotation = -0.15;
+                              opacity = Curves.easeIn.transform(value / 0.3);
+                            } else if (value < 0.7) {
+                              // Phase 2: Main slide out (more dramatic)
+                              final t = (value - 0.3) / 0.4;
+                              translateY =
+                                  40 * jarScale +
+                                  Curves.easeOutCubic.transform(t) *
+                                      100 *
+                                      jarScale;
+                              rotation = -0.15 + (t * 0.12);
+                              opacity = 1.0;
+                            } else {
+                              // Phase 3: Settle with slight bounce
+                              final t = ((value - 0.7) / 0.3).clamp(0.0, 1.0);
+                              translateY =
+                                  140 * jarScale +
+                                  Curves.easeOutCubic.transform(t) *
+                                      20 *
+                                      jarScale;
+                              rotation = -0.03 + (t * 0.05);
+                              opacity = 1.0;
+                            }
+
+                            return Transform.translate(
+                              offset: Offset(0, -translateY),
+                              child: Transform.rotate(
+                                angle: rotation,
+                                child: Opacity(opacity: opacity, child: child),
+                              ),
+                            );
+                          },
+                          child: _PaperSlipWidget(scale: jarScale),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -276,9 +319,7 @@ class _PaperSlipWidget extends StatelessWidget {
 class _JarPainter extends CustomPainter {
   final bool isEmpty;
 
-  _JarPainter({
-    required this.isEmpty,
-  });
+  _JarPainter({required this.isEmpty});
 
   @override
   void paint(Canvas canvas, Size size) {
