@@ -92,7 +92,7 @@ class PreferencesService {
 
   /// Get verses per day (default 1)
   int getVersesPerDay() {
-    return _prefsBox.get('verses_per_day', defaultValue: 1) as int;
+    return _prefsBox.get('verses_per_day', defaultValue: 5) as int;
   }
 
   /// Set verses per day (minimum 1, no maximum limit)
@@ -179,6 +179,15 @@ class PreferencesService {
     }
 
     await _prefsBox.put('today_tap_count', newCount);
+  }
+
+  /// Grant an extra tap for today (used after rewarded ad)
+  Future<void> grantExtraTap() async {
+    final currentCount = getTodayJarTapCount();
+    if (currentCount > 0) {
+      // We reduce the count to grant one more tap
+      await _prefsBox.put('today_tap_count', currentCount - 1);
+    }
   }
 
   /// Check if user can tap the jar today

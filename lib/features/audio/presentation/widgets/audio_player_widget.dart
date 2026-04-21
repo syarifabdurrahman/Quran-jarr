@@ -39,6 +39,10 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.midnightPeriwinkle : AppColors.sageGreen;
+    final iconColor = isDark ? AppColors.darkTextSecondary : AppColors.deepUmber;
+
     final audioState = ref.watch(audioPlayerNotifierProvider);
     final audioNotifier = ref.read(audioPlayerNotifierProvider.notifier);
 
@@ -53,10 +57,12 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.sageGreen.withValues(alpha: 0.1),
+        color: isDark 
+            ? AppColors.darkElevated 
+            : primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.sageGreen.withValues(alpha: 0.3),
+          color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.3),
           width: 1,
         ),
       ),
@@ -68,7 +74,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
             children: [
               Icon(
                 isThisDownloaded ? Icons.offline_pin : Icons.headphones,
-                color: AppColors.sageGreen,
+                color: primaryColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -78,8 +84,8 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Verse Recitation',
-                    style: AppTextStyles.loraBodySmall().copyWith(
-                      color: AppColors.sageGreen,
+                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                      color: primaryColor,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
@@ -91,13 +97,13 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.sageGreen.withValues(alpha: 0.2),
+                    color: primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'Saved',
-                    style: AppTextStyles.loraCaption().copyWith(
-                      color: AppColors.sageGreen,
+                    style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                      color: primaryColor,
                     ),
                   ),
                 ),
@@ -109,7 +115,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                   onPressed: () => _downloadAudio(audioNotifier),
                   icon: Icon(
                     Icons.download_outlined,
-                    color: AppColors.sageGreen,
+                    color: primaryColor,
                     size: 18,
                   ),
                   padding: EdgeInsets.zero,
@@ -124,7 +130,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.sageGreen,
+                      color: primaryColor,
                     ),
                   ),
                 ),
@@ -133,7 +139,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                   onTap: audioNotifier.clearError,
                   child: Icon(
                     Icons.close,
-                    color: AppColors.deepUmber.withValues(alpha: 0.5),
+                    color: iconColor.withValues(alpha: 0.5),
                     size: 20,
                   ),
                 ),
@@ -144,7 +150,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
             const SizedBox(height: 8),
             Text(
               audioState.errorMessage!,
-              style: AppTextStyles.loraBodySmall().copyWith(
+              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                 color: Colors.red.shade700,
               ),
               maxLines: 3,
@@ -163,10 +169,10 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     trackHeight: 4,
                     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                     overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                    activeTrackColor: AppColors.sageGreen,
-                    inactiveTrackColor: AppColors.sageGreen.withValues(alpha: 0.2),
-                    thumbColor: AppColors.sageGreen,
-                    overlayColor: AppColors.sageGreen.withValues(alpha: 0.2),
+                    activeTrackColor: primaryColor,
+                    inactiveTrackColor: primaryColor.withValues(alpha: 0.2),
+                    thumbColor: primaryColor,
+                    overlayColor: primaryColor.withValues(alpha: 0.2),
                   ),
                   child: Slider(
                     value: audioState.position.inMilliseconds.clamp(
@@ -187,15 +193,15 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     children: [
                       Text(
                         _formatDuration(audioState.position),
-                        style: AppTextStyles.loraBodySmall().copyWith(
-                          color: AppColors.deepUmber.withValues(alpha: 0.7),
+                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                          color: iconColor.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
                       ),
                       Text(
                         _formatDuration(audioState.duration ?? Duration.zero),
-                        style: AppTextStyles.loraBodySmall().copyWith(
-                          color: AppColors.deepUmber.withValues(alpha: 0.7),
+                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                          color: iconColor.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
                       ),
@@ -224,11 +230,11 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.sageGreen,
+                    color: primaryColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.sageGreen.withValues(alpha: 0.3),
+                        color: primaryColor.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -260,16 +266,16 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.deepUmber.withValues(alpha: 0.1),
+                      color: iconColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.deepUmber.withValues(alpha: 0.3),
+                        color: iconColor.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
                     child: Icon(
                       Icons.replay,
-                      color: AppColors.deepUmber.withValues(alpha: 0.7),
+                      color: iconColor.withValues(alpha: 0.7),
                       size: 20,
                     ),
                   ),
@@ -284,16 +290,16 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.deepUmber.withValues(alpha: 0.1),
+                      color: iconColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.deepUmber.withValues(alpha: 0.3),
+                        color: iconColor.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
                     child: Icon(
                       Icons.stop,
-                      color: AppColors.deepUmber.withValues(alpha: 0.7),
+                      color: iconColor.withValues(alpha: 0.7),
                       size: 20,
                     ),
                   ),

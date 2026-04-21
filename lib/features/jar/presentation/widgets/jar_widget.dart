@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/config/constants.dart';
@@ -29,8 +29,8 @@ class JarWidget extends ConsumerStatefulWidget {
 
 class _JarWidgetState extends ConsumerState<JarWidget>
     with TickerProviderStateMixin {
-  late AnimationController _shakeController;
-  late AnimationController _paperController;
+  AnimationController? _shakeController;
+  AnimationController? _paperController;
   bool _isPressed = false;
   bool _showPaperSlip = false;
 
@@ -49,8 +49,8 @@ class _JarWidgetState extends ConsumerState<JarWidget>
 
   @override
   void dispose() {
-    _shakeController.dispose();
-    _paperController.dispose();
+    _shakeController?.dispose();
+    _paperController?.dispose();
     super.dispose();
   }
 
@@ -63,8 +63,8 @@ class _JarWidgetState extends ConsumerState<JarWidget>
   }
 
   Future<void> _triggerShakeAnimation() async {
-    await _shakeController.forward();
-    await _shakeController.reverse();
+    await _shakeController?.forward();
+    await _shakeController?.reverse();
   }
 
   Future<void> _handleTap() async {
@@ -72,48 +72,46 @@ class _JarWidgetState extends ConsumerState<JarWidget>
 
     setState(() => _showPaperSlip = true);
 
+    // Call the onTap callback immediately so verse loading starts behind the scenes
+    widget.onTap?.call();
+
     // Simple shake
-    await _shakeController.forward();
-    await _shakeController.reverse();
+    await _shakeController?.forward();
+    await _shakeController?.reverse();
 
     // Paper slip comes out
-    await _paperController.forward();
+    await _paperController?.forward();
 
     // Reset after animation
     await Future.delayed(const Duration(milliseconds: 200));
-    setState(() => _showPaperSlip = false);
-    _shakeController.reset();
-    await _paperController.reverse();
-
-    // Call the onTap callback
-    widget.onTap?.call();
+    if (mounted) {
+      setState(() => _showPaperSlip = false);
+      _shakeController?.reset();
+      await _paperController?.reverse();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final maxJarHeight = screenHeight * 0.4;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final jarScale = (screenWidth / 375).clamp(0.7, 1.3);
+        final jarWidth = AppConstants.jarWidth * jarScale;
+        final jarHeight = AppConstants.jarHeight * jarScale;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxJarHeight),
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          _handleTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenWidth = MediaQuery.of(context).size.width;
-            final jarScale = (screenWidth / 375).clamp(0.7, 1.3);
-            final jarWidth = AppConstants.jarWidth * jarScale;
-            final jarHeight = AppConstants.jarHeight * jarScale;
-
-            return SizedBox(
-              width: jarWidth + 60 * jarScale,
-              height: jarHeight + 80 * jarScale,
-              child: Stack(
+        return SizedBox(
+          width: jarWidth + 60 * jarScale,
+          height: jarHeight + 80 * jarScale,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) {
+              setState(() => _isPressed = false);
+              _handleTap();
+            },
+            onTapCancel: () => setState(() => _isPressed = false),
+            child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   // Jar (centered)
@@ -125,12 +123,13 @@ class _JarWidgetState extends ConsumerState<JarWidget>
                       duration: const Duration(milliseconds: 100),
                       curve: Curves.easeInOut,
                       child: AnimatedBuilder(
-                        animation: _shakeController,
+                        animation: _shakeController ?? kAlwaysDismissedAnimation,
                         builder: (context, child) {
+                          final shakeVal = _shakeController?.value ?? 0.0;
                           final shake =
-                              sin(_shakeController.value * 3.14159 * 4) *
+                              sin(shakeVal * 3.14159 * 4) *
                               10 *
-                              (1 - _shakeController.value);
+                              (1 - shakeVal);
                           return Transform.translate(
                             offset: Offset(shake, 0),
                             child: child,
@@ -150,7 +149,7 @@ class _JarWidgetState extends ConsumerState<JarWidget>
                           ),
                         ),
                       ),
-                    ).animate().then(delay: 100.ms).fade(duration: 400.ms),
+                    ),
                   ),
 
                   // Paper slip that comes out
@@ -159,10 +158,10 @@ class _JarWidgetState extends ConsumerState<JarWidget>
                       left: jarWidth / 2 - 25 * jarScale,
                       top: 90 * jarScale,
                       child: AnimatedBuilder(
-                        animation: _paperController,
+                        animation: _paperController ?? kAlwaysDismissedAnimation,
                         builder: (context, child) {
                           final curve = Curves.easeOutCubic;
-                          final t = curve.transform(_paperController.value);
+                          final t = curve.transform(_paperController?.value ?? 0.0);
 
                           return Transform.translate(
                             offset: Offset(0, -t * 120 * jarScale),
@@ -174,14 +173,13 @@ class _JarWidgetState extends ConsumerState<JarWidget>
                         },
                         child: _PaperSlipWidget(scale: jarScale),
                       ),
-                    ).animate().fade(duration: 150.ms),
+                    ),
                 ],
               ),
-            );
-          },
-        ),
-      ),
-    );
+            ),
+          );
+        },
+      );
   }
 }
 

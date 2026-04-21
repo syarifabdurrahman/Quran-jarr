@@ -7,6 +7,8 @@
 ///
 /// Test IDs provided below are for development/testing purposes only.
 
+import 'dart:io';
+
 class AdConfig {
   // AdMob App IDs
   // Replace with your actual AdMob App ID from AdMob dashboard
@@ -24,7 +26,11 @@ class AdConfig {
 
   /// Get the appropriate App ID based on the current platform
   static String get appId {
-    // This will be resolved at runtime based on platform
+    if (Platform.isAndroid) {
+      return androidAppId;
+    } else if (Platform.isIOS) {
+      return iosAppId;
+    }
     return '';
   }
 
@@ -33,6 +39,14 @@ class AdConfig {
     // This will be resolved at runtime based on platform
     return '';
   }
+
+  // Native Ad Unit IDs (Using Google Test IDs for now)
+  static const String androidNativeAdUnitId = 'ca-app-pub-3940256099942544/2247696110';
+  static const String iosNativeAdUnitId = 'ca-app-pub-3940256099942544/3986624511';
+
+  // Rewarded Ad Unit IDs (Using Google Test IDs for now)
+  static const String androidRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+  static const String iosRewardedAdUnitId = 'ca-app-pub-3940256099942544/1712485313';
 
   /// Minimum time between interstitial ad shows (in seconds)
   /// This prevents ads from showing too rapidly

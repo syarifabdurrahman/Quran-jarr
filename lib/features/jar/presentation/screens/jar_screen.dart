@@ -1,6 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/ad_config.dart';
 import 'package:quran_jarr/core/config/constants.dart';
@@ -10,7 +11,8 @@ import 'package:quran_jarr/core/providers/streak_provider.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
-import 'package:quran_jarr/core/services/rate_us_service.dart';
+import 'package:quran_jarr/core/config/translations.dart';
+import 'package:quran_jarr/features/rating/presentation/soft_rate_dialog.dart';
 import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
@@ -21,7 +23,6 @@ import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
-import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
@@ -37,7 +38,7 @@ class JarScreen extends ConsumerStatefulWidget {
 
 class _JarScreenState extends ConsumerState<JarScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  AnimationController? _animationController;
   final GlobalKey _verseCardKey = GlobalKey();
 
   @override
@@ -63,45 +64,65 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _animationController?.dispose();
     super.dispose();
   }
 
   Future<void> _handleJarTap() async {
-    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Check if user can tap the jar today
     if (!ref.read(preferencesNotifierProvider.notifier).canTapJarToday()) {
-      // Haptic feedback for limit reached
-      HapticFeedback.mediumImpact();
-      // Show limit reached message with softer colors
+      // Show limit reached message with softer colors and an option to unlock extra tap
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 Icon(
-                  Icons.check_circle_outline,
+                  Icons.lock_clock_outlined,
                   color: Colors.white.withValues(alpha: 0.9),
                   size: 20,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.limitReached,
-                    style: AppTextStyles.loraBodySmall().copyWith(
+                    'Daily limit reached. Unlock one more?',
+                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                       color: Colors.white.withValues(alpha: 0.95),
                     ),
                   ),
                 ),
               ],
             ),
-            // Softer color for limit reached state
+            action: SnackBarAction(
+              label: 'WATCH AD',
+              textColor: AppColors.midnightGold,
+              onPressed: () {
+                AdService.instance.showRewardedAd(
+                  onUserEarnedReward: () {
+                    ref.read(preferencesNotifierProvider.notifier).grantExtraTap();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Extra tap granted! Try tapping the jar again.')),
+                      );
+                    }
+                  },
+                  onAdFailedToLoad: () {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sorry, no ad available right now.')),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
             backgroundColor: isDark
                 ? AppColors.midnightSlate
-                : AppColors.sageGreen.withValues(alpha: 0.85),
+                : AppColors.sageGreen.withValues(alpha: 0.9),
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 6),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -122,7 +143,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
   Future<void> _pullVerseAnimation() async {
     // Phase 1: Jar shake animation (smoother, longer)
-    await _animationController.forward();
+    await _animationController?.forward();
 
     // Phase 2: Anticipation delay (1.5 seconds) - creates ritual moment
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -168,7 +189,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
                   Expanded(
                     child: Text(
                       milestoneMessage,
-                      style: AppTextStyles.loraBodyMedium().copyWith(
+                      style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -187,19 +208,19 @@ class _JarScreenState extends ConsumerState<JarScreen>
         }
       }
 
-      // Show rate us dialog occasionally (after every 5 verses, but not on 0)
+      // Improved Rate Us Experience: Show soft prompt on milestones
+      if (mounted) {
+        final streakState = ref.read(streakProvider);
+        SoftRateDialog.showIfNeeded(context, ref, streakState.currentStreak);
+      }
+
+      // Ad experience - Interstitial trigger
       final streakState = ref.read(streakProvider);
       final versesReadToday = streakState.versesReadToday;
       if (versesReadToday > 0 &&
           versesReadToday % AdConfig.versesBetweenAds == 0 &&
           mounted) {
-        // Delay to not interrupt the verse reading experience
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            RateUsService.instance.showRateUsDialog(context);
-          }
-        });
-        // Show interstitial ad after rate us dialog
+        // Show interstitial ad after a slight delay
         Future.delayed(const Duration(seconds: 4), () {
           if (mounted) {
             AdService.instance.showInterstitialAd();
@@ -208,7 +229,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
       }
     }
 
-    _animationController.reset();
+    _animationController?.reset();
   }
 
   Future<void> _shareVerse(Verse verse) async {
@@ -221,257 +242,321 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final jarState = ref.watch(jarNotifierProvider);
     final isConnected = ref.watch(connectivityProvider);
-    final remainingTaps = ref.watch(remainingJarTapsProvider);
+    final l10n = context.l10n;
     final dailyLimit = ref.watch(jarTapLimitProvider);
+    final remainingTaps = ref.watch(remainingJarTapsProvider);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark
         ? AppColors.midnightPeriwinkle
         : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.midnightBlue : AppColors.cream;
+    final terracottaColor = isDark
+        ? AppColors.midnightGold
+        : AppColors.terracotta;
+    final bgColor = isDark ? null : AppColors.cream;
     final errorColor = AppColors.error;
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // App Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: 48,
-                  maxHeight: MediaQuery.of(context).size.height * 0.15,
+      body: Container(
+        decoration: isDark
+            ? const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(0, -0.2), // Focused behind the jar
+                  radius: 1.2,
+                  colors: [
+                    Color(0xFF1E293B), // Midnight Blue Lighter
+                    Color(0xFF020617), // Midnight Blue Deep
+                  ],
+                  stops: [0.0, 1.0],
                 ),
+              )
+            : null,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Custom Top Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.appTitle,
-                          style: AppTextStyles.loraTitle(),
-                          maxLines: 1,
+                      child: Text(
+                        l10n.appTitle,
+                        style: AppTextStyles.loraHeadingForTheme(context).copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              showTranslationPicker(context);
-                            },
-                            icon: Icon(
-                              Icons.translate_outlined,
-                              color: primaryColor,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              RateUsService.instance.showRateUsDialog(context);
-                            },
-                            icon: Icon(
-                              Icons.star_outline_rounded,
-                              color: primaryColor,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
+                        _TranslationButton(primaryColor: primaryColor),
+                        const SizedBox(width: 8),
+                        _ArchiveButton(color: terracottaColor),
                       ],
                     ),
                   ],
                 ),
               ),
-            ),
 
-            // Offline Warning Banner
-            if (!isConnected)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: errorColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: errorColor.withValues(alpha: 0.3),
-                    width: 1,
+              // Offline Warning Banner
+              if (!isConnected)
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: errorColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: errorColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.wifi_off, color: errorColor, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.noInternet,
+                          style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: errorColor),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.wifi_off, color: errorColor, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.noInternet,
-                            style: AppTextStyles.loraBodyMedium().copyWith(
-                              color: errorColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            l10n.noInternetDesc,
-                            style: AppTextStyles.loraBodySmall().copyWith(
-                              color: errorColor.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        ref.read(connectivityProvider.notifier).check();
-                      },
-                      icon: Icon(Icons.refresh, color: errorColor, size: 18),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: l10n.retry,
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(duration: 300.ms),
 
-            // Main Content
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
+              // Status Bar
+              _StatusBar(
+                remainingTaps: remainingTaps,
+                dailyLimit: dailyLimit,
+                primaryColor: primaryColor,
+              ),
 
-                    // Jar Widget
-                    JarWidget(
-                      isEmpty: jarState.currentVerse == null,
-                      onTap: _handleJarTap,
-                    ).animate().scale(
-                      duration: 600.ms,
-                      curve: Curves.easeOutBack,
-                    ),
+              const SizedBox(height: 20),
 
-                    const SizedBox(height: 20),
-
-                    // Remaining Taps Indicator
-                    _RemainingTapsIndicator(
-                      remainingTaps: remainingTaps,
-                      dailyLimit: dailyLimit,
-                      primaryColor: primaryColor,
-                    ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
-
-                    // Countdown Timer (show when limit reached)
-                    if (remainingTaps <= 0 && dailyLimit < 9999)
-                      _CountdownTimer(
-                        primaryColor: primaryColor,
-                        isDark: isDark,
-                      ).animate().fade(delay: 400.ms),
-
-                    const SizedBox(height: 20),
-
-                    // Loading indicator
-                    if (jarState.isLoading && jarState.currentVerse == null)
-                      const VerseSkeletonLoader(),
-
-                    // Verse Card with breath moment animation
-                    if (jarState.currentVerse != null)
-                      RepaintBoundary(
-                            key: _verseCardKey,
-                            child: VerseCardWidget(
-                              verse: jarState.currentVerse!,
-                              onSaveToggle: () {
-                                ref
-                                    .read(jarNotifierProvider.notifier)
-                                    .toggleSaveVerse();
-                              },
-                              onShare: () {
-                                _shareVerse(jarState.currentVerse!);
-                              },
-                            ),
-                          )
-                          .animate()
-                          // Breath moment: fade in slowly
-                          .fade(duration: 800.ms, curve: Curves.easeOut)
-                          // Slide up smoothly
-                          .slideY(
-                            begin: 0.4,
-                            duration: 600.ms,
-                            curve: Curves.easeOutCubic,
-                          )
-                          // Subtle scale effect for emphasis
-                          .scale(
-                            begin: const Offset(0.95, 0.95),
-                            end: const Offset(1.0, 1.0),
-                            duration: 600.ms,
-                            curve: Curves.easeOut,
-                          ),
-
-                    // Error message
-                    if (jarState.errorMessage != null)
-                      Container(
-                        margin: const EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: errorColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
+              // Main Content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Jar Area with Glow
+                      SizedBox(
+                        height: 350, // Increased height to push jar slightly up and prevent overlap
+                        child: Stack(
+                          alignment: Alignment.center,
                           children: [
-                            Icon(Icons.error_outline, color: errorColor),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                jarState.errorMessage!,
-                                style: AppTextStyles.loraBodySmall(),
+                            AnimatedBuilder(
+                              animation: _animationController ?? kAlwaysDismissedAnimation,
+                              child: RepaintBoundary(
+                                child: JarWidget(
+                                  isEmpty: jarState.currentVerse == null,
+                                  onTap: () => _handleJarTap(),
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: () {
-                                ref
-                                    .read(jarNotifierProvider.notifier)
-                                    .clearError();
+                              builder: (context, child) {
+                                final controllerValue = _animationController?.value ?? 0.0;
+                                final floatValue = sin(controllerValue * 2 * pi);
+                                final glowValue = (sin(controllerValue * 2 * pi) + 1) / 2;
+                                
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Mystic Glow
+                                    if (isDark)
+                                      Container(
+                                        width: 220,
+                                        height: 220,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primaryColor.withValues(alpha: 0.05 * (1 + glowValue)),
+                                              blurRadius: 60 + (10 * glowValue),
+                                              spreadRadius: 20 + (5 * glowValue),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    
+                                    // Floating Jar
+                                    Transform.translate(
+                                      offset: Offset(0, floatValue * 8 - 10), // -10 moves it slightly up
+                                      child: child,
+                                    ),
+                                  ],
+                                );
                               },
                             ),
+
                           ],
                         ),
-                      ).animate().shake(),
+                      ),
+                      
+                      // Reading Journey Card (Moved here to avoid blocking the jar)
+                      _StreakDisplay(primaryColor: primaryColor, isDark: isDark),
 
-                    // Streak Display at the bottom
-                    const SizedBox(height: 16),
-                    _StreakDisplay(
-                      primaryColor: primaryColor,
-                      isDark: isDark,
-                    ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+
+                      // Countdown Timer (show when limit reached)
+                      if (remainingTaps <= 0 && dailyLimit < 9999)
+                        _CountdownTimer(
+                          primaryColor: primaryColor,
+                          isDark: isDark,
+                        ),
+
+                      // Verse Display
+                      if (jarState.isLoading && jarState.currentVerse == null)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: VerseSkeletonLoader(),
+                        )
+                      else if (jarState.currentVerse != null)
+                        VerseCardWidget(
+                          verse: jarState.currentVerse!,
+                          onSaveToggle: () => ref.read(jarNotifierProvider.notifier).toggleSaveVerse(),
+                          onShare: () => _shareVerse(jarState.currentVerse!),
+                        ),
+
+                      // Error message
+                      if (jarState.errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          child: TweenAnimationBuilder<double>(
+                            key: ValueKey(jarState.errorMessage),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 500),
+                            curve: Curves.easeOut,
+                            builder: (context, value, child) {
+                              final shake = sin(value * 3.14159 * 4) * 8 * (1 - value);
+                              return Transform.translate(
+                                offset: Offset(shake, 0),
+                                child: child,
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: errorColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: errorColor),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      jarState.errorMessage!,
+                                      style: AppTextStyles.loraBodySmallForTheme(context),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 20),
+                                    onPressed: () => ref.read(jarNotifierProvider.notifier).clearError(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+/// Translation Button
+class _TranslationButton extends ConsumerWidget {
+  final Color primaryColor;
+
+  const _TranslationButton({required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTranslation = ref.watch(selectedTranslationProvider);
+    final isIndonesian = currentTranslation.id == 'indonesian';
+
+    return IconButton(
+      onPressed: () async {
+        final translation = isIndonesian
+            ? AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'english')
+            : AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'indonesian');
+        
+        await ref.read(preferencesNotifierProvider.notifier).setTranslation(translation);
+        
+        // Reload Jar verse with new translation if verse is already fetched
+        if (context.mounted) {
+          await ref.read(jarNotifierProvider.notifier).reloadVerseWithTranslation(translation.id);
+        }
+      },
+      icon: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+        ),
+        child: Text(
+          isIndonesian ? 'ID' : 'EN',
+          style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+            color: primaryColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      tooltip: 'Toggle Language',
+    );
+  }
+}
+
+/// Status Bar
+class _StatusBar extends StatelessWidget {
+  final int remainingTaps;
+  final int dailyLimit;
+  final Color primaryColor;
+
+  const _StatusBar({
+    required this.remainingTaps,
+    required this.dailyLimit,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _RemainingTapsIndicator(
+      remainingTaps: remainingTaps,
+      dailyLimit: dailyLimit,
+      primaryColor: primaryColor,
+    );
+  }
+}
+
+/// Archive Button
+class _ArchiveButton extends StatelessWidget {
+  final Color color;
+  const _ArchiveButton({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () => Navigator.pushNamed(context, '/archive'),
+      icon: Icon(Icons.inventory_2_outlined, color: color),
+      tooltip: 'Archive',
+    );
+  }
+}
+
 
 /// Settings Dialog
 /// Allows user to change verse selection mode and access other options
@@ -511,7 +596,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             Expanded(
               child: Text(
                 'Enable Alarms & Reminders',
-                style: AppTextStyles.loraHeading().copyWith(color: textColor),
+                style: AppTextStyles.loraHeadingForTheme(context).copyWith(color: textColor),
               ),
             ),
           ],
@@ -522,12 +607,12 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           children: [
             Text(
               'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
-              style: AppTextStyles.loraBodyMedium().copyWith(color: textColor),
+              style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(color: textColor),
             ),
             SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
             Text(
               'This is required on Android 12+ for exact timing of notifications.',
-              style: AppTextStyles.loraBodySmall().copyWith(
+              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                 color: isDark ? AppColors.darkTextSecondary : Colors.grey[600],
               ),
             ),
@@ -541,7 +626,9 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           ElevatedButton(
             onPressed: () async {
               await NotificationService.instance.openNotificationSettings();
-              Navigator.of(context).pop(true);
+              if (context.mounted) {
+                Navigator.of(context).pop(true);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text(
@@ -601,7 +688,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
               padding: ResponsiveUtils.getPadding(context),
               child: Row(
                 children: [
-                  Text(l10n.settings, style: AppTextStyles.loraHeading()),
+                  Text(l10n.settings, style: AppTextStyles.loraHeadingForTheme(context)),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -624,7 +711,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Jar Taps Per Day Section
                     Text(
                       l10n.jarTapsPerDay,
-                      style: AppTextStyles.loraBodySmall().copyWith(
+                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
                       ),
@@ -660,7 +747,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Notification Settings Section
                     Text(
                       l10n.dailyNotification,
-                      style: AppTextStyles.loraBodySmall().copyWith(
+                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
                       ),
@@ -714,7 +801,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Font Size Section
                     Text(
                       l10n.fontSize,
-                      style: AppTextStyles.loraBodySmall().copyWith(
+                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
                       ),
@@ -753,7 +840,7 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Verse Selection Mode Section
                     Text(
                       l10n.verseSelection,
-                      style: AppTextStyles.loraBodySmall().copyWith(
+                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                         color: primaryColor,
                         fontWeight: FontWeight.w600,
                       ),
@@ -849,7 +936,7 @@ class _SettingsItem extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: primaryColor),
             const SizedBox(width: 16),
-            Text(title, style: AppTextStyles.loraBodyMedium()),
+            Text(title, style: AppTextStyles.loraBodyMediumForTheme(context)),
             const Spacer(),
             Icon(
               Icons.arrow_forward_ios,
@@ -911,11 +998,11 @@ class _ModeOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.loraBodyMedium().copyWith(
+                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(description, style: AppTextStyles.loraBodySmall()),
+                  Text(description, style: AppTextStyles.loraBodySmallForTheme(context)),
                 ],
               ),
             ),
@@ -957,7 +1044,7 @@ class _SettingsToggle extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 title,
-                style: AppTextStyles.loraBodyMedium(),
+                style: AppTextStyles.loraBodyMediumForTheme(context),
                 maxLines: 1,
               ),
             ),
@@ -1017,7 +1104,7 @@ class _NotificationTimePicker extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   l10n.notificationTime,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
+                  style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                     color: primaryColor.withValues(alpha: 0.8),
                   ),
                   maxLines: 1,
@@ -1034,7 +1121,7 @@ class _NotificationTimePicker extends StatelessWidget {
               child: FittedBox(
                 child: Text(
                   _formatTime(time),
-                  style: AppTextStyles.loraBodySmall().copyWith(
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     color: primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1050,7 +1137,7 @@ class _NotificationTimePicker extends StatelessWidget {
   String _formatTime(TimeOfDay time) {
     final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '${hour}:${time.minute.toString().padLeft(2, '0')} $period';
+    return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
 
@@ -1096,7 +1183,7 @@ class _FontSizeSlider extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     title,
-                    style: AppTextStyles.loraBodyMedium().copyWith(
+                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                       color: primaryColor.withValues(alpha: 0.8),
                     ),
                     maxLines: 1,
@@ -1113,7 +1200,7 @@ class _FontSizeSlider extends ConsumerWidget {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     '$percentage%',
-                    style: AppTextStyles.loraBodySmall().copyWith(
+                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                       color: primaryColor,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1183,7 +1270,7 @@ class _VersesPerDaySelector extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     l10n.jarTapsPerDay,
-                    style: AppTextStyles.loraBodyMedium().copyWith(
+                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                       color: primaryColor.withValues(alpha: 0.8),
                     ),
                     maxLines: 1,
@@ -1233,7 +1320,7 @@ class _VersesPerDaySelector extends StatelessWidget {
                     child: FittedBox(
                       child: Text(
                         versesPerDay >= 9999 ? '∞' : versesPerDay.toString(),
-                        style: AppTextStyles.loraBodyLarge().copyWith(
+                        style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
                           color: primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1342,7 +1429,7 @@ class _RemainingTapsIndicator extends StatelessWidget {
                 isUnlimited
                     ? '∞ Unlimited taps'
                     : '$remainingTaps of $dailyLimit taps remaining',
-                style: AppTextStyles.loraBodySmall().copyWith(
+                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                   color: primaryColor.withValues(alpha: 0.8),
                 ),
                 maxLines: 1,
@@ -1416,7 +1503,7 @@ class _StreakDisplay extends ConsumerWidget {
                   children: [
                     Text(
                       streakNotifier.streakStatus,
-                      style: AppTextStyles.loraBodyMedium().copyWith(
+                      style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1425,14 +1512,14 @@ class _StreakDisplay extends ConsumerWidget {
                     if (dailyLimit < 9999)
                       Text(
                         '$versesToday/$dailyLimit verses today',
-                        style: AppTextStyles.loraBodySmall().copyWith(
+                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                           color: primaryColor.withValues(alpha: 0.8),
                         ),
                       )
                     else
                       Text(
                         '$versesToday verses today',
-                        style: AppTextStyles.loraBodySmall().copyWith(
+                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                           color: primaryColor.withValues(alpha: 0.8),
                         ),
                       ),
@@ -1460,7 +1547,7 @@ class _StreakDisplay extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${(dailyProgress * 100).round()}%',
-                  style: AppTextStyles.loraBodySmall().copyWith(
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     color: primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1488,7 +1575,7 @@ class _StreakDisplay extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   '$streak/$nextMilestone',
-                  style: AppTextStyles.loraBodySmall().copyWith(
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     color: primaryColor.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w600,
                   ),
@@ -1570,7 +1657,7 @@ class _CountdownTimerState extends State<_CountdownTimer> {
           const SizedBox(width: 8),
           Text(
             'Next verse in: ${TimezoneHelper.formatDuration(_timeUntilMidnight)}',
-            style: AppTextStyles.loraBodySmall().copyWith(
+            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
               color: textColor,
               fontWeight: FontWeight.w500,
             ),

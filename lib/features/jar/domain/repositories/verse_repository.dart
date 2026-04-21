@@ -7,7 +7,7 @@ import '../entities/verse.dart';
 /// Following Interface Segregation Principle - focused, single-purpose interface
 abstract class VerseRepository {
   /// Get a random verse from Quran
-  /// Returns Right(Verse) on success, Left(ApiException) on failure
+  /// Returns `Right(Verse)` on success, `Left(ApiException)` on failure
   /// Optional surahNumbers parameter for curated mode
   Future<Either<ApiException, Verse>> getRandomVerse({
     String translationId,
@@ -15,11 +15,11 @@ abstract class VerseRepository {
   });
 
   /// Get a verse by its key (e.g., "2:255")
-  /// Returns Right(Verse) on success, Left(ApiException) on failure
+  /// Returns `Right(Verse)` on success, `Left(ApiException)` on failure
   Future<Either<ApiException, Verse>> getVerseByKey(String verseKey, {String translationId});
 
   /// Get today's verse (cached or new if 24h passed)
-  /// Returns Right(Verse) on success, Left(ApiException) on failure
+  /// Returns `Right(Verse)` on success, `Left(ApiException)` on failure
   /// Optional surahNumbers parameter for curated mode
   Future<Either<ApiException, Verse>> getDailyVerse({
     String translationId,
@@ -31,7 +31,7 @@ abstract class VerseRepository {
   Future<Either<ApiException, void>> saveVerse(Verse verse);
 
   /// Get all saved verses from archive
-  /// Returns Right(List<Verse>) on success, Left(ApiException) on failure
+  /// Returns `Right(List<Verse>)` on success, `Left(ApiException)` on failure
   Future<Either<ApiException, List<Verse>>> getSavedVerses();
 
   /// Delete a verse from archive

@@ -37,7 +37,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('Settings', style: AppTextStyles.loraHeading()),
+        title: Text('Settings', style: AppTextStyles.loraHeadingForTheme(context)),
         backgroundColor: bgColor,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -194,7 +194,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: AppTextStyles.loraBodySmall().copyWith(
+      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
         color: color,
         fontWeight: FontWeight.w600,
       ),
@@ -224,7 +224,7 @@ class _SettingsToggle extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: primaryColor),
           const SizedBox(width: 12),
-          Expanded(child: Text(title, style: AppTextStyles.loraBodyMedium())),
+          Expanded(child: Text(title, style: AppTextStyles.loraBodyMediumForTheme(context))),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -267,7 +267,7 @@ class _NotificationTimePicker extends StatelessWidget {
             Expanded(
               child: Text(
                 'Notification Time',
-                style: AppTextStyles.loraBodyMedium(),
+                style: AppTextStyles.loraBodyMediumForTheme(context),
               ),
             ),
             Container(
@@ -278,7 +278,7 @@ class _NotificationTimePicker extends StatelessWidget {
               ),
               child: Text(
                 time.format(context),
-                style: AppTextStyles.loraBodyMedium().copyWith(
+                style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
                 ),
@@ -321,7 +321,7 @@ class _FontSizeSlider extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.loraBodyMedium()),
+                Text(title, style: AppTextStyles.loraBodyMediumForTheme(context)),
                 Slider(
                   value: value,
                   min: min,
@@ -342,7 +342,7 @@ class _FontSizeSlider extends StatelessWidget {
             ),
             child: Text(
               '${(value * 100).round()}%',
-              style: AppTextStyles.loraBodySmall().copyWith(
+              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                 color: primaryColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -376,7 +376,7 @@ class _VersesPerDaySelector extends StatelessWidget {
           Expanded(
             child: Text(
               'Jar Taps Per Day',
-              style: AppTextStyles.loraBodyMedium(),
+              style: AppTextStyles.loraBodyMediumForTheme(context),
             ),
           ),
           Row(
@@ -402,7 +402,7 @@ class _VersesPerDaySelector extends StatelessWidget {
                   child: Center(
                     child: Text(
                       isUnlimited ? '∞' : versesPerDay.toString(),
-                      style: AppTextStyles.loraHeading().copyWith(
+                      style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                         color: AppColors.cream,
                         fontSize: 18,
                       ),
@@ -552,7 +552,7 @@ class _ThemeOption extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: AppTextStyles.loraCaption().copyWith(
+                style: AppTextStyles.loraCaptionForTheme(context).copyWith(
                   color: isSelected ? primaryColor : null,
                   fontWeight: isSelected ? FontWeight.w600 : null,
                 ),
@@ -586,7 +586,7 @@ class _JarTypeSelector extends StatelessWidget {
           children: [
             Icon(Icons.local_drink, size: 18, color: primaryColor),
             const SizedBox(width: 8),
-            Text('Jar Style', style: AppTextStyles.loraBodyMedium()),
+            Text('Jar Style', style: AppTextStyles.loraBodyMediumForTheme(context)),
           ],
         ),
         const SizedBox(height: 12),
@@ -683,7 +683,7 @@ class _JarOption extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 label,
-                style: AppTextStyles.loraCaption().copyWith(
+                style: AppTextStyles.loraCaptionForTheme(context).copyWith(
                   color: isSelected ? primaryColor : null,
                   fontWeight: isSelected ? FontWeight.w600 : null,
                 ),

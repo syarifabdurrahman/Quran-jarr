@@ -23,7 +23,7 @@ class AboutScreen extends StatelessWidget {
       appBar: AppBar(
         title: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(l10n.aboutUs, style: AppTextStyles.loraHeading()),
+          child: Text(l10n.aboutUs, style: AppTextStyles.loraHeadingForTheme(context)),
         ),
         backgroundColor: bgColor,
         elevation: 0,
@@ -59,7 +59,7 @@ class AboutScreen extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   AppConstants.appName,
-                  style: AppTextStyles.loraTitle(),
+                  style: AppTextStyles.loraTitleForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                 ),
@@ -72,7 +72,7 @@ class AboutScreen extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   'Version ${AppConstants.appVersion}',
-                  style: AppTextStyles.loraBodySmall().copyWith(
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     color: textSecondary,
                   ),
                   maxLines: 1,
@@ -86,7 +86,7 @@ class AboutScreen extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.appTitle,
-                  style: AppTextStyles.loraBodyMedium().copyWith(
+                  style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                     color: primaryColor,
                     fontStyle: FontStyle.italic,
                   ),
@@ -116,14 +116,14 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     Text(
                       l10n.aboutUs,
-                      style: AppTextStyles.loraHeading().copyWith(
+                      style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                         color: primaryColor,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       l10n.aboutDescription,
-                      style: AppTextStyles.loraBodyMedium(),
+                      style: AppTextStyles.loraBodyMediumForTheme(context),
                       maxLines: 10,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -136,7 +136,7 @@ class AboutScreen extends StatelessWidget {
               // Developers Section
               Text(
                 l10n.developers,
-                style: AppTextStyles.loraBodySmall().copyWith(
+                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.0,
@@ -173,7 +173,7 @@ class AboutScreen extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   'Made with ❤️ for the Ummah',
-                  style: AppTextStyles.loraBodySmall().copyWith(
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     color: textSecondary,
                   ),
                   maxLines: 1,
@@ -186,7 +186,7 @@ class AboutScreen extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   '© 2026 Quran Jarr',
-                  style: AppTextStyles.loraCaption().copyWith(
+                  style: AppTextStyles.loraCaptionForTheme(context).copyWith(
                     color: textSecondary,
                   ),
                   maxLines: 1,
@@ -262,7 +262,7 @@ class _DeveloperCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     name,
-                    style: AppTextStyles.loraBodyMedium().copyWith(
+                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
@@ -274,7 +274,7 @@ class _DeveloperCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     role,
-                    style: AppTextStyles.loraBodySmall().copyWith(
+                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                       color: textSecondary,
                     ),
                     maxLines: 1,

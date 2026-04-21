@@ -36,7 +36,7 @@ class TranslationPickerWidget extends ConsumerWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.glassBorder.withOpacity(0.3),
+              color: AppColors.glassBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -51,7 +51,7 @@ class TranslationPickerWidget extends ConsumerWidget {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Select Translation',
-                      style: AppTextStyles.loraTitle(),
+                      style: AppTextStyles.loraTitleForTheme(context),
                       maxLines: 1,
                     ),
                   ),
@@ -76,7 +76,7 @@ class TranslationPickerWidget extends ConsumerWidget {
             height: 1,
             margin: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: AppColors.glassBorder.withOpacity(0.3),
+              color: AppColors.glassBorder.withValues(alpha: 0.3),
             ),
           ),
           // Translations list
@@ -89,7 +89,7 @@ class TranslationPickerWidget extends ConsumerWidget {
               child: Container(
                 height: 1,
                 decoration: BoxDecoration(
-                  color: AppColors.glassBorder.withOpacity(0.2),
+                  color: AppColors.glassBorder.withValues(alpha: 0.2),
                 ),
               ),
             ),
@@ -104,7 +104,7 @@ class TranslationPickerWidget extends ConsumerWidget {
                 ),
                 title: Text(
                   translation.name,
-                  style: AppTextStyles.loraBodyLarge().copyWith(
+                  style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
                     color: isSelected
                         ? AppColors.sageGreen
                         : AppColors.deepUmber,
@@ -116,8 +116,8 @@ class TranslationPickerWidget extends ConsumerWidget {
                 ),
                 subtitle: Text(
                   translation.author,
-                  style: AppTextStyles.loraBodySmall().copyWith(
-                    color: AppColors.deepUmber.withOpacity(0.6),
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                    color: AppColors.deepUmber.withValues(alpha: 0.6),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -126,7 +126,7 @@ class TranslationPickerWidget extends ConsumerWidget {
                     ? Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.sageGreen.withOpacity(0.2),
+                          color: AppColors.sageGreen.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

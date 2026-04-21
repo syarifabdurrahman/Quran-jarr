@@ -117,6 +117,16 @@ class AppTextStyles {
     multiplier,
   );
 
+  static TextStyle surahNameForTheme(
+    BuildContext context, [
+    double multiplier = 1.0,
+  ]) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return surahName(multiplier).copyWith(
+      color: isDark ? AppColors.midnightPeriwinkle : AppColors.sageGreen,
+    );
+  }
+
   // Button Text
   static TextStyle buttonText([double multiplier = 1.0]) => _withFontSize(
     GoogleFonts.lora(
@@ -168,6 +178,19 @@ class AppTextStyles {
     multiplier,
   );
 
+  static TextStyle loraCaptionForTheme(
+    BuildContext context, [
+    double multiplier = 1.0,
+  ]) => _withFontSize(
+    GoogleFonts.lora(
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: AppColors.getTextSecondary(context),
+      height: 1.4,
+    ),
+    multiplier,
+  );
+
   static TextStyle loraHeadingForTheme(
     BuildContext context, [
     double multiplier = 1.0,
@@ -190,6 +213,48 @@ class AppTextStyles {
       fontWeight: FontWeight.w700,
       color: AppColors.getTextPrimary(context),
       height: 1.2,
+    ),
+    multiplier,
+  );
+
+  // Theme-aware Arabic Text Styles (Amiri)
+  static TextStyle amiriVerseLargeForTheme(
+    BuildContext context, [
+    double multiplier = 1.0,
+  ]) => _withFontSize(
+    GoogleFonts.amiri(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      color: AppColors.getTextPrimary(context),
+      height: 1.8,
+      letterSpacing: 0.5,
+    ),
+    multiplier,
+  );
+
+  static TextStyle amiriVerseMediumForTheme(
+    BuildContext context, [
+    double multiplier = 1.0,
+  ]) => _withFontSize(
+    GoogleFonts.amiri(
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      color: AppColors.getTextPrimary(context),
+      height: 1.7,
+      letterSpacing: 0.3,
+    ),
+    multiplier,
+  );
+
+  static TextStyle amiriVerseSmallForTheme(
+    BuildContext context, [
+    double multiplier = 1.0,
+  ]) => _withFontSize(
+    GoogleFonts.amiri(
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      color: AppColors.getTextPrimary(context),
+      height: 1.6,
     ),
     multiplier,
   );

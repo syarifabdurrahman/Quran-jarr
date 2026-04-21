@@ -115,7 +115,7 @@ class ShareableVerseCard extends StatelessWidget {
                   ),
                   child: Text(
                     '"${verse.translation}"',
-                    style: AppTextStyles.loraBodyLarge().copyWith(
+                    style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
                       color: AppColors.deepUmber,
                       height: 1.6,
                       fontStyle: FontStyle.italic,
@@ -139,7 +139,7 @@ class ShareableVerseCard extends StatelessWidget {
                     children: [
                       Text(
                         verse.arabicSurahName,
-                        style: AppTextStyles.loraHeading().copyWith(
+                        style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                           color: AppColors.terracotta,
                           fontWeight: FontWeight.bold,
                           fontSize: 40,
@@ -154,7 +154,7 @@ class ShareableVerseCard extends StatelessWidget {
                       const SizedBox(width: 15),
                       Text(
                         '${verse.surahNumber}:${verse.ayahNumber}',
-                        style: AppTextStyles.loraHeading().copyWith(
+                        style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                           color: AppColors.terracotta,
                           fontWeight: FontWeight.bold,
                           fontSize: 40,
@@ -184,7 +184,7 @@ class ShareableVerseCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         'Quran Jarr',
-                        style: AppTextStyles.loraBodyMedium().copyWith(
+                        style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                           color: AppColors.cream,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1,

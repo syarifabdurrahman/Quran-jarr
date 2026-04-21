@@ -80,7 +80,7 @@ class RateUsService {
             // Title
             Text(
               'Enjoying Quran Jarr?',
-              style: AppTextStyles.loraHeading().copyWith(fontSize: 20),
+              style: AppTextStyles.loraHeadingForTheme(context).copyWith(fontSize: 20),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -88,7 +88,7 @@ class RateUsService {
             // Description
             Text(
               'If you find this app helpful for your daily Quran reading, please consider rating us on the Play Store.',
-              style: AppTextStyles.loraBodySmall().copyWith(
+              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
                     : AppColors.textSecondary,
@@ -132,7 +132,7 @@ class RateUsService {
                 },
                 child: Text(
                   'Maybe Later',
-                  style: AppTextStyles.loraBodyMedium().copyWith(
+                  style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                     color: primaryColor,
                   ),
                 ),

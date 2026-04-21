@@ -35,27 +35,32 @@ class AppColors {
   static const Color textSecondary = Color(0xFF7A7268);
   static const Color textOnDark = Color(0xFFF9F7F2);
 
-  // ==================== Dark Theme Colors (Midnight Reflection) ====================
+  // ==================== Dark Theme Colors (Celestial Night) ====================
 
   // Primary Colors - Dark Theme
-  static const Color midnightBlue = Color(0xFF1A2238);
-  static const Color midnightPeriwinkle = Color(0xFF9DAAF2);
-  static const Color midnightGold = Color(0xFFD4AF37);
-  static const Color midnightSlate = Color(0xFF3E4A61);
+  static const Color midnightBlue = Color(0xFF0F172A); // Deeper Obsidian
+  static const Color midnightPeriwinkle = Color(0xFF94A3B8); // Softer Slate Blue
+  static const Color midnightGold = Color(0xFFE2B170); // Ethereal Gold
+  static const Color midnightSlate = Color(0xFF1E293B); // Deep Navy Slate
 
   // Dark Theme Surface Colors
-  static const Color darkSurface = Color(0xFF121A2E);
-  static const Color darkCard = Color(0xFF1E2740);
-  static const Color darkElevated = Color(0xFF252F4A);
+  static const Color darkSurface = Color(0xFF020617); // Richer Night
+  static const Color darkCard = Color(0xFF1E293B);
+  static const Color darkElevated = Color(0xFF334155);
 
   // Dark Theme Text Colors
-  static const Color darkTextPrimary = Color(0xFFF5F5F5);
-  static const Color darkTextSecondary = Color(0xFFB0B8C8);
-  static const Color darkTextMuted = Color(0xFF6B7280);
+  static const Color darkTextPrimary = Color(0xFFE2E8F0); // Off-white for less glare
+  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  static const Color darkTextMuted = Color(0xFF64748B);
 
   // Dark Theme Accents
-  static const Color darkSageGreen = Color(0xFF9BA89D);
-  static const Color darkTerracotta = Color(0xFFE5B88A);
+  static const Color darkSageGreen = Color(0xFF475569);
+  static const Color darkTerracotta = Color(0xFFB45309);
+
+  // Glassmorphism (Night Mode)
+  static const Color glassNight = Color(0x331E293B);
+  static const Color glassNightBorder = Color(0x1A94A3B8);
+  static const Color starlightGlow = Color(0x1AE2B170);
 
   // ==================== Theme-Aware Getters (DRY) ====================
 

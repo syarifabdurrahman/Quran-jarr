@@ -83,7 +83,7 @@ class JarPainterFactory {
   }
 }
 
-/// Classic Jar Painter (original design)
+/// Classic Jar Painter
 class ClassicJarPainter extends CustomPainter {
   final bool isEmpty;
   final Color jarColor;
@@ -99,9 +99,21 @@ class ClassicJarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    // Glass back layer
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = jarColor.withValues(alpha: 0.1);
+
+    final highlightPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.4);
+
+    final jarOutlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..color = jarColor.withValues(alpha: 0.8);
 
     // Jar body
     final jarPath = Path();
@@ -123,13 +135,58 @@ class ClassicJarPainter extends CustomPainter {
     jarPath.lineTo(size.width * 0.8, size.height * 0.25);
     jarPath.close();
 
-    paint.color = jarColor;
-    canvas.drawPath(jarPath, paint);
+    canvas.drawPath(jarPath, fillPaint);
+
+    // Papers inside (if not empty)
+    if (!isEmpty) {
+      final paperPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = paperColor.withValues(alpha: 0.6);
+
+      final paperShadow = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.black.withValues(alpha: 0.2);
+
+      for (int i = 0; i < 4; i++) {
+        canvas.save();
+        canvas.translate(size.width * (0.3 + i * 0.12), size.height * 0.7);
+        canvas.rotate(-0.1 + (i * 0.1));
+        
+        // Shadow
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(Rect.fromLTWH(2, 2, size.width * 0.1, size.height * 0.2), const Radius.circular(2)),
+          paperShadow,
+        );
+        // Paper
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, size.width * 0.1, size.height * 0.2), const Radius.circular(2)),
+          paperPaint,
+        );
+        canvas.restore();
+      }
+    }
+
+    // Glass front layer
+    canvas.drawPath(jarPath, fillPaint);
+    canvas.drawPath(jarPath, jarOutlinePaint);
+
+    // Glass Highlight
+    canvas.drawLine(
+      Offset(size.width * 0.22, size.height * 0.35),
+      Offset(size.width * 0.18, size.height * 0.8),
+      highlightPaint,
+    );
 
     // Lid
+    final lidGradient = LinearGradient(
+      colors: [lidColor.withValues(alpha: 0.7), lidColor, lidColor.withValues(alpha: 0.6)],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    ).createShader(Rect.fromLTWH(size.width * 0.15, size.height * 0.15, size.width * 0.7, size.height * 0.1));
+
     final lidPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = lidColor;
+      ..shader = lidGradient;
 
     final lidPath = Path();
     lidPath.moveTo(size.width * 0.15, size.height * 0.25);
@@ -139,30 +196,10 @@ class ClassicJarPainter extends CustomPainter {
     lidPath.close();
 
     canvas.drawPath(lidPath, lidPaint);
-
-    // Papers inside (if not empty)
-    if (!isEmpty) {
-      final paperPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = paperColor.withValues(alpha: 0.3);
-
-      for (int i = 0; i < 3; i++) {
-        final paperPath = Path();
-        paperPath.moveTo(size.width * (0.3 + i * 0.1), size.height * 0.5);
-        paperPath.lineTo(size.width * (0.35 + i * 0.1), size.height * 0.85);
-        paperPath.lineTo(size.width * (0.4 + i * 0.1), size.height * 0.85);
-        paperPath.lineTo(size.width * (0.35 + i * 0.1), size.height * 0.5);
-        paperPath.close();
-
-        canvas.drawPath(paperPath, paperPaint);
-      }
-    }
   }
 
   @override
-  bool shouldRepaint(covariant ClassicJarPainter oldDelegate) {
-    return oldDelegate.isEmpty != isEmpty;
-  }
+  bool shouldRepaint(covariant ClassicJarPainter oldDelegate) => oldDelegate.isEmpty != isEmpty;
 }
 
 /// Vintage Jar Painter
@@ -181,47 +218,73 @@ class VintageJarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    // Glass base
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = jarColor.withValues(alpha: 0.08);
+
+    final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 3
+      ..color = jarColor.withValues(alpha: 0.9);
+
+    final highlightPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.25);
 
     // Jar body (more rounded, vintage shape)
     final jarPath = Path();
-    jarPath.moveTo(size.width * 0.25, size.height * 0.3);
+    jarPath.moveTo(size.width * 0.35, size.height * 0.3);
     jarPath.quadraticBezierTo(
-      size.width * 0.1,
+      size.width * 0.05,
       size.height * 0.5,
-      size.width * 0.2,
+      size.width * 0.15,
       size.height * 0.9,
     );
     jarPath.quadraticBezierTo(
       size.width * 0.5,
       size.height * 1.0,
-      size.width * 0.8,
+      size.width * 0.85,
       size.height * 0.9,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.9,
+      size.width * 0.95,
       size.height * 0.5,
-      size.width * 0.75,
+      size.width * 0.65,
       size.height * 0.3,
     );
     jarPath.close();
 
-    paint.color = jarColor;
-    canvas.drawPath(jarPath, paint);
+    canvas.drawPath(jarPath, fillPaint);
 
-    // Decorative band
-    final bandPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..color = lidColor.withValues(alpha: 0.5);
+    // Papers
+    if (!isEmpty) {
+      final paperPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = paperColor.withValues(alpha: 0.7);
 
-    canvas.drawLine(
-      Offset(size.width * 0.22, size.height * 0.6),
-      Offset(size.width * 0.78, size.height * 0.6),
-      bandPaint,
-    );
+      for (int i = 0; i < 5; i++) {
+        canvas.save();
+        canvas.translate(size.width * (0.3 + i * 0.1), size.height * 0.75);
+        canvas.rotate(0.3 - i * 0.15);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, size.width * 0.08, size.height * 0.18), const Radius.circular(3)),
+          paperPaint,
+        );
+        canvas.restore();
+      }
+    }
+
+    canvas.drawPath(jarPath, fillPaint);
+    canvas.drawPath(jarPath, outlinePaint);
+
+    // Glass Highlight curved
+    final highlightPath = Path();
+    highlightPath.moveTo(size.width * 0.2, size.height * 0.55);
+    highlightPath.quadraticBezierTo(size.width * 0.18, size.height * 0.7, size.width * 0.25, size.height * 0.85);
+    canvas.drawPath(highlightPath, highlightPaint);
 
     // Cork lid
     final lidPaint = Paint()
@@ -231,41 +294,22 @@ class VintageJarPainter extends CustomPainter {
     final lidPath = Path();
     lidPath.addRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.3,
-          size.height * 0.1,
-          size.width * 0.4,
-          size.height * 0.2,
-        ),
+        Rect.fromLTWH(size.width * 0.35, size.height * 0.15, size.width * 0.3, size.height * 0.15),
         const Radius.circular(8),
       ),
     );
 
+    // Bottle neck
+    final neckPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = jarColor.withValues(alpha: 0.6);
+    
+    canvas.drawRect(Rect.fromLTWH(size.width * 0.35, size.height * 0.25, size.width * 0.3, size.height * 0.05), neckPaint);
     canvas.drawPath(lidPath, lidPaint);
-
-    // Papers
-    if (!isEmpty) {
-      final paperPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = paperColor.withValues(alpha: 0.25);
-
-      for (int i = 0; i < 4; i++) {
-        canvas.save();
-        canvas.translate(size.width * (0.35 + i * 0.08), size.height * 0.7);
-        canvas.rotate(0.2 - i * 0.1);
-        canvas.drawRect(
-          Rect.fromLTWH(0, 0, size.width * 0.06, size.height * 0.2),
-          paperPaint,
-        );
-        canvas.restore();
-      }
-    }
   }
 
   @override
-  bool shouldRepaint(covariant VintageJarPainter oldDelegate) {
-    return oldDelegate.isEmpty != isEmpty;
-  }
+  bool shouldRepaint(covariant VintageJarPainter oldDelegate) => oldDelegate.isEmpty != isEmpty;
 }
 
 /// Modern Jar Painter
@@ -284,84 +328,74 @@ class ModernJarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    // Fill
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = jarColor.withValues(alpha: 0.05);
+
+    final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 3
+      ..color = jarColor;
 
     // Jar body (clean geometric shape)
     final jarRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.2,
-        size.height * 0.25,
-        size.width * 0.6,
-        size.height * 0.7,
-      ),
-      const Radius.circular(16),
+      Rect.fromLTWH(size.width * 0.2, size.height * 0.25, size.width * 0.6, size.height * 0.7),
+      const Radius.circular(20),
     );
 
-    paint.color = jarColor;
-    canvas.drawRRect(jarRect, paint);
-
-    // Minimalist lid
-    final lidPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = lidColor.withValues(alpha: 0.8);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.35,
-          size.height * 0.1,
-          size.width * 0.3,
-          size.height * 0.18,
-        ),
-        const Radius.circular(12),
-      ),
-      lidPaint,
-    );
-
-    // Glass reflection effect
-    final reflectionPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = jarColor.withValues(alpha: 0.3);
-
-    canvas.drawLine(
-      Offset(size.width * 0.3, size.height * 0.3),
-      Offset(size.width * 0.3, size.height * 0.85),
-      reflectionPaint,
-    );
+    canvas.drawRRect(jarRect, fillPaint);
 
     // Papers
     if (!isEmpty) {
       final paperPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = paperColor.withValues(alpha: 0.2);
+        ..color = paperColor.withValues(alpha: 0.8);
 
-      for (int i = 0; i < 3; i++) {
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(
-              size.width * (0.3 + i * 0.12),
-              size.height * 0.5,
-              size.width * 0.08,
-              size.height * 0.35,
-            ),
-            const Radius.circular(4),
-          ),
+      for (int i = 0; i < 4; i++) {
+        canvas.drawCircle(
+          Offset(size.width * (0.35 + i * 0.1), size.height * 0.8),
+          size.width * 0.06,
           paperPaint,
         );
       }
     }
+
+    canvas.drawRRect(jarRect, fillPaint);
+    canvas.drawRRect(jarRect, outlinePaint);
+
+    // Glass reflection effect
+    final reflectionPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.3);
+
+    canvas.drawLine(
+      Offset(size.width * 0.28, size.height * 0.35),
+      Offset(size.width * 0.28, size.height * 0.85),
+      reflectionPaint,
+    );
+
+    // Minimalist lid
+    final lidPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = lidColor;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(size.width * 0.15, size.height * 0.15, size.width * 0.7, size.height * 0.1),
+        const Radius.circular(6),
+      ),
+      lidPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant ModernJarPainter oldDelegate) {
-    return oldDelegate.isEmpty != isEmpty;
-  }
+  bool shouldRepaint(covariant ModernJarPainter oldDelegate) => oldDelegate.isEmpty != isEmpty;
 }
 
-/// Ornate Jar Painter - Elegant decorative jar with intricate details
+/// Ornate Jar Painter
 class OrnateJarPainter extends CustomPainter {
   final bool isEmpty;
   final Color jarColor;
@@ -379,143 +413,112 @@ class OrnateJarPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final jarPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = 3
       ..color = jarColor;
 
     final fillPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = jarColor.withValues(alpha: 0.08);
+      ..color = jarColor.withValues(alpha: 0.12);
+
+    final highlightPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.3);
 
     // Jar body - elegant curved shape
     final jarPath = Path();
-    jarPath.moveTo(size.width * 0.25, size.height * 0.28);
+    jarPath.moveTo(size.width * 0.3, size.height * 0.3);
     jarPath.quadraticBezierTo(
-      size.width * 0.12,
-      size.height * 0.45,
-      size.width * 0.18,
-      size.height * 0.75,
+      size.width * 0.0,
+      size.height * 0.6,
+      size.width * 0.2,
+      size.height * 0.9,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.22,
-      size.height * 0.95,
       size.width * 0.5,
-      size.height * 0.95,
+      size.height * 1.0,
+      size.width * 0.8,
+      size.height * 0.9,
     );
     jarPath.quadraticBezierTo(
-      size.width * 0.78,
-      size.height * 0.95,
-      size.width * 0.82,
-      size.height * 0.75,
-    );
-    jarPath.quadraticBezierTo(
-      size.width * 0.88,
-      size.height * 0.45,
-      size.width * 0.75,
-      size.height * 0.28,
+      size.width * 1.0,
+      size.height * 0.6,
+      size.width * 0.7,
+      size.height * 0.3,
     );
     jarPath.close();
 
     canvas.drawPath(jarPath, fillPaint);
-    canvas.drawPath(jarPath, jarPaint);
 
-    // Decorative neck ring
-    final neckPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = lidColor.withValues(alpha: 0.4);
-
-    canvas.drawLine(
-      Offset(size.width * 0.28, size.height * 0.35),
-      Offset(size.width * 0.72, size.height * 0.35),
-      neckPaint,
-    );
-
-    // Decorative base ring
-    canvas.drawLine(
-      Offset(size.width * 0.25, size.height * 0.88),
-      Offset(size.width * 0.75, size.height * 0.88),
-      neckPaint,
-    );
-
-    // Ornate lid with dome shape
-    final lidPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = lidColor;
-
-    // Lid base
-    final lidPath = Path();
-    lidPath.moveTo(size.width * 0.28, size.height * 0.28);
-    lidPath.lineTo(size.width * 0.72, size.height * 0.28);
-    lidPath.lineTo(size.width * 0.68, size.height * 0.18);
-    lidPath.lineTo(size.width * 0.32, size.height * 0.18);
-    lidPath.close();
-
-    canvas.drawPath(lidPath, lidPaint);
-
-    // Lid dome
-    final domePath = Path();
-    domePath.moveTo(size.width * 0.32, size.height * 0.18);
-    domePath.quadraticBezierTo(
-      size.width * 0.5,
-      size.height * 0.08,
-      size.width * 0.68,
-      size.height * 0.18,
-    );
-    domePath.close();
-
-    canvas.drawPath(domePath, lidPaint);
-
-    // Lid knob
-    final knobPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = lidColor.withValues(alpha: 0.8);
-
-    canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.12),
-      size.width * 0.05,
-      knobPaint,
-    );
-
-    // Decorative filigree lines on jar body
-    final filigreePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = jarColor.withValues(alpha: 0.25);
-
-    // Left filigree
-    canvas.drawLine(
-      Offset(size.width * 0.3, size.height * 0.45),
-      Offset(size.width * 0.35, size.height * 0.75),
-      filigreePaint,
-    );
-    // Right filigree
-    canvas.drawLine(
-      Offset(size.width * 0.7, size.height * 0.45),
-      Offset(size.width * 0.65, size.height * 0.75),
-      filigreePaint,
-    );
-
-    // Papers inside (if not empty)
+    // Papers inside
     if (!isEmpty) {
       final paperPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = paperColor.withValues(alpha: 0.3);
+        ..color = paperColor.withValues(alpha: 0.5);
 
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 5; i++) {
         canvas.save();
-        canvas.translate(size.width * (0.35 + i * 0.1), size.height * 0.6);
-        canvas.rotate(0.15 - i * 0.1);
-        canvas.drawRect(
-          Rect.fromLTWH(0, 0, size.width * 0.06, size.height * 0.25),
-          paperPaint,
-        );
+        canvas.translate(size.width * (0.35 + i * 0.08), size.height * 0.65);
+        canvas.rotate(0.2 - i * 0.15);
+        
+        final starPath = Path();
+        starPath.moveTo(0, size.height * 0.05);
+        starPath.lineTo(size.width * 0.05, size.height * 0.15);
+        starPath.lineTo(size.width * 0.15, size.height * 0.15);
+        starPath.lineTo(size.width * 0.08, size.height * 0.2);
+        starPath.lineTo(size.width * 0.1, size.height * 0.3);
+        starPath.lineTo(0, size.height * 0.25);
+        starPath.lineTo(-size.width * 0.1, size.height * 0.3);
+        starPath.lineTo(-size.width * 0.08, size.height * 0.2);
+        starPath.lineTo(-size.width * 0.15, size.height * 0.15);
+        starPath.lineTo(-size.width * 0.05, size.height * 0.15);
+        starPath.close();
+
+        canvas.drawPath(starPath, paperPaint);
         canvas.restore();
       }
     }
+
+    canvas.drawPath(jarPath, fillPaint);
+    canvas.drawPath(jarPath, jarPaint);
+
+    // Highlights
+    final hPath = Path();
+    hPath.moveTo(size.width * 0.2, size.height * 0.5);
+    hPath.quadraticBezierTo(size.width * 0.15, size.height * 0.65, size.width * 0.25, size.height * 0.8);
+    canvas.drawPath(hPath, highlightPaint);
+
+    // Ornate lid
+    final lidGradient = RadialGradient(
+      colors: [lidColor.withValues(alpha: 0.8), lidColor],
+    ).createShader(Rect.fromLTWH(size.width * 0.2, size.height * 0.1, size.width * 0.6, size.height * 0.2));
+
+    final lidPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = lidGradient;
+
+    final domePath = Path();
+    domePath.moveTo(size.width * 0.3, size.height * 0.3);
+    domePath.lineTo(size.width * 0.25, size.height * 0.2);
+    domePath.quadraticBezierTo(size.width * 0.5, size.height * 0.0, size.width * 0.75, size.height * 0.2);
+    domePath.lineTo(size.width * 0.7, size.height * 0.3);
+    domePath.close();
+    
+    canvas.drawPath(domePath, lidPaint);
+
+    // Gold rings
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = AppColors.midnightGold;
+
+    // Base ring
+    canvas.drawLine(Offset(size.width * 0.25, size.height * 0.9), Offset(size.width * 0.75, size.height * 0.9), ringPaint);
+    // Neck ring
+    canvas.drawLine(Offset(size.width * 0.3, size.height * 0.3), Offset(size.width * 0.7, size.height * 0.3), ringPaint);
   }
 
   @override
-  bool shouldRepaint(covariant OrnateJarPainter oldDelegate) {
-    return oldDelegate.isEmpty != isEmpty;
-  }
+  bool shouldRepaint(covariant OrnateJarPainter oldDelegate) => oldDelegate.isEmpty != isEmpty;
 }

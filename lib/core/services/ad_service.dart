@@ -16,6 +16,10 @@ class AdService {
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdReady = false;
 
+  // Rewarded ad
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+
   // Timestamp of last interstitial ad show
   DateTime? _lastAdShowTime;
 
@@ -42,6 +46,26 @@ class AdService {
     return '';
   }
 
+  /// Get the appropriate Native Ad Unit ID
+  String getNativeAdUnitId() {
+    if (Platform.isAndroid) {
+      return AdConfig.androidNativeAdUnitId;
+    } else if (Platform.isIOS) {
+      return AdConfig.iosNativeAdUnitId;
+    }
+    return '';
+  }
+
+  /// Get the appropriate Rewarded Ad Unit ID
+  String getRewardedAdUnitId() {
+    if (Platform.isAndroid) {
+      return AdConfig.androidRewardedAdUnitId;
+    } else if (Platform.isIOS) {
+      return AdConfig.iosRewardedAdUnitId;
+    }
+    return '';
+  }
+
   /// Initialize the Mobile Ads SDK
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -54,8 +78,9 @@ class AdService {
       }
       await MobileAds.instance.initialize();
       _isInitialized = true;
-      // Load the first interstitial ad
+      // Load ads
       _loadInterstitialAd();
+      _loadRewardedAd();
     } catch (e) {
       // Silently fail during initialization
       _isInitialized = false;
@@ -110,6 +135,43 @@ class AdService {
     );
   }
 
+  /// Load a rewarded ad
+  void _loadRewardedAd() {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+
+    final adUnitId = getRewardedAdUnitId();
+    
+    RewardedAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              _isRewardedAdReady = false;
+              ad.dispose();
+              _loadRewardedAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              _isRewardedAdReady = false;
+              ad.dispose();
+              _loadRewardedAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          _isRewardedAdReady = false;
+          Future.delayed(const Duration(seconds: 60), () {
+            _loadRewardedAd();
+          });
+        },
+      ),
+    );
+  }
+
   /// Check if enough time has passed since the last ad was shown
   bool get _canShowAd {
     if (_lastAdShowTime == null) {
@@ -148,6 +210,28 @@ class AdService {
     } catch (e) {
       // Failed to show ad
       return false;
+    }
+  }
+
+  /// Show a rewarded ad
+  Future<void> showRewardedAd({
+    required Function() onUserEarnedReward,
+    Function()? onAdFailedToLoad,
+  }) async {
+    if (!_isInitialized) await initialize();
+
+    if (!_isRewardedAdReady || _rewardedAd == null) {
+      if (onAdFailedToLoad != null) onAdFailedToLoad();
+      _loadRewardedAd();
+      return;
+    }
+
+    try {
+      await _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
+        onUserEarnedReward();
+      });
+    } catch (e) {
+      if (onAdFailedToLoad != null) onAdFailedToLoad();
     }
   }
 

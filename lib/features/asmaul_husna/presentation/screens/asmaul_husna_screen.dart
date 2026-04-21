@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/config/translations.dart';
@@ -63,7 +64,7 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.midnightBlue : AppColors.cream;
+    final bgColor = isDark ? null : AppColors.cream;
     final primaryColor = isDark
         ? AppColors.midnightPeriwinkle
         : AppColors.sageGreen;
@@ -71,138 +72,165 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
     final isIndonesian = currentLocale.languageCode == 'id';
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        title: Text('Asmaul Husna', style: AppTextStyles.loraHeading()),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryColor),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() => _currentIndex = 0);
-            },
-            icon: Icon(Icons.refresh_rounded, color: primaryColor),
-            tooltip: 'Reset to first',
-          ),
-          IconButton(
-            onPressed: () async {
-              final translation = isIndonesian
-                  ? AvailableTranslations.allTranslations.firstWhere(
-                      (t) => t.id == 'english',
-                    )
-                  : AvailableTranslations.allTranslations.firstWhere(
-                      (t) => t.id == 'indonesian',
-                    );
-              await ref
-                  .read(preferencesNotifierProvider.notifier)
-                  .setTranslation(translation);
-            },
-            icon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                isIndonesian ? 'ID' : 'EN',
-                style: AppTextStyles.loraCaption().copyWith(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w600,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: AppBar(
+              backgroundColor: isDark 
+                  ? AppColors.darkSurface.withValues(alpha: 0.1)
+                  : AppColors.cream.withValues(alpha: 0.8),
+              elevation: 0,
+              title: Text('Names of Allah', style: AppTextStyles.loraHeadingForTheme(context)),
+              centerTitle: true,
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  onPressed: () => setState(() => _currentIndex = 0),
+                  icon: Icon(Icons.refresh_rounded, color: primaryColor),
+                  tooltip: 'Reset',
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-
-          // Navigation info
-          Text(
-            '${_currentIndex + 1} / ${asmaulHusnaList.length}',
-            style: AppTextStyles.loraBodySmall().copyWith(color: primaryColor),
-          ),
-          const SizedBox(height: 24),
-
-          // Main content area with swipe support
-          Expanded(
-            child: GestureDetector(
-              onHorizontalDragStart: _onDragStart,
-              onHorizontalDragUpdate: _onDragUpdate,
-              onHorizontalDragEnd: _onDragEnd,
-              child: Stack(
-                children: [
-                  // Card Stack - centered
-                  Center(
-                    child: _buildCardStack(isDark, primaryColor, isIndonesian),
-                  ),
-
-                  // Prev Button - positioned on left, always visible
-                  Positioned(
-                    left: 8,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: _NavButton(
-                        icon: Icons.chevron_left_rounded,
-                        onTap: _currentIndex > 0 ? _prevCard : null,
-                        primaryColor: primaryColor,
-                        isDark: isDark,
+                IconButton(
+                  onPressed: () async {
+                    final translation = isIndonesian
+                        ? AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'english')
+                        : AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'indonesian');
+                    await ref.read(preferencesNotifierProvider.notifier).setTranslation(translation);
+                  },
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      isIndonesian ? 'ID' : 'EN',
+                      style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: isDark
+            ? const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(0, -0.2),
+                  radius: 1.2,
+                  colors: [
+                    Color(0xFF1E293B), // Midnight Blue Lighter
+                    Color(0xFF020617), // Midnight Blue Deep
+                  ],
+                  stops: [0.0, 1.0],
+                ),
+              )
+            : null,
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              // Navigation info
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_currentIndex + 1} / ${asmaulHusnaList.length}',
+                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
-                  // Next Button - positioned on right, always visible
-                  Positioned(
-                    right: 8,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: _NavButton(
-                        icon: Icons.chevron_right_rounded,
-                        onTap: _currentIndex < asmaulHusnaList.length - 1
-                            ? _nextCard
-                            : null,
-                        primaryColor: primaryColor,
-                        isDark: isDark,
+              // Main content area with swipe support
+              Expanded(
+                child: GestureDetector(
+                  onHorizontalDragStart: _onDragStart,
+                  onHorizontalDragUpdate: _onDragUpdate,
+                  onHorizontalDragEnd: _onDragEnd,
+                  child: Stack(
+                    children: [
+                      // Card Stack - centered
+                      Center(
+                        child: _buildCardStack(isDark, primaryColor, isIndonesian),
                       ),
+
+                      // Prev Button - positioned on left, always visible
+                      Positioned(
+                        left: 8,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _NavButton(
+                            icon: Icons.chevron_left_rounded,
+                            onTap: _currentIndex > 0 ? _prevCard : null,
+                            primaryColor: primaryColor,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+
+                      // Next Button - positioned on right, always visible
+                      Positioned(
+                        right: 8,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _NavButton(
+                            icon: Icons.chevron_right_rounded,
+                            onTap: _currentIndex < asmaulHusnaList.length - 1
+                                ? _nextCard
+                                : null,
+                            primaryColor: primaryColor,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Swipe hint
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.swipe_rounded,
+                    color: primaryColor.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Swipe or use arrows to navigate',
+                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                      color: primaryColor.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Swipe hint
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.swipe_rounded,
-                color: primaryColor.withValues(alpha: 0.5),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Swipe or use arrows to navigate',
-                style: AppTextStyles.loraBodySmall().copyWith(
-                  color: primaryColor.withValues(alpha: 0.6),
-                ),
-              ),
+              const SizedBox(height: 24),
             ],
           ),
-          const SizedBox(height: 24),
-        ],
+      ),
       ),
     );
   }
@@ -280,28 +308,37 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
         ? (isDark ? AppColors.darkCard : Colors.white)
         : (isDark ? AppColors.darkElevated : const Color(0xFFE5E0D8));
 
-    return Container(
-      width: 170,
-      height: 250,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isFront ? 0.15 : 0.05),
-            blurRadius: isFront ? 15 : 5,
-            offset: const Offset(0, 5),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: isFront ? 10 : 0, sigmaY: isFront ? 10 : 0),
+        child: Container(
+          width: 170,
+          height: 250,
+          decoration: BoxDecoration(
+            color: cardColor.withValues(alpha: isFront ? 0.85 : 0.95),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: isDark 
+                    ? primaryColor.withValues(alpha: isFront ? 0.2 : 0.05)
+                    : Colors.black.withValues(alpha: isFront ? 0.15 : 0.05),
+                blurRadius: isFront ? 20 : 5,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: isFront
+                  ? primaryColor.withValues(alpha: 0.4)
+                  : Colors.black.withValues(alpha: 0.05),
+              width: isFront ? 1.5 : 1,
+            ),
           ),
-        ],
-        border: Border.all(
-          color: isFront
-              ? primaryColor.withValues(alpha: 0.3)
-              : Colors.black.withValues(alpha: 0.05),
+          child: isFront
+              ? _buildFrontCard(data, meaning, primaryColor, index, isDark)
+              : _buildBackCard(data, isDark),
         ),
       ),
-      child: isFront
-          ? _buildFrontCard(data, meaning, primaryColor, index)
-          : _buildBackCard(data, isDark),
     );
   }
 
@@ -310,6 +347,7 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
     String meaning,
     Color primaryColor,
     int index,
+    bool isDark,
   ) {
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -319,7 +357,7 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
         children: [
           Text(
             'Asmaul Husna (${index + 1}/99)',
-            style: AppTextStyles.loraCaption().copyWith(
+            style: AppTextStyles.loraCaptionForTheme(context).copyWith(
               color: primaryColor.withValues(alpha: 0.7),
               fontSize: 10,
             ),
@@ -345,7 +383,7 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               data['latin']!,
-              style: AppTextStyles.loraBodyMedium().copyWith(
+              style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: primaryColor,
                 fontSize: 14,
@@ -359,8 +397,8 @@ class _AsmaulHusnaScreenState extends ConsumerState<AsmaulHusnaScreen> {
             child: Text(
               meaning,
               textAlign: TextAlign.center,
-              style: AppTextStyles.loraCaption().copyWith(
-                color: AppColors.textSecondary,
+              style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                 fontSize: 11,
               ),
               maxLines: 3,

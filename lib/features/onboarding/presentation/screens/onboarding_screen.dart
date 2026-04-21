@@ -98,7 +98,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPressed: _completeOnboarding,
                     child: Text(
                       'Skip',
-                      style: AppTextStyles.loraBodySmall().copyWith(
+                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                         color: AppColors.sageGreen,
                       ),
                     ),
@@ -225,7 +225,7 @@ class _LanguageSelectionPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.chooseYourLanguage,
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -238,7 +238,7 @@ class _LanguageSelectionPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   l10n.selectYourPreferredLanguage,
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -288,7 +288,7 @@ class _LanguageSelectionPage extends StatelessWidget {
                       ),
                       child: Text(
                         l10n.cancel,
-                        style: AppTextStyles.loraBodyMedium().copyWith(
+                        style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                           color: AppColors.sageGreen,
                         ),
                       ),
@@ -314,7 +314,7 @@ class _LanguageSelectionPage extends StatelessWidget {
                       ),
                       child: Text(
                         l10n.ok,
-                        style: AppTextStyles.loraBodyMedium(),
+                        style: AppTextStyles.loraBodyMediumForTheme(context),
                       ),
                     ).animate().fade(delay: 700.ms).slideX(begin: 0.3),
                   ],
@@ -376,7 +376,7 @@ class _LanguageCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   languageCode.toUpperCase(),
-                  style: AppTextStyles.loraHeading().copyWith(
+                  style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                     color: AppColors.sageGreen,
                     fontWeight: FontWeight.bold,
                   ),
@@ -396,7 +396,7 @@ class _LanguageCard extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       languageName,
-                      style: AppTextStyles.loraHeading().copyWith(
+                      style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                         color: AppColors.sageGreen,
                         fontWeight: FontWeight.bold,
                       ),
@@ -406,7 +406,7 @@ class _LanguageCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Translation: $translationAuthor',
-                    style: AppTextStyles.loraBodySmall(),
+                    style: AppTextStyles.loraBodySmallForTheme(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -474,7 +474,7 @@ class _InternetCheckPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.internetConnectionRequired,
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -487,7 +487,7 @@ class _InternetCheckPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   l10n.internetConnectionDesc,
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -556,7 +556,7 @@ class _ModeSelectionPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.chooseYourExperience,
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -569,7 +569,7 @@ class _ModeSelectionPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   l10n.selectYourExperienceDesc,
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -663,7 +663,7 @@ class _NotificationPermissionPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.dailyNotification,
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -676,7 +676,7 @@ class _NotificationPermissionPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   l10n.dailyNotificationDesc,
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -775,7 +775,7 @@ class _VersesPerDayPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.jarTapsPerDay,
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -788,7 +788,7 @@ class _VersesPerDayPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   l10n.jarTapsPerDayDesc,
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -858,7 +858,7 @@ class _VersesPerDayPage extends StatelessWidget {
                               selectedVersesPerDay >= 9999
                                   ? '∞'
                                   : selectedVersesPerDay.toString(),
-                              style: AppTextStyles.loraTitle().copyWith(
+                              style: AppTextStyles.loraTitleForTheme(context).copyWith(
                                 color: AppColors.cream,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 32,
@@ -1005,7 +1005,7 @@ class _JarTypeSelectionPage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   'Choose Your Jar',
-                  style: AppTextStyles.loraTitle().copyWith(fontSize: 24),
+                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                 ),
@@ -1017,7 +1017,7 @@ class _JarTypeSelectionPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'Select a jar style that speaks to you. You can change this anytime in settings.',
-                  style: AppTextStyles.loraBodyMedium(),
+                  style: AppTextStyles.loraBodyMediumForTheme(context),
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
@@ -1133,7 +1133,7 @@ class _JarTypeOption extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: AppTextStyles.loraBodyMedium().copyWith(
+              style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
                 color: isSelected ? primaryColor : null,
                 fontWeight: isSelected ? FontWeight.w600 : null,
               ),
@@ -1171,7 +1171,7 @@ class _OnboardingButton extends StatelessWidget {
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(text, style: AppTextStyles.loraBodyMedium(), maxLines: 1),
+        child: Text(text, style: AppTextStyles.loraBodyMediumForTheme(context), maxLines: 1),
       ),
     );
   }
@@ -1237,7 +1237,7 @@ class _ModeCard extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       title,
-                      style: AppTextStyles.loraHeading().copyWith(
+                      style: AppTextStyles.loraHeadingForTheme(context).copyWith(
                         color: AppColors.sageGreen,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1247,7 +1247,7 @@ class _ModeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTextStyles.loraBodySmall(),
+                    style: AppTextStyles.loraBodySmallForTheme(context),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -49,7 +49,9 @@ class ShareService {
         subject:
             '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
-      _showSuccessSnackBar(context, 'Shared to WhatsApp!');
+      if (context.mounted) {
+        _showSuccessSnackBar(context, 'Shared to WhatsApp!');
+      }
     }
   }
 
@@ -64,7 +66,9 @@ class ShareService {
       await Share.shareXFiles([
         XFile(image.path, mimeType: 'image/png'),
       ], subject: 'Quran Verse - ${verse.arabicSurahName}');
-      _showSuccessSnackBar(context, 'Shared to Facebook!');
+      if (context.mounted) {
+        _showSuccessSnackBar(context, 'Shared to Facebook!');
+      }
     }
   }
 
@@ -83,7 +87,9 @@ class ShareService {
         text:
             '${verse.translation}\n\n${verse.surahName} (${verse.surahNumber}:${verse.ayahNumber})',
       );
-      _showSuccessSnackBar(context, 'Image shared successfully!');
+      if (context.mounted) {
+        _showSuccessSnackBar(context, 'Image shared successfully!');
+      }
     }
   }
 
@@ -93,7 +99,7 @@ class ShareService {
         SnackBar(
           content: Text(
             message,
-            style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
+            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: Colors.white),
           ),
           backgroundColor: AppColors.sageGreen,
           behavior: SnackBarBehavior.floating,
@@ -116,7 +122,9 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
 📱 Quran Jarr - Daily Quran Inspiration''';
 
     await Share.share(shareText.trim(), subject: 'Quran Verse');
-    _showSuccessSnackBar(context, 'Verse shared successfully!');
+    if (context.mounted) {
+      _showSuccessSnackBar(context, 'Verse shared successfully!');
+    }
   }
 
   /// Save verse card image to gallery
@@ -128,7 +136,7 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
     final image = await _captureCard(cardKey);
     if (image != null) {
       try {
-        final result = await ImageGallerySaverPlus.saveImage(
+        await ImageGallerySaverPlus.saveImage(
           image.readAsBytesSync(),
           quality: 100,
           name: 'quran_verse_${DateTime.now().millisecondsSinceEpoch}',
@@ -138,7 +146,7 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
             SnackBar(
               content: Text(
                 'Image saved to gallery!',
-                style: AppTextStyles.loraBodySmall().copyWith(
+                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                   color: Colors.white,
                 ),
               ),
@@ -154,7 +162,7 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
             SnackBar(
               content: Text(
                 'Failed to save image',
-                style: AppTextStyles.loraBodySmall().copyWith(
+                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                   color: Colors.white,
                 ),
               ),
@@ -195,7 +203,7 @@ ${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})''';
         SnackBar(
           content: Text(
             'Verse copied to clipboard!',
-            style: AppTextStyles.loraBodySmall().copyWith(color: Colors.white),
+            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: Colors.white),
           ),
           backgroundColor: AppColors.sageGreen,
           behavior: SnackBarBehavior.floating,
@@ -272,7 +280,7 @@ class _ShareOptionsSheet extends StatelessWidget {
                   children: [
                     Text(
                       'Share Verse',
-                      style: AppTextStyles.loraTitle().copyWith(
+                      style: AppTextStyles.loraTitleForTheme(context).copyWith(
                         color: textColor,
                       ),
                     ),
@@ -400,14 +408,12 @@ class _ShareOptionsSheet extends StatelessWidget {
 
 /// Share Option Widget
 class _ShareOption extends StatelessWidget {
-  final String? icon;
   final IconData? iconData;
   final String title;
   final Color color;
   final VoidCallback onTap;
 
   const _ShareOption({
-    this.icon,
     this.iconData,
     required this.title,
     required this.color,
@@ -434,15 +440,13 @@ class _ShareOption extends StatelessWidget {
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: icon != null
-                  ? Image.asset(icon!, width: 24, height: 24)
-                  : Icon(iconData, color: color, size: 24),
+              child: Icon(iconData, color: color, size: 24),
             ),
             const SizedBox(width: 16),
             // Title
             Text(
               title,
-              style: AppTextStyles.loraBodyLarge().copyWith(
+              style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
                 color: textColor,
                 fontWeight: FontWeight.w500,
               ),

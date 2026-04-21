@@ -8,6 +8,7 @@ import 'package:quran_jarr/features/archive/presentation/providers/archive_provi
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/translation_picker_widget.dart';
+import 'package:quran_jarr/features/ads/presentation/widgets/native_ad_widget.dart';
 
 /// Sort options for archive
 enum SortOption {
@@ -138,7 +139,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                   Expanded(
                     child: Text(
                       'My Archive',
-                      style: AppTextStyles.loraTitle(),
+                      style: AppTextStyles.loraTitleForTheme(context),
                       maxLines: 1,
                     ),
                   ),
@@ -182,7 +183,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 onChanged: _onSearchChanged,
                 decoration: InputDecoration(
                   hintText: 'Search verses...',
-                  hintStyle: AppTextStyles.loraBodySmall(),
+                  hintStyle: AppTextStyles.loraBodySmallForTheme(context),
                   prefixIcon: Icon(Icons.search, color: primaryColor),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -241,7 +242,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             children: [
               Icon(Icons.error_outline, color: errorColor, size: 48),
               const SizedBox(height: 16),
-              Text(state.errorMessage!, style: AppTextStyles.loraBodyMedium()),
+              Text(state.errorMessage!, style: AppTextStyles.loraBodyMediumForTheme(context)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
@@ -267,11 +268,11 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               size: 64,
             ),
             const SizedBox(height: 16),
-            Text('No saved verses yet', style: AppTextStyles.loraHeading()),
+            Text('No saved verses yet', style: AppTextStyles.loraHeadingForTheme(context)),
             const SizedBox(height: 8),
             Text(
               'Tap the bookmark icon on a verse to save it here',
-              style: AppTextStyles.loraBodySmall(),
+              style: AppTextStyles.loraBodySmallForTheme(context),
             ),
           ],
         ),
@@ -320,6 +321,12 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           ),
         ),
       );
+      headerItems.add(const SizedBox(height: 16));
+    }
+
+    // Insert Native Ad after highlights but before all verses
+    if (state.savedVerses.isNotEmpty) {
+      headerItems.add(const NativeAdWidget());
       headerItems.add(const SizedBox(height: 16));
     }
 
@@ -399,10 +406,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: bgColor,
-        title: Text('Clear Archive', style: AppTextStyles.loraHeading()),
+        title: Text('Clear Archive', style: AppTextStyles.loraHeadingForTheme(context)),
         content: Text(
           'Remove all ${state.savedVerses.length} saved verses from your archive?',
-          style: AppTextStyles.loraBodyMedium(),
+          style: AppTextStyles.loraBodyMediumForTheme(context),
         ),
         actions: [
           TextButton(
@@ -443,7 +450,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             title,
-            style: AppTextStyles.loraBodyMedium().copyWith(
+            style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),

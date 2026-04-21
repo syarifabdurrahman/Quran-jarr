@@ -140,6 +140,12 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     await _prefs.setJarType(type);
     _notify();
   }
+
+  /// Grant an extra tap (called after rewarded ad)
+  Future<void> grantExtraTap() async {
+    await _prefs.grantExtraTap();
+    _notify();
+  }
 }
 
 /// Preferences Provider
