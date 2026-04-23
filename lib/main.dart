@@ -57,23 +57,19 @@ class QuranJarrApp extends ConsumerWidget {
         final systemTextScale = MediaQuery.of(context).textScaler.scale(1.0);
         final clampedTextScale = systemTextScale.clamp(1.0, 1.3);
 
+        // For system mode (0), get system brightness first
+        final systemBrightness = MediaQuery.platformBrightnessOf(context);
+        
         ThemeData currentTheme;
-        switch (themeMode) {
-          case 1:
-            currentTheme = ThemeConfig.lightTheme;
-            break;
-          case 2:
-            currentTheme = ThemeConfig.darkTheme;
-            break;
-          default:
-            currentTheme = ThemeConfig.lightTheme;
-        }
-
         if (themeMode == 0) {
-          final systemBrightness = MediaQuery.platformBrightnessOf(context);
+          // System mode: use device brightness
           currentTheme = systemBrightness == Brightness.dark
               ? ThemeConfig.darkTheme
               : ThemeConfig.lightTheme;
+        } else if (themeMode == 1) {
+          currentTheme = ThemeConfig.lightTheme;
+        } else {
+          currentTheme = ThemeConfig.darkTheme;
         }
 
         return MediaQuery(

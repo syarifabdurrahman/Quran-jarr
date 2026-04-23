@@ -161,12 +161,13 @@ class QuranApiService {
         }
       }
 
-      // Get audio URL (Mishary Rashid Al Afasy - reciter 1)
+      // Get audio URL (reciter based on ApiConfig)
       String? audioUrl;
       final audioData = data['audio'] as Map<String, dynamic>?;
-      if (audioData != null && audioData.containsKey('1')) {
-        final reciter1 = audioData['1'] as Map<String, dynamic>?;
-        audioUrl = reciter1?['url'] as String?;
+      final reciterKey = ApiConfig.defaultReciter.toString();
+      if (audioData != null && audioData.containsKey(reciterKey)) {
+        final reciter = audioData[reciterKey] as Map<String, dynamic>?;
+        audioUrl = reciter?['url'] as String?;
       }
 
       final verseKey = '$surahNo:$ayahNo';

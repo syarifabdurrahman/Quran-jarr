@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
@@ -57,16 +58,20 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
             filter: ImageFilter.blur(
-              sigmaX: isDark ? 12 : 0,
-              sigmaY: isDark ? 12 : 0,
+              sigmaX: 12,
+              sigmaY: 12,
             ),
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.glassNight : cardColor,
+                color: isDark
+                    ? AppColors.glassNight
+                    : cardColor.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark ? AppColors.glassNightBorder : glassBorder,
+                  color: isDark
+                      ? AppColors.glassNightBorder
+                      : glassBorder.withValues(alpha: 0.1),
                   width: 1,
                 ),
                 boxShadow: [
@@ -269,11 +274,17 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     if (!hasTafsirForCurrentTranslation) {
       // Only try to load from API if we don't have tafsir locally
       setState(() => _isLoadingTafsir = true);
-      try {
-        await ref.read(jarNotifierProvider.notifier).loadTafsir();
-      } catch (e) {
-        // If loading fails (e.g., offline), check if we have any other tafsir
-        // Silently handle error - will show tafsir if available locally
+      
+      // Verify connection before trying to load tafsir
+      await ref.read(connectivityProvider.notifier).verifyConnection();
+      final isConnected = ref.read(connectivityProvider);
+      
+      if (isConnected) {
+        try {
+          await ref.read(jarNotifierProvider.notifier).loadTafsir();
+        } catch (e) {
+          // If loading fails, silently handle - will show message if no tafsir available
+        }
       }
       setState(() => _isLoadingTafsir = false);
     }

@@ -29,6 +29,11 @@ class AppColors {
   // Glassmorphism
   static const Color glassWhite = Color(0xFFFFFFFF);
   static const Color glassBorder = Color(0x1A000000);
+  static const Color sunlightGlow = Color(0x1AD4A373); // Ethereal Day Glow
+
+  // Day Theme Gradients
+  static const Color dayGradientStart = Color(0xFFFFFFFF);
+  static const Color dayGradientEnd = Color(0xFFF9F7F2);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF4A4238);

@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 
-class NativeAdWidget extends StatefulWidget {
+class NativeAdWidget extends ConsumerStatefulWidget {
   const NativeAdWidget({super.key});
 
   @override
-  State<NativeAdWidget> createState() => _NativeAdWidgetState();
+  ConsumerState<NativeAdWidget> createState() => _NativeAdWidgetState();
 }
 
-class _NativeAdWidgetState extends State<NativeAdWidget> {
+class _NativeAdWidgetState extends ConsumerState<NativeAdWidget> {
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
+  bool _adLoadAttempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register callback to reload ad when connection is restored
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(connectivityProvider.notifier).onConnectionRestored(_loadAd);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -22,6 +34,9 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
   }
 
   void _loadAd() {
+    // Skip if already loaded or currently loading
+    if (_nativeAdIsLoaded || _adLoadAttempted) return;
+    _adLoadAttempted = true;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Choose colors based on theme to make the ad feel "Premium" and integrated
@@ -88,8 +103,9 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.cream,
@@ -101,8 +117,8 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -120,10 +136,10 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'SPONSORED REFLECTION',
+                  'SPONSORED',
                   style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
                     fontSize: 8,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.0,
                     fontWeight: FontWeight.bold,
                     color: AppColors.mutedGold.withValues(alpha: 0.8),
                   ),
@@ -133,8 +149,8 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
           ),
           ConstrainedBox(
             constraints: const BoxConstraints(
-              minHeight: 90,
-              maxHeight: 100,
+              minHeight: 70,
+              maxHeight: 80,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),

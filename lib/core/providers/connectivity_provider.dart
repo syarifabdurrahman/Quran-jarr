@@ -14,13 +14,28 @@ class ConnectivityNotifier extends StateNotifier<bool> {
 
     // Listen to connectivity changes
     ConnectivityService.instance.connectivityStream.listen((isConnected) {
+      final wasDisconnected = !state;
       state = isConnected;
+      // Call callbacks when connection is restored
+      if (isConnected && wasDisconnected) {
+        _onConnectionRestoredCallbacks.forEach((callback) {
+          callback();
+        });
+      }
     });
 
     // Initial check
     ConnectivityService.instance.checkConnectivity().then((value) {
       state = value;
     });
+  }
+
+  /// Callbacks to run when connection is restored
+  final List<void Function()> _onConnectionRestoredCallbacks = [];
+
+  /// Register a callback to be called when connection is restored
+  void onConnectionRestored(void Function() callback) {
+    _onConnectionRestoredCallbacks.add(callback);
   }
 
   /// Manually check connectivity

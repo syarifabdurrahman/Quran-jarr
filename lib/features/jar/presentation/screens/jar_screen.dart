@@ -26,6 +26,7 @@ import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
 import 'package:quran_jarr/core/services/locale_service.dart';
+import 'package:quran_jarr/features/ads/presentation/widgets/native_ad_widget.dart';
 
 /// Jar Screen
 /// Main screen with jar visualization and verse display
@@ -462,6 +463,11 @@ class _JarScreenState extends ConsumerState<JarScreen>
                             ),
                           ),
                         ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Native Ad - same layout as stats screen
+                      const NativeAdWidget(),
                       
                       const SizedBox(height: 40),
                     ],

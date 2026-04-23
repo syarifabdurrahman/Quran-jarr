@@ -6,7 +6,14 @@ class StreakService {
   static final StreakService instance = StreakService._();
   StreakService._();
 
-  late Box _streakBox;
+  Box? _streakBox;
+
+  Box get _box {
+    if (_streakBox == null) {
+      throw StateError('StreakService must be initialized before use');
+    }
+    return _streakBox!;
+  }
 
   // Box name
   static const String _boxName = 'streak_box';
@@ -26,23 +33,23 @@ class StreakService {
 
   /// Get current streak count
   int get currentStreak =>
-      (_streakBox.get(_currentStreakKey, defaultValue: 0) as num).toInt();
+      (_box.get(_currentStreakKey, defaultValue: 0) as num).toInt();
 
   /// Get longest streak count
   int get longestStreak =>
-      (_streakBox.get(_longestStreakKey, defaultValue: 0) as num).toInt();
+      (_box.get(_longestStreakKey, defaultValue: 0) as num).toInt();
 
   /// Get total verses read
   int get totalVersesRead =>
-      (_streakBox.get(_totalVersesReadKey, defaultValue: 0) as num).toInt();
+      (_box.get(_totalVersesReadKey, defaultValue: 0) as num).toInt();
 
   /// Get verses read today
   int get versesReadToday =>
-      (_streakBox.get(_versesReadTodayKey, defaultValue: 0) as num).toInt();
+      (_box.get(_versesReadTodayKey, defaultValue: 0) as num).toInt();
 
   /// Get last read date
   DateTime? get lastReadDate {
-    final dateString = _streakBox.get(_lastReadDateKey);
+    final dateString = _box.get(_lastReadDateKey);
     if (dateString == null) return null;
     return DateTime.parse(dateString as String);
   }
@@ -73,19 +80,19 @@ class StreakService {
 
     // Increment total verses read
     final totalVerses = totalVersesRead + 1;
-    await _streakBox.put(_totalVersesReadKey, totalVerses);
+    await _box.put(_totalVersesReadKey, totalVerses);
 
     // Update last read date
-    await _streakBox.put(_lastReadDateKey, now.toIso8601String());
+    await _box.put(_lastReadDateKey, now.toIso8601String());
 
     // Check if this is a new day
     bool isNewStreak = false;
 
     if (lastRead == null) {
       // First verse ever read
-      await _streakBox.put(_currentStreakKey, 1);
-      await _streakBox.put(_versesReadTodayKey, 1);
-      await _streakBox.put(_todayDateKey, todayDateOnly.toIso8601String());
+      await _box.put(_currentStreakKey, 1);
+      await _box.put(_versesReadTodayKey, 1);
+      await _box.put(_todayDateKey, todayDateOnly.toIso8601String());
       isNewStreak = true;
     } else {
       final lastReadDateOnly = DateTime(
@@ -97,7 +104,7 @@ class StreakService {
       if (lastReadDateOnly.isAtSameMomentAs(todayDateOnly)) {
         // Same day, just increment verses read today
         final versesToday = versesReadToday + 1;
-        await _streakBox.put(_versesReadTodayKey, versesToday);
+        await _box.put(_versesReadTodayKey, versesToday);
       } else {
         // Check if it's consecutive (yesterday)
         final yesterday = todayDateOnly.subtract(const Duration(days: 1));
@@ -105,20 +112,20 @@ class StreakService {
         if (lastReadDateOnly.isAtSameMomentAs(yesterday)) {
           // Consecutive day! Increment streak
           final newStreak = currentStreak + 1;
-          await _streakBox.put(_currentStreakKey, newStreak);
-          await _streakBox.put(_versesReadTodayKey, 1);
-          await _streakBox.put(_todayDateKey, todayDateOnly.toIso8601String());
+          await _box.put(_currentStreakKey, newStreak);
+          await _box.put(_versesReadTodayKey, 1);
+          await _box.put(_todayDateKey, todayDateOnly.toIso8601String());
           isNewStreak = true;
 
           // Update longest streak if needed
           if (newStreak > longestStreak) {
-            await _streakBox.put(_longestStreakKey, newStreak);
+            await _box.put(_longestStreakKey, newStreak);
           }
         } else {
           // Streak broken, reset to 1
-          await _streakBox.put(_currentStreakKey, 1);
-          await _streakBox.put(_versesReadTodayKey, 1);
-          await _streakBox.put(_todayDateKey, todayDateOnly.toIso8601String());
+          await _box.put(_currentStreakKey, 1);
+          await _box.put(_versesReadTodayKey, 1);
+          await _box.put(_todayDateKey, todayDateOnly.toIso8601String());
           isNewStreak = true;
         }
       }
@@ -150,8 +157,8 @@ class StreakService {
 
   /// Reset streak (for testing or user preference)
   Future<void> resetStreak() async {
-    await _streakBox.put(_currentStreakKey, 0);
-    await _streakBox.put(_versesReadTodayKey, 0);
+    await _box.put(_currentStreakKey, 0);
+    await _box.put(_versesReadTodayKey, 0);
   }
 
   /// Get streak status for display

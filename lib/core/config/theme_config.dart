@@ -23,7 +23,7 @@ class ThemeConfig {
       ),
       scaffoldBackgroundColor: AppColors.cream,
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.cream,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
@@ -35,10 +35,16 @@ class ThemeConfig {
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.softSand,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        shadowColor: AppColors.glassBorder,
+        color: AppColors.softSand.withValues(alpha: 0.8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: AppColors.glassBorder.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+        shadowColor: AppColors.glassBorder.withValues(alpha: 0.1),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

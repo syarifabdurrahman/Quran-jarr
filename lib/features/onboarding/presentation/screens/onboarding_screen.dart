@@ -83,8 +83,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.midnightPeriwinkle : AppColors.sageGreen;
+    final bgColor = isDark ? const Color(0xFF0F172A) : AppColors.cream;
+
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -99,7 +103,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: Text(
                       'Skip',
                       style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                        color: AppColors.sageGreen,
+                        color: primaryColor,
                       ),
                     ),
                   ),
@@ -115,18 +119,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 },
                 children: [
                   _LanguageSelectionPage(
+                    primaryColor: primaryColor,
                     selectedTranslationId: _selectedTranslationId,
                     onSelectionChanged: _onLanguageChanged,
                     onNext: _nextPage,
                     onSkip: _completeOnboarding,
                   ),
-                  _InternetCheckPage(onNext: _nextPage),
-                  _ModeSelectionPage(onNext: _nextPage),
+                  _InternetCheckPage(
+                    primaryColor: primaryColor,
+                    onNext: _nextPage,
+                  ),
+                  _ModeSelectionPage(
+                    primaryColor: primaryColor,
+                    onNext: _nextPage,
+                  ),
                   _NotificationPermissionPage(
+                    primaryColor: primaryColor,
                     onNext: _nextPage,
                     onComplete: _completeOnboarding,
                   ),
                   _VersesPerDayPage(
+                    primaryColor: primaryColor,
                     selectedVersesPerDay: _selectedVersesPerDay,
                     onSelectionChanged: (value) {
                       setState(() => _selectedVersesPerDay = value);
@@ -134,6 +147,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onComplete: _nextPage,
                   ),
                   _JarTypeSelectionPage(
+                    primaryColor: primaryColor,
                     selectedJarType: _selectedJarType,
                     onSelectionChanged: (value) {
                       setState(() => _selectedJarType = value);
@@ -158,8 +172,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: _currentPage == index
-                          ? AppColors.sageGreen
-                          : AppColors.sageGreen.withValues(alpha: 0.3),
+                          ? primaryColor
+                          : primaryColor.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -175,12 +189,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
 /// Language Selection Page
 class _LanguageSelectionPage extends StatelessWidget {
+  final Color primaryColor;
   final String selectedTranslationId;
   final Future<void> Function(String) onSelectionChanged;
   final VoidCallback onNext;
   final VoidCallback onSkip;
 
   const _LanguageSelectionPage({
+    required this.primaryColor,
     required this.selectedTranslationId,
     required this.onSelectionChanged,
     required this.onNext,
@@ -190,6 +206,9 @@ class _LanguageSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
@@ -208,13 +227,13 @@ class _LanguageSelectionPage extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.language_outlined,
                   size: 60,
-                  color: AppColors.sageGreen,
+                  color: primaryColor,
                 ),
               ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
@@ -249,6 +268,7 @@ class _LanguageSelectionPage extends StatelessWidget {
 
               // English Card
               _LanguageCard(
+                primaryColor: primaryColor,
                 languageName: l10n.english,
                 languageCode: 'en',
                 translationAuthor: 'Quran API',
@@ -260,6 +280,7 @@ class _LanguageSelectionPage extends StatelessWidget {
 
               // Indonesian Card
               _LanguageCard(
+                primaryColor: primaryColor,
                 languageName: l10n.bahasaIndonesia,
                 languageCode: 'id',
                 translationAuthor: 'Kemenag RI',
@@ -289,7 +310,7 @@ class _LanguageSelectionPage extends StatelessWidget {
                       child: Text(
                         l10n.cancel,
                         style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                          color: AppColors.sageGreen,
+                          color: primaryColor,
                         ),
                       ),
                     ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
@@ -300,8 +321,8 @@ class _LanguageSelectionPage extends StatelessWidget {
                     ElevatedButton(
                       onPressed: onNext,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.sageGreen,
-                        foregroundColor: AppColors.cream,
+                        backgroundColor: primaryColor,
+                        foregroundColor: isDark ? AppColors.midnightSlate : AppColors.cream,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 10,
@@ -330,6 +351,7 @@ class _LanguageSelectionPage extends StatelessWidget {
 
 /// Language Card Widget
 class _LanguageCard extends StatelessWidget {
+  final Color primaryColor;
   final String languageName;
   final String languageCode;
   final String translationAuthor;
@@ -337,6 +359,7 @@ class _LanguageCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _LanguageCard({
+    required this.primaryColor,
     required this.languageName,
     required this.languageCode,
     required this.translationAuthor,
@@ -353,12 +376,12 @@ class _LanguageCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.sageGreen.withValues(alpha: 0.15)
-              : AppColors.sageGreen.withValues(alpha: 0.05),
+              ? primaryColor.withValues(alpha: 0.15)
+              : primaryColor.withValues(alpha: 0.05),
           border: Border.all(
             color: isSelected
-                ? AppColors.sageGreen
-                : AppColors.sageGreen.withValues(alpha: 0.3),
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -370,14 +393,14 @@ class _LanguageCard extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppColors.sageGreen.withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
                   languageCode.toUpperCase(),
                   style: AppTextStyles.loraHeadingForTheme(context).copyWith(
-                    color: AppColors.sageGreen,
+                    color: primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -397,7 +420,7 @@ class _LanguageCard extends StatelessWidget {
                     child: Text(
                       languageName,
                       style: AppTextStyles.loraHeadingForTheme(context).copyWith(
-                        color: AppColors.sageGreen,
+                        color: primaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -416,12 +439,12 @@ class _LanguageCard extends StatelessWidget {
 
             // Selection indicator
             if (isSelected)
-              Icon(Icons.check_circle, size: 24, color: AppColors.sageGreen)
+              Icon(Icons.check_circle, size: 24, color: primaryColor)
             else
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: AppColors.sageGreen.withValues(alpha: 0.5),
+                color: primaryColor.withValues(alpha: 0.5),
               ),
           ],
         ),
@@ -432,9 +455,13 @@ class _LanguageCard extends StatelessWidget {
 
 /// Internet Check Page
 class _InternetCheckPage extends StatelessWidget {
+  final Color primaryColor;
   final VoidCallback onNext;
 
-  const _InternetCheckPage({required this.onNext});
+  const _InternetCheckPage({
+    required this.primaryColor,
+    required this.onNext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -457,13 +484,13 @@ class _InternetCheckPage extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.wifi_outlined,
                   size: 60,
-                  color: AppColors.sageGreen,
+                  color: primaryColor,
                 ),
               ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
@@ -503,6 +530,7 @@ class _InternetCheckPage extends StatelessWidget {
                   _OnboardingButton(
                     text: l10n.maybeLater,
                     isPrimary: false,
+                    primaryColor: primaryColor,
                     onPressed: () {
                       PreferencesService.instance.setInternetAccepted(false);
                       onNext();
@@ -514,6 +542,7 @@ class _InternetCheckPage extends StatelessWidget {
                   _OnboardingButton(
                     text: l10n.iUnderstand,
                     isPrimary: true,
+                    primaryColor: primaryColor,
                     onPressed: () {
                       PreferencesService.instance.setInternetAccepted(true);
                       onNext();
@@ -531,9 +560,13 @@ class _InternetCheckPage extends StatelessWidget {
 
 /// Mode Selection Page
 class _ModeSelectionPage extends StatelessWidget {
+  final Color primaryColor;
   final VoidCallback onNext;
 
-  const _ModeSelectionPage({required this.onNext});
+  const _ModeSelectionPage({
+    required this.primaryColor,
+    required this.onNext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -584,6 +617,7 @@ class _ModeSelectionPage extends StatelessWidget {
                 title: l10n.curatedSurahs,
                 description: l10n.curatedSurahsDesc,
                 isSelected: false,
+                primaryColor: primaryColor,
                 onTap: () async {
                   await PreferencesService.instance.setVerseSelectionMode(
                     VerseSelectionMode.curated,
@@ -600,6 +634,7 @@ class _ModeSelectionPage extends StatelessWidget {
                 title: l10n.randomVerses,
                 description: l10n.randomVersesDesc,
                 isSelected: true,
+                primaryColor: primaryColor,
                 onTap: () async {
                   await PreferencesService.instance.setVerseSelectionMode(
                     VerseSelectionMode.random,
@@ -617,10 +652,12 @@ class _ModeSelectionPage extends StatelessWidget {
 
 /// Notification Permission Page
 class _NotificationPermissionPage extends StatelessWidget {
+  final Color primaryColor;
   final VoidCallback onNext;
   final VoidCallback onComplete;
 
   const _NotificationPermissionPage({
+    required this.primaryColor,
     required this.onNext,
     required this.onComplete,
   });
@@ -628,98 +665,86 @@ class _NotificationPermissionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+
     return Padding(
-      padding: const EdgeInsets.all(24),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - 120,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+
+          // Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.notifications_outlined,
+              size: 60,
+              color: primaryColor,
+            ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
 
-              // Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  size: 60,
-                  color: AppColors.sageGreen,
-                ),
-              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+          const SizedBox(height: 40),
 
-              const SizedBox(height: 40),
-
-              // Title
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  l10n.dailyNotification,
-                  style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                ),
-              ).animate().fade(delay: 200.ms).slideY(begin: 0.3),
-
-              const SizedBox(height: 16),
-
-              // Description
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  l10n.dailyNotificationDesc,
-                  style: AppTextStyles.loraBodyMediumForTheme(context),
-                  textAlign: TextAlign.center,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ).animate().fade(delay: 400.ms).slideY(begin: 0.3),
-
-              const SizedBox(height: 48),
-
-              // Buttons
-              Column(
-                children: [
-                  _OnboardingButton(
-                    text: l10n.enableNotifications,
-                    isPrimary: true,
-                    onPressed: () async {
-                      await NotificationService.instance.requestPermission();
-                      await NotificationService.instance
-                          .scheduleDailyNotification(
-                            const TimeOfDay(hour: 7, minute: 0),
-                          );
-                      await PreferencesService.instance
-                          .setDailyNotificationEnabled(true);
-                      onNext();
-                    },
-                  ).animate().fade(delay: 600.ms).slideX(begin: 0.3),
-
-                  const SizedBox(height: 16),
-
-                  _OnboardingButton(
-                    text: l10n.maybeLater,
-                    isPrimary: false,
-                    onPressed: () {
-                      PreferencesService.instance.setDailyNotificationEnabled(
-                        false,
-                      );
-                      onNext();
-                    },
-                  ).animate().fade(delay: 700.ms).slideX(begin: -0.3),
-                ],
-              ),
-            ],
+          // Title
+          Text(
+            l10n.dailyNotification,
+            style: AppTextStyles.loraTitleForTheme(context).copyWith(fontSize: 24),
+            textAlign: TextAlign.center,
           ),
-        ),
+
+          const SizedBox(height: 16),
+
+          // Description
+          Text(
+            l10n.dailyNotificationDesc,
+            style: AppTextStyles.loraBodyMediumForTheme(context),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 48),
+
+          // Buttons
+          SizedBox(
+            width: double.infinity,
+            child: _OnboardingButton(
+              text: l10n.enableNotifications,
+              isPrimary: true,
+              primaryColor: primaryColor,
+              onPressed: () async {
+                await NotificationService.instance.requestPermission();
+                await NotificationService.instance
+                    .scheduleDailyNotification(
+                      const TimeOfDay(hour: 7, minute: 0),
+                    );
+                await PreferencesService.instance
+                    .setDailyNotificationEnabled(true);
+                onNext();
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          SizedBox(
+            width: double.infinity,
+            child: _OnboardingButton(
+              text: l10n.maybeLater,
+              isPrimary: false,
+              primaryColor: primaryColor,
+              onPressed: () {
+                PreferencesService.instance.setDailyNotificationEnabled(
+                  false,
+                );
+                onNext();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -727,11 +752,13 @@ class _NotificationPermissionPage extends StatelessWidget {
 
 /// Verses Per Day Page
 class _VersesPerDayPage extends StatelessWidget {
+  final Color primaryColor;
   final int selectedVersesPerDay;
   final ValueChanged<int> onSelectionChanged;
   final VoidCallback onComplete;
 
   const _VersesPerDayPage({
+    required this.primaryColor,
     required this.selectedVersesPerDay,
     required this.onSelectionChanged,
     required this.onComplete,
@@ -740,6 +767,8 @@ class _VersesPerDayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
@@ -758,13 +787,13 @@ class _VersesPerDayPage extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.sageGreen.withValues(alpha: 0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.format_list_numbered_outlined,
                   size: 60,
-                  color: AppColors.sageGreen,
+                  color: primaryColor,
                 ),
               ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
@@ -813,16 +842,16 @@ class _VersesPerDayPage extends StatelessWidget {
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: AppColors.sageGreen.withValues(alpha: 0.1),
+                            color: primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.sageGreen.withValues(alpha: 0.3),
+                              color: primaryColor.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.remove,
-                            color: AppColors.sageGreen,
+                            color: primaryColor,
                             size: 28,
                           ),
                         ),
@@ -846,10 +875,10 @@ class _VersesPerDayPage extends StatelessWidget {
                           width: 100,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: AppColors.sageGreen,
+                            color: primaryColor,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.sageGreen,
+                              color: primaryColor,
                               width: 2,
                             ),
                           ),
@@ -859,7 +888,7 @@ class _VersesPerDayPage extends StatelessWidget {
                                   ? '∞'
                                   : selectedVersesPerDay.toString(),
                               style: AppTextStyles.loraTitleForTheme(context).copyWith(
-                                color: AppColors.cream,
+                                color: isDark ? AppColors.darkCard : AppColors.cream,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 32,
                               ),
@@ -883,16 +912,16 @@ class _VersesPerDayPage extends StatelessWidget {
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: AppColors.sageGreen,
+                            color: primaryColor,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.sageGreen,
+                              color: primaryColor,
                               width: 2,
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.add,
-                            color: AppColors.cream,
+                            color: isDark ? AppColors.darkCard : AppColors.cream,
                             size: 28,
                           ),
                         ),
@@ -915,19 +944,19 @@ class _VersesPerDayPage extends StatelessWidget {
                           height: 64,
                           decoration: BoxDecoration(
                             color: selectedVersesPerDay >= 9999
-                                ? AppColors.sageGreen
-                                : AppColors.sageGreen.withValues(alpha: 0.1),
+                                ? primaryColor
+                                : primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.sageGreen,
+                              color: primaryColor,
                               width: 2,
                             ),
                           ),
                           child: Icon(
                             Icons.all_inclusive,
                             color: selectedVersesPerDay >= 9999
-                                ? AppColors.cream
-                                : AppColors.sageGreen,
+                                ? (isDark ? AppColors.darkCard : AppColors.cream)
+                                : primaryColor,
                             size: 28,
                           ),
                         ),
@@ -947,6 +976,7 @@ class _VersesPerDayPage extends StatelessWidget {
               _OnboardingButton(
                 text: l10n.getStarted,
                 isPrimary: true,
+                primaryColor: primaryColor,
                 onPressed: onComplete,
               ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
             ],
@@ -959,11 +989,13 @@ class _VersesPerDayPage extends StatelessWidget {
 
 /// Jar Type Selection Page
 class _JarTypeSelectionPage extends StatelessWidget {
+  final Color primaryColor;
   final int selectedJarType;
   final ValueChanged<int> onSelectionChanged;
   final VoidCallback onComplete;
 
   const _JarTypeSelectionPage({
+    required this.primaryColor,
     required this.selectedJarType,
     required this.onSelectionChanged,
     required this.onComplete,
@@ -972,9 +1004,6 @@ class _JarTypeSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.midnightPeriwinkle
-        : AppColors.sageGreen;
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -1074,6 +1103,7 @@ class _JarTypeSelectionPage extends StatelessWidget {
               _OnboardingButton(
                 text: 'Continue',
                 isPrimary: true,
+                primaryColor: primaryColor,
                 onPressed: onComplete,
               ).animate().fade(delay: 800.ms).slideY(begin: 0.3),
             ],
@@ -1149,23 +1179,27 @@ class _JarTypeOption extends StatelessWidget {
 class _OnboardingButton extends StatelessWidget {
   final String text;
   final bool isPrimary;
+  final Color primaryColor;
   final VoidCallback onPressed;
 
   const _OnboardingButton({
     required this.text,
     required this.isPrimary,
+    required this.primaryColor,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: isPrimary
-            ? AppColors.sageGreen
-            : AppColors.sageGreen.withValues(alpha: 0.1),
-        foregroundColor: isPrimary ? AppColors.cream : AppColors.sageGreen,
+            ? primaryColor
+            : primaryColor.withValues(alpha: 0.1),
+        foregroundColor: isPrimary ? (isDark ? AppColors.midnightSlate : AppColors.cream) : primaryColor,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -1184,6 +1218,7 @@ class _ModeCard extends StatelessWidget {
   final String description;
   final bool isSelected;
   final VoidCallback onTap;
+  final Color primaryColor;
 
   const _ModeCard({
     required this.icon,
@@ -1191,10 +1226,13 @@ class _ModeCard extends StatelessWidget {
     required this.description,
     required this.isSelected,
     required this.onTap,
+    required this.primaryColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -1202,12 +1240,12 @@ class _ModeCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.sageGreen.withValues(alpha: 0.15)
-              : AppColors.sageGreen.withValues(alpha: 0.05),
+              ? primaryColor.withValues(alpha: 0.15)
+              : primaryColor.withValues(alpha: 0.05),
           border: Border.all(
             color: isSelected
-                ? AppColors.sageGreen
-                : AppColors.sageGreen.withValues(alpha: 0.3),
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -1219,10 +1257,10 @@ class _ModeCard extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppColors.sageGreen.withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 28, color: AppColors.sageGreen),
+              child: Icon(icon, size: 28, color: primaryColor),
             ),
 
             const SizedBox(width: 16),
@@ -1238,7 +1276,7 @@ class _ModeCard extends StatelessWidget {
                     child: Text(
                       title,
                       style: AppTextStyles.loraHeadingForTheme(context).copyWith(
-                        color: AppColors.sageGreen,
+                        color: primaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -1256,7 +1294,7 @@ class _ModeCard extends StatelessWidget {
             ),
 
             // Arrow icon
-            Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.sageGreen),
+            Icon(Icons.arrow_forward_ios, size: 16, color: primaryColor),
           ],
         ),
       ),

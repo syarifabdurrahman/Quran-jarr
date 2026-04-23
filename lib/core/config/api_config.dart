@@ -14,8 +14,8 @@ class ApiConfig {
   /// Quran has 114 surahs (chapters)
   static const int totalSurahs = 114;
 
-  /// Default reciter for audio (1 = Mishary Rashid Al Afasy)
-  static const int defaultReciter = 1;
+  /// Default reciter for audio (2 = Abdul Basit)
+  static const int defaultReciter = 2;
 
   /// Timeout duration in seconds
   static const int timeoutSeconds = 30;
