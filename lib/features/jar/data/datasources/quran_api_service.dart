@@ -48,6 +48,7 @@ class QuranApiService {
   Future<Either<ApiException, VerseModel>> getRandomVerse({
     String translationId = 'english', // Default to English
     List<int>? surahNumbers, // Optional list of surah numbers to choose from
+    int? reciterId, // Optional reciter ID
   }) async {
     // For curated mode, try up to 3 different surahs if one fails
     final maxRetries = surahNumbers != null ? 3 : 1;
@@ -71,7 +72,7 @@ class QuranApiService {
         final response = await _quranDio.get('/$surahNo/$ayahNo.json');
         final data = response.data as Map<String, dynamic>;
 
-        final result = await _parseVerseResponse(data, translationId);
+        final result = await _parseVerseResponse(data, translationId, reciterId: reciterId);
 
         // If successful, return the result
         if (result.isRight()) {
@@ -118,12 +119,13 @@ class QuranApiService {
     int surahNo,
     int ayahNo, {
     String translationId = 'english',
+    int? reciterId,
   }) async {
     try {
       final response = await _quranDio.get('/$surahNo/$ayahNo.json');
       final data = response.data as Map<String, dynamic>;
 
-      return await _parseVerseResponse(data, translationId);
+      return await _parseVerseResponse(data, translationId, reciterId: reciterId);
     } on DioException catch (e) {
       return Left(ApiException.fromDioError(e));
     } catch (e) {
@@ -134,8 +136,9 @@ class QuranApiService {
   /// Parse verse response from API
   Future<Either<ApiException, VerseModel>> _parseVerseResponse(
     Map<String, dynamic> data,
-    String translationId,
-  ) async {
+    String translationId, {
+    int? reciterId,
+  }) async {
     try {
       final surahNo = data['surahNo'] as int;
       final ayahNo = data['ayahNo'] as int;
@@ -161,10 +164,10 @@ class QuranApiService {
         }
       }
 
-      // Get audio URL (reciter based on ApiConfig)
+      // Get audio URL (reciter based on config or provided ID)
       String? audioUrl;
       final audioData = data['audio'] as Map<String, dynamic>?;
-      final reciterKey = ApiConfig.defaultReciter.toString();
+      final reciterKey = (reciterId ?? ApiConfig.defaultReciter).toString();
       if (audioData != null && audioData.containsKey(reciterKey)) {
         final reciter = audioData[reciterKey] as Map<String, dynamic>?;
         audioUrl = reciter?['url'] as String?;

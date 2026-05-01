@@ -24,10 +24,12 @@ class VerseRepositoryImpl implements VerseRepository {
   Future<Either<ApiException, Verse>> getRandomVerse({
     String translationId = 'english', // Default translation
     List<int>? surahNumbers, // Optional list of surah numbers for curated mode
+    int? reciterId,
   }) async {
     final result = await _apiService.getRandomVerse(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
 
     if (result.isLeft()) {
@@ -53,6 +55,7 @@ class VerseRepositoryImpl implements VerseRepository {
   Future<Either<ApiException, Verse>> getVerseByKey(
     String verseKey, {
     String translationId = 'english', // Default translation
+    int? reciterId,
   }) async {
     // Parse verse key (format: "surah:ayah" e.g., "2:255")
     final parts = verseKey.split(':');
@@ -68,6 +71,7 @@ class VerseRepositoryImpl implements VerseRepository {
         surahNo,
         ayahNo,
         translationId: translationId,
+        reciterId: reciterId,
       );
 
       if (result.isLeft()) {
@@ -96,6 +100,7 @@ class VerseRepositoryImpl implements VerseRepository {
   Future<Either<ApiException, Verse>> getDailyVerse({
     String translationId = 'english', // Default translation
     List<int>? surahNumbers, // Optional list of surah numbers for curated mode
+    int? reciterId,
   }) async {
     // Try to get cached today's verse first
     final cachedVerse = await _localStorage.getTodayVerse();
@@ -110,6 +115,7 @@ class VerseRepositoryImpl implements VerseRepository {
     final result = await _apiService.getRandomVerse(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
 
     // Cache the verse if successful

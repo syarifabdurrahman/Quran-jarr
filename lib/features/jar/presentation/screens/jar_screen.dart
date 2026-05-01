@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/config/ad_config.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
@@ -22,6 +23,8 @@ import 'package:quran_jarr/core/utils/timezone_helper.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
+import 'package:quran_jarr/features/dhikr/presentation/screens/dhikr_screen.dart';
+import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
@@ -89,9 +92,9 @@ class _JarScreenState extends ConsumerState<JarScreen>
                 Expanded(
                   child: Text(
                     'Daily limit reached. Unlock one more?',
-                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                      color: Colors.white.withValues(alpha: 0.95),
-                    ),
+                    style: AppTextStyles.loraBodySmallForTheme(
+                      context,
+                    ).copyWith(color: Colors.white.withValues(alpha: 0.95)),
                   ),
                 ),
               ],
@@ -102,17 +105,24 @@ class _JarScreenState extends ConsumerState<JarScreen>
               onPressed: () {
                 AdService.instance.showRewardedAd(
                   onUserEarnedReward: () {
-                    ref.read(preferencesNotifierProvider.notifier).grantExtraTap();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Extra tap granted! Try tapping the jar again.')),
-                      );
-                    }
+                    if (!mounted) return;
+                    ref
+                        .read(preferencesNotifierProvider.notifier)
+                        .grantExtraTap();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Extra tap granted! Try tapping the jar again.',
+                        ),
+                      ),
+                    );
                   },
                   onAdFailedToLoad: () {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sorry, no ad available right now.')),
+                        const SnackBar(
+                          content: Text('Sorry, no ad available right now.'),
+                        ),
                       );
                     }
                   },
@@ -190,10 +200,11 @@ class _JarScreenState extends ConsumerState<JarScreen>
                   Expanded(
                     child: Text(
                       milestoneMessage,
-                      style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodyMediumForTheme(context)
+                          .copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ),
                 ],
@@ -216,11 +227,11 @@ class _JarScreenState extends ConsumerState<JarScreen>
       }
 
       // Ad experience - Interstitial trigger
+      if (!mounted) return;
       final streakState = ref.read(streakProvider);
       final versesReadToday = streakState.versesReadToday;
       if (versesReadToday > 0 &&
-          versesReadToday % AdConfig.versesBetweenAds == 0 &&
-          mounted) {
+          versesReadToday % AdConfig.versesBetweenAds == 0) {
         // Show interstitial ad after a slight delay
         Future.delayed(const Duration(seconds: 4), () {
           if (mounted) {
@@ -239,6 +250,45 @@ class _JarScreenState extends ConsumerState<JarScreen>
       verse,
       cardKey: _verseCardKey,
     );
+  }
+
+  bool _isNavigatingToDhikr = false;
+  double _dragStartY = 0;
+  DateTime _dragStartTime = DateTime.now();
+
+  void _navigateToDhikr() {
+    if (_isNavigatingToDhikr || !mounted) return;
+
+    setState(() => _isNavigatingToDhikr = true);
+
+    Navigator.of(context)
+        .push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const DhikrScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0.0, 1.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutQuart;
+                  var tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+            opaque: false,
+            barrierDismissible: true,
+          ),
+        )
+        .then((_) {
+          if (mounted) {
+            setState(() => _isNavigatingToDhikr = false);
+          }
+        });
   }
 
   @override
@@ -261,224 +311,332 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: Container(
-        decoration: isDark
-            ? const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment(0, -0.2), // Focused behind the jar
-                  radius: 1.2,
-                  colors: [
-                    Color(0xFF1E293B), // Midnight Blue Lighter
-                    Color(0xFF020617), // Midnight Blue Deep
-                  ],
-                  stops: [0.0, 1.0],
-                ),
-              )
-            : null,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom Top Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.appTitle,
-                        style: AppTextStyles.loraHeadingForTheme(context).copyWith(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _TranslationButton(primaryColor: primaryColor),
-                        const SizedBox(width: 8),
-                        _ArchiveButton(color: terracottaColor),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Offline Warning Banner
-              if (!isConnected)
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: errorColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: errorColor.withValues(alpha: 0.3)),
+      body: Listener(
+        onPointerDown: (event) {
+          _dragStartY = event.position.dy;
+          _dragStartTime = DateTime.now();
+        },
+        onPointerUp: (event) {
+          if (!mounted) return;
+          final deltaY = _dragStartY - event.position.dy;
+          final duration = DateTime.now().difference(_dragStartTime).inMilliseconds;
+          
+          // Detect swipe up: require a more deliberate swipe (at least 180 pixels)
+          // to ensure it only triggers when the user swiping "mentok" (substantially).
+          if (deltaY > 180 && duration < 800) {
+            _navigateToDhikr();
+          }
+        },
+        child: Container(
+          decoration: isDark
+              ? const BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment(0, -0.2), // Focused behind the jar
+                    radius: 1.2,
+                    colors: [
+                      Color(0xFF1E293B), // Midnight Blue Lighter
+                      Color(0xFF020617), // Midnight Blue Deep
+                    ],
+                    stops: [0.0, 1.0],
+                  ),
+                )
+              : null,
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Custom Top Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.wifi_off, color: errorColor, size: 20),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          l10n.noInternet,
-                          style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: errorColor),
+                          l10n.appTitle,
+                          style: AppTextStyles.loraHeadingForTheme(
+                            context,
+                          ).copyWith(fontSize: 24, fontWeight: FontWeight.w700),
                         ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _TranslationButton(primaryColor: primaryColor),
+                          const SizedBox(width: 8),
+                          _ArchiveButton(color: terracottaColor),
+                        ],
                       ),
                     ],
                   ),
                 ),
 
-              // Status Bar
-              _StatusBar(
-                remainingTaps: remainingTaps,
-                dailyLimit: dailyLimit,
-                primaryColor: primaryColor,
-              ),
-
-              const SizedBox(height: 20),
-
-              // Main Content
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Jar Area with Glow
-                      SizedBox(
-                        height: 350, // Increased height to push jar slightly up and prevent overlap
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedBuilder(
-                              animation: _animationController ?? kAlwaysDismissedAnimation,
-                              child: RepaintBoundary(
-                                child: JarWidget(
-                                  isEmpty: jarState.currentVerse == null,
-                                  onTap: () => _handleJarTap(),
-                                ),
-                              ),
-                              builder: (context, child) {
-                                final controllerValue = _animationController?.value ?? 0.0;
-                                final floatValue = sin(controllerValue * 2 * pi);
-                                final glowValue = (sin(controllerValue * 2 * pi) + 1) / 2;
-                                
-                                return Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Mystic Glow
-                                    if (isDark)
-                                      Container(
-                                        width: 220,
-                                        height: 220,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: primaryColor.withValues(alpha: 0.05 * (1 + glowValue)),
-                                              blurRadius: 60 + (10 * glowValue),
-                                              spreadRadius: 20 + (5 * glowValue),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    
-                                    // Floating Jar
-                                    Transform.translate(
-                                      offset: Offset(0, floatValue * 8 - 10), // -10 moves it slightly up
-                                      child: child,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-
-                          ],
-                        ),
+                // Offline Warning Banner
+                if (!isConnected)
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: errorColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: errorColor.withValues(alpha: 0.3),
                       ),
-                      
-                      // Reading Journey Card (Moved here to avoid blocking the jar)
-                      _StreakDisplay(primaryColor: primaryColor, isDark: isDark),
-
-                      const SizedBox(height: 16),
-
-                      // Countdown Timer (show when limit reached)
-                      if (remainingTaps <= 0 && dailyLimit < 9999)
-                        _CountdownTimer(
-                          primaryColor: primaryColor,
-                          isDark: isDark,
-                        ),
-
-                      // Verse Display
-                      if (jarState.isLoading && jarState.currentVerse == null)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: VerseSkeletonLoader(),
-                        )
-                      else if (jarState.currentVerse != null)
-                        VerseCardWidget(
-                          verse: jarState.currentVerse!,
-                          onSaveToggle: () => ref.read(jarNotifierProvider.notifier).toggleSaveVerse(),
-                          onShare: () => _shareVerse(jarState.currentVerse!),
-                        ),
-
-                      // Error message
-                      if (jarState.errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          child: TweenAnimationBuilder<double>(
-                            key: ValueKey(jarState.errorMessage),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeOut,
-                            builder: (context, value, child) {
-                              final shake = sin(value * 3.14159 * 4) * 8 * (1 - value);
-                              return Transform.translate(
-                                offset: Offset(shake, 0),
-                                child: child,
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: errorColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.error_outline, color: errorColor),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      jarState.errorMessage!,
-                                      style: AppTextStyles.loraBodySmallForTheme(context),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.close, size: 20),
-                                    onPressed: () => ref.read(jarNotifierProvider.notifier).clearError(),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.wifi_off, color: errorColor, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            l10n.noInternet,
+                            style: AppTextStyles.loraBodySmallForTheme(
+                              context,
+                            ).copyWith(color: errorColor),
                           ),
                         ),
-                      
-                      const SizedBox(height: 40),
-                      
-                      // Native Ad - same layout as stats screen
-                      const NativeAdWidget(),
-                      
-                      const SizedBox(height: 40),
-                    ],
+                      ],
+                    ),
                   ),
+
+                // Status Bar
+                _StatusBar(
+                  remainingTaps: remainingTaps,
+                  dailyLimit: dailyLimit,
+                  primaryColor: primaryColor,
                 ),
+
+                const SizedBox(height: 20),
+
+                // Main Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                        children: [
+                          // Jar Area with Glow
+                          SizedBox(
+                            height:
+                                350, // Increased height to push jar slightly up and prevent overlap
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                AnimatedBuilder(
+                                  animation:
+                                      _animationController ??
+                                      kAlwaysDismissedAnimation,
+                                  child: RepaintBoundary(
+                                    child: JarWidget(
+                                      isEmpty: jarState.currentVerse == null,
+                                      onTap: () => _handleJarTap(),
+                                    ),
+                                  ),
+                                  builder: (context, child) {
+                                    final controllerValue =
+                                        _animationController?.value ?? 0.0;
+                                    final floatValue = sin(
+                                      controllerValue * 2 * pi,
+                                    );
+                                    final glowValue =
+                                        (sin(controllerValue * 2 * pi) + 1) / 2;
+
+                                    return Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // Mystic Glow
+                                        if (isDark)
+                                          Container(
+                                            width: 220,
+                                            height: 220,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: primaryColor
+                                                      .withValues(
+                                                        alpha:
+                                                            0.05 *
+                                                            (1 + glowValue),
+                                                      ),
+                                                  blurRadius:
+                                                      60 + (10 * glowValue),
+                                                  spreadRadius:
+                                                      20 + (5 * glowValue),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                        // Floating Jar
+                                        Transform.translate(
+                                          offset: Offset(
+                                            0,
+                                            floatValue * 8 - 10,
+                                          ), // -10 moves it slightly up
+                                          child: child,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Reading Journey Card (Moved here to avoid blocking the jar)
+                          _StreakDisplay(
+                            primaryColor: primaryColor,
+                            isDark: isDark,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Countdown Timer (show when limit reached)
+                          if (remainingTaps <= 0)
+                            _CountdownTimer(
+                              primaryColor: primaryColor,
+                              isDark: isDark,
+                            ),
+
+                          // Verse Display
+                          if (jarState.isLoading &&
+                              jarState.currentVerse == null)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 20),
+                              child: VerseSkeletonLoader(),
+                            )
+                          else if (jarState.currentVerse != null)
+                            VerseCardWidget(
+                              verse: jarState.currentVerse!,
+                              onSaveToggle: () => ref
+                                  .read(jarNotifierProvider.notifier)
+                                  .toggleSaveVerse(),
+                              onShare: () =>
+                                  _shareVerse(jarState.currentVerse!),
+                            ),
+
+                          // Error message
+                          if (jarState.errorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              child: TweenAnimationBuilder<double>(
+                                key: ValueKey(jarState.errorMessage),
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                                builder: (context, value, child) {
+                                  final shake =
+                                      sin(value * 3.14159 * 4) *
+                                      8 *
+                                      (1 - value);
+                                  return Transform.translate(
+                                    offset: Offset(shake, 0),
+                                    child: child,
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: errorColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error_outline,
+                                        color: errorColor,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          jarState.errorMessage!,
+                                          style:
+                                              AppTextStyles.loraBodySmallForTheme(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close, size: 20),
+                                        onPressed: () => ref
+                                            .read(jarNotifierProvider.notifier)
+                                            .clearError(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 40),
+
+                          // Native Ad - same layout as stats screen
+                          const NativeAdWidget(),
+
+                          const SizedBox(height: 40),
+
+                          // Swipe Up Indicator
+                          Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                      Icons.keyboard_arrow_up_rounded,
+                                      color: primaryColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    )
+                                    .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat(),
+                                    )
+                                    .moveY(
+                                      begin: 5,
+                                      end: -5,
+                                      duration: 1000.ms,
+                                      curve: Curves.easeInOut,
+                                    )
+                                    .fadeIn(duration: 1000.ms),
+                                Text(
+                                      'Swipe up for Dhikr',
+                                      style:
+                                          AppTextStyles.loraCaptionForTheme(
+                                            context,
+                                          ).copyWith(
+                                            color: primaryColor.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                            letterSpacing: 1,
+                                          ),
+                                    )
+                                    .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat(),
+                                    )
+                                    .fadeIn(duration: 1000.ms, delay: 500.ms)
+                                    .fadeOut(duration: 1000.ms, delay: 500.ms),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -496,14 +654,22 @@ class _TranslationButton extends ConsumerWidget {
     return IconButton(
       onPressed: () async {
         final translation = isIndonesian
-            ? AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'english')
-            : AvailableTranslations.allTranslations.firstWhere((t) => t.id == 'indonesian');
-        
-        await ref.read(preferencesNotifierProvider.notifier).setTranslation(translation);
-        
+            ? AvailableTranslations.allTranslations.firstWhere(
+                (t) => t.id == 'english',
+              )
+            : AvailableTranslations.allTranslations.firstWhere(
+                (t) => t.id == 'indonesian',
+              );
+
+        await ref
+            .read(preferencesNotifierProvider.notifier)
+            .setTranslation(translation);
+
         // Reload Jar verse with new translation if verse is already fetched
         if (context.mounted) {
-          await ref.read(jarNotifierProvider.notifier).reloadVerseWithTranslation(translation.id);
+          await ref
+              .read(jarNotifierProvider.notifier)
+              .reloadVerseWithTranslation(translation.id);
         }
       },
       icon: Container(
@@ -515,10 +681,9 @@ class _TranslationButton extends ConsumerWidget {
         ),
         child: Text(
           isIndonesian ? 'ID' : 'EN',
-          style: AppTextStyles.loraCaptionForTheme(context).copyWith(
-            color: primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.loraCaptionForTheme(
+            context,
+          ).copyWith(color: primaryColor, fontWeight: FontWeight.bold),
         ),
       ),
       tooltip: 'Toggle Language',
@@ -556,13 +721,18 @@ class _ArchiveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => Navigator.pushNamed(context, '/archive'),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ArchiveScreen(),
+          ),
+        );
+      },
       icon: Icon(Icons.inventory_2_outlined, color: color),
       tooltip: 'Archive',
     );
   }
 }
-
 
 /// Settings Dialog
 /// Allows user to change verse selection mode and access other options
@@ -602,7 +772,9 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
             Expanded(
               child: Text(
                 'Enable Alarms & Reminders',
-                style: AppTextStyles.loraHeadingForTheme(context).copyWith(color: textColor),
+                style: AppTextStyles.loraHeadingForTheme(
+                  context,
+                ).copyWith(color: textColor),
               ),
             ),
           ],
@@ -613,7 +785,9 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
           children: [
             Text(
               'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
-              style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(color: textColor),
+              style: AppTextStyles.loraBodyMediumForTheme(
+                context,
+              ).copyWith(color: textColor),
             ),
             SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
             Text(
@@ -694,7 +868,10 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
               padding: ResponsiveUtils.getPadding(context),
               child: Row(
                 children: [
-                  Text(l10n.settings, style: AppTextStyles.loraHeadingForTheme(context)),
+                  Text(
+                    l10n.settings,
+                    style: AppTextStyles.loraHeadingForTheme(context),
+                  ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -717,10 +894,11 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Jar Taps Per Day Section
                     Text(
                       l10n.jarTapsPerDay,
-                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodySmallForTheme(context)
+                          .copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     _VersesPerDaySelector(
@@ -753,10 +931,11 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Notification Settings Section
                     Text(
                       l10n.dailyNotification,
-                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodySmallForTheme(context)
+                          .copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     // Daily Notification Toggle
@@ -807,10 +986,11 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Font Size Section
                     Text(
                       l10n.fontSize,
-                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodySmallForTheme(context)
+                          .copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     _FontSizeSlider(
@@ -846,10 +1026,11 @@ class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
                     // Verse Selection Mode Section
                     Text(
                       l10n.verseSelection,
-                      style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodySmallForTheme(context)
+                          .copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     _ModeOption(
@@ -1004,11 +1185,14 @@ class _ModeOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.loraBodyMediumForTheme(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
-                  Text(description, style: AppTextStyles.loraBodySmallForTheme(context)),
+                  Text(
+                    description,
+                    style: AppTextStyles.loraBodySmallForTheme(context),
+                  ),
                 ],
               ),
             ),
@@ -1110,9 +1294,9 @@ class _NotificationTimePicker extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   l10n.notificationTime,
-                  style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                    color: primaryColor.withValues(alpha: 0.8),
-                  ),
+                  style: AppTextStyles.loraBodyMediumForTheme(
+                    context,
+                  ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
                   maxLines: 1,
                 ),
               ),
@@ -1127,10 +1311,9 @@ class _NotificationTimePicker extends StatelessWidget {
               child: FittedBox(
                 child: Text(
                   _formatTime(time),
-                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.loraBodySmallForTheme(
+                    context,
+                  ).copyWith(color: primaryColor, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -1189,9 +1372,9 @@ class _FontSizeSlider extends ConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     title,
-                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                      color: primaryColor.withValues(alpha: 0.8),
-                    ),
+                    style: AppTextStyles.loraBodyMediumForTheme(
+                      context,
+                    ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
                     maxLines: 1,
                   ),
                 ),
@@ -1206,10 +1389,11 @@ class _FontSizeSlider extends ConsumerWidget {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     '$percentage%',
-                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.loraBodySmallForTheme(context)
+                        .copyWith(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ),
               ),
@@ -1276,9 +1460,9 @@ class _VersesPerDaySelector extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     l10n.jarTapsPerDay,
-                    style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                      color: primaryColor.withValues(alpha: 0.8),
-                    ),
+                    style: AppTextStyles.loraBodyMediumForTheme(
+                      context,
+                    ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
                     maxLines: 1,
                   ),
                 ),
@@ -1326,10 +1510,11 @@ class _VersesPerDaySelector extends StatelessWidget {
                     child: FittedBox(
                       child: Text(
                         versesPerDay >= 9999 ? '∞' : versesPerDay.toString(),
-                        style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTextStyles.loraBodyLargeForTheme(context)
+                            .copyWith(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                         maxLines: 1,
                       ),
                     ),
@@ -1402,8 +1587,6 @@ class _RemainingTapsIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If limit is 9999 or higher, show unlimited
-    final bool isUnlimited = dailyLimit >= 9999;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1432,12 +1615,10 @@ class _RemainingTapsIndicator extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                isUnlimited
-                    ? '∞ Unlimited taps'
-                    : '$remainingTaps of $dailyLimit taps remaining',
-                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                  color: primaryColor.withValues(alpha: 0.8),
-                ),
+                '$remainingTaps of $dailyLimit taps remaining',
+                style: AppTextStyles.loraBodySmallForTheme(
+                  context,
+                ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
                 maxLines: 1,
               ),
             ),
@@ -1465,9 +1646,7 @@ class _StreakDisplay extends ConsumerWidget {
     final progress = streakNotifier.progressToNextMilestone;
     final versesToday = streakState.versesReadToday;
     final dailyLimit = ref.watch(jarTapLimitProvider);
-    final dailyProgress = dailyLimit >= 9999
-        ? 0.0
-        : (versesToday / dailyLimit).clamp(0.0, 1.0);
+    final dailyProgress = (versesToday / dailyLimit).clamp(0.0, 1.0);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1509,26 +1688,18 @@ class _StreakDisplay extends ConsumerWidget {
                   children: [
                     Text(
                       streakNotifier.streakStatus,
-                      style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.loraBodyMediumForTheme(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
                     // Daily verse counter
-                    if (dailyLimit < 9999)
-                      Text(
-                        '$versesToday/$dailyLimit verses today',
-                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                          color: primaryColor.withValues(alpha: 0.8),
-                        ),
-                      )
-                    else
-                      Text(
-                        '$versesToday verses today',
-                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                          color: primaryColor.withValues(alpha: 0.8),
-                        ),
-                      ),
+                    Text(
+                      '$versesToday/$dailyLimit verses today',
+                      style: AppTextStyles.loraBodySmallForTheme(
+                        context,
+                      ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
+                    ),
                   ],
                 ),
               ),
@@ -1536,7 +1707,6 @@ class _StreakDisplay extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           // Daily Progress Bar
-          if (dailyLimit < 9999)
             Row(
               children: [
                 Expanded(
@@ -1553,10 +1723,9 @@ class _StreakDisplay extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${(dailyProgress * 100).round()}%',
-                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.loraBodySmallForTheme(
+                    context,
+                  ).copyWith(color: primaryColor, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -1663,10 +1832,9 @@ class _CountdownTimerState extends State<_CountdownTimer> {
           const SizedBox(width: 8),
           Text(
             'Next verse in: ${TimezoneHelper.formatDuration(_timeUntilMidnight)}',
-            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-              color: textColor,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.loraBodySmallForTheme(
+              context,
+            ).copyWith(color: textColor, fontWeight: FontWeight.w500),
           ),
         ],
       ),

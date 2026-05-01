@@ -1,463 +1,203 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
+import 'package:quran_jarr/features/jar/presentation/widgets/spiritual_aura_card.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
-import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 
-/// Share Service
-/// Handles creating and sharing verse cards as images
 class ShareService {
+  static final ShareService instance = ShareService._();
   ShareService._();
 
-  static final ShareService _instance = ShareService._();
-  static ShareService get instance => _instance;
+  final ScreenshotController screenshotController = ScreenshotController();
 
-  final ScreenshotController _screenshotController = ScreenshotController();
+  /// Share a widget as an image
+  Future<void> shareWidgetAsImage(Widget widget, {String? fileName}) async {
+    try {
+      final image = await screenshotController.captureFromWidget(
+        widget,
+        delay: const Duration(milliseconds: 100),
+      );
 
-  ScreenshotController get screenshotController => _screenshotController;
+      final directory = await getTemporaryDirectory();
+      final imagePath = await File('${directory.path}/${fileName ?? 'verse_share'}.png').create();
+      await imagePath.writeAsBytes(image);
 
-  /// Show share bottom sheet with options
+      await Share.shareXFiles([XFile(imagePath.path)], text: 'Shared from Quran Jarr');
+    } catch (e) {
+      debugPrint('Error sharing widget: $e');
+    }
+  }
+
+  /// Save a widget as an image to gallery
+  Future<bool> saveWidgetToGallery(Widget widget, {String? fileName}) async {
+    try {
+      final image = await screenshotController.captureFromWidget(
+        widget,
+        delay: const Duration(milliseconds: 100),
+      );
+
+      final result = await ImageGallerySaverPlus.saveImage(
+        image,
+        name: fileName ?? 'verse_${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      return result != null && result['isSuccess'] == true;
+    } catch (e) {
+      debugPrint('Error saving widget: $e');
+      return false;
+    }
+  }
+
+  /// Show share options (Text or Image)
   Future<void> showShareOptions(
     BuildContext context,
     Verse verse, {
     GlobalKey? cardKey,
   }) async {
-    showModalBottomSheet(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ShareOptionsSheet(verse: verse, cardKey: cardKey),
-    );
-  }
-
-  /// Share verse as image to WhatsApp
-  Future<void> shareToWhatsApp(
-    Verse verse,
-    GlobalKey cardKey,
-    BuildContext context,
-  ) async {
-    final image = await _captureCard(cardKey);
-    if (image != null) {
-      await Share.shareXFiles(
-        [XFile(image.path, mimeType: 'image/png')],
-        subject:
-            '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
-      );
-      if (context.mounted) {
-        _showSuccessSnackBar(context, 'Shared to WhatsApp!');
-      }
-    }
-  }
-
-  /// Share verse as image to Facebook
-  Future<void> shareToFacebook(
-    Verse verse,
-    GlobalKey cardKey,
-    BuildContext context,
-  ) async {
-    final image = await _captureCard(cardKey);
-    if (image != null) {
-      await Share.shareXFiles([
-        XFile(image.path, mimeType: 'image/png'),
-      ], subject: 'Quran Verse - ${verse.arabicSurahName}');
-      if (context.mounted) {
-        _showSuccessSnackBar(context, 'Shared to Facebook!');
-      }
-    }
-  }
-
-  /// Share verse as image with text
-  Future<void> shareAsImage(
-    Verse verse,
-    GlobalKey cardKey,
-    BuildContext context,
-  ) async {
-    final image = await _captureCard(cardKey);
-    if (image != null) {
-      await Share.shareXFiles(
-        [XFile(image.path, mimeType: 'image/png')],
-        subject:
-            '${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})',
-        text:
-            '${verse.translation}\n\n${verse.surahName} (${verse.surahNumber}:${verse.ayahNumber})',
-      );
-      if (context.mounted) {
-        _showSuccessSnackBar(context, 'Image shared successfully!');
-      }
-    }
-  }
-
-  void _showSuccessSnackBar(BuildContext context, String message) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: Colors.white),
-          ),
-          backgroundColor: AppColors.sageGreen,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  /// Share verse as text only
-  Future<void> shareAsText(Verse verse, BuildContext context) async {
-    final shareText =
-        '''
-${verse.arabicText}
-
-"${verse.translation}"
-
-${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})
-
-📱 Quran Jarr - Daily Quran Inspiration''';
-
-    await Share.share(shareText.trim(), subject: 'Quran Verse');
-    if (context.mounted) {
-      _showSuccessSnackBar(context, 'Verse shared successfully!');
-    }
-  }
-
-  /// Save verse card image to gallery
-  Future<void> saveToGallery(
-    Verse verse,
-    GlobalKey cardKey,
-    BuildContext context,
-  ) async {
-    final image = await _captureCard(cardKey);
-    if (image != null) {
-      try {
-        await ImageGallerySaverPlus.saveImage(
-          image.readAsBytesSync(),
-          quality: 100,
-          name: 'quran_verse_${DateTime.now().millisecondsSinceEpoch}',
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Image saved to gallery!',
-                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              backgroundColor: AppColors.sageGreen,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.glassNight : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to save image',
-                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  /// Share to Instagram Stories
-  Future<void> shareToInstagramStory(Verse verse, GlobalKey cardKey) async {
-    final image = await _captureCard(cardKey);
-    if (image != null) {
-      await Share.shareXFiles([
-        XFile(image.path, mimeType: 'image/png'),
-      ], subject: 'Quran Verse - ${verse.arabicSurahName}');
-    }
-  }
-
-  /// Copy verse text to clipboard
-  Future<void> copyToClipboard(Verse verse, BuildContext context) async {
-    final shareText =
-        '''
-${verse.arabicText}
-
-"${verse.translation}"
-
-${verse.arabicSurahName} (${verse.surahNumber}:${verse.ayahNumber})''';
-
-    await Clipboard.setData(ClipboardData(text: shareText.trim()));
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Verse copied to clipboard!',
-            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(color: Colors.white),
-          ),
-          backgroundColor: AppColors.sageGreen,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
+          ],
         ),
-      );
-    }
-  }
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Share Verse',
+              style: AppTextStyles.loraHeadingForTheme(context),
+            ),
+            const SizedBox(height: 32),
+            _buildShareOption(
+              context,
+              icon: Icons.text_fields_rounded,
+              title: 'Share as Text',
+              subtitle: 'Send Arabic text and translation',
+              onTap: () {
+                Navigator.pop(context);
+                final text = '${verse.arabicText}\n\n${verse.translation}\n\n— ${verse.surahReference}\nShared from Quran Jarr';
+                Share.share(text);
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildShareOption(
+              context,
+              icon: Icons.auto_awesome,
+              title: 'Share Spiritual Aura',
+              subtitle: 'Beautiful glassmorphic image',
+              onTap: () async {
+                Navigator.pop(context);
+                
+                // Show a small loading indicator
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Generating Spiritual Aura...'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
 
-  /// Capture the verse card as an image
-  Future<File?> _captureCard(GlobalKey cardKey) async {
-    try {
-      RenderRepaintBoundary boundary =
-          cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
+                await shareWidgetAsImage(
+                  SpiritualAuraCard(verse: verse, isDark: isDark),
+                  fileName: 'spiritual_aura_${verse.verseKey.replaceAll(':', '_')}',
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildShareOption(
+              context,
+              icon: Icons.download_rounded,
+              title: 'Save to Gallery',
+              subtitle: 'Keep the Aura card in your phone',
+              onTap: () async {
+                Navigator.pop(context);
+                
+                final success = await saveWidgetToGallery(
+                  SpiritualAuraCard(verse: verse, isDark: isDark),
+                  fileName: 'verse_${verse.verseKey.replaceAll(':', '_')}',
+                );
 
-      if (byteData == null) return null;
-
-      final directory = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${directory.path}/verse_$timestamp.png');
-      await file.writeAsBytes(byteData.buffer.asUint8List());
-
-      return file;
-    } catch (e) {
-      return null;
-    }
-  }
-}
-
-/// Share Options Bottom Sheet
-class _ShareOptionsSheet extends StatelessWidget {
-  final Verse verse;
-  final GlobalKey? cardKey;
-
-  const _ShareOptionsSheet({required this.verse, this.cardKey});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkCard : AppColors.softSand;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
-    final iconColor = isDark
-        ? AppColors.midnightPeriwinkle
-        : AppColors.sageGreen;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textColor.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Text(
-                      'Share Verse',
-                      style: AppTextStyles.loraTitleForTheme(context).copyWith(
-                        color: textColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: iconColor),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              // Share options
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // WhatsApp
-                    if (cardKey != null)
-                      _ShareOption(
-                        iconData: Icons.chat_bubble,
-                        title: 'WhatsApp',
-                        color: const Color(0xFF25D366),
-                        onTap: () {
-                          Navigator.pop(context);
-                          ShareService.instance.shareToWhatsApp(
-                            verse,
-                            cardKey!,
-                            context,
-                          );
-                        },
-                      ),
-                    // Facebook
-                    if (cardKey != null)
-                      _ShareOption(
-                        iconData: Icons.facebook,
-                        title: 'Facebook',
-                        color: const Color(0xFF1877F2),
-                        onTap: () {
-                          Navigator.pop(context);
-                          ShareService.instance.shareToFacebook(
-                            verse,
-                            cardKey!,
-                            context,
-                          );
-                        },
-                      ),
-                    // Instagram
-                    if (cardKey != null)
-                      _ShareOption(
-                        iconData: Icons.camera_alt,
-                        title: 'Instagram Stories',
-                        color: const Color(0xFFE4405F),
-                        onTap: () {
-                          Navigator.pop(context);
-                          ShareService.instance.shareAsImage(
-                            verse,
-                            cardKey!,
-                            context,
-                          );
-                        },
-                      ),
-                    // Save to Gallery
-                    if (cardKey != null)
-                      _ShareOption(
-                        iconData: Icons.download,
-                        title: 'Save to Gallery',
-                        color: const Color(0xFF4CAF50),
-                        onTap: () {
-                          Navigator.pop(context);
-                          ShareService.instance.saveToGallery(
-                            verse,
-                            cardKey!,
-                            context,
-                          );
-                        },
-                      ),
-                    // More (general share)
-                    if (cardKey != null)
-                      _ShareOption(
-                        iconData: Icons.share,
-                        title: 'Share as Image',
-                        color: AppColors.sageGreen,
-                        onTap: () {
-                          Navigator.pop(context);
-                          ShareService.instance.shareAsImage(
-                            verse,
-                            cardKey!,
-                            context,
-                          );
-                        },
-                      ),
-                    // Share as text
-                    _ShareOption(
-                      iconData: Icons.text_snippet_outlined,
-                      title: 'Share as Text',
-                      color: AppColors.deepUmber,
-                      onTap: () {
-                        Navigator.pop(context);
-                        ShareService.instance.shareAsText(verse, context);
-                      },
-                    ),
-                    // Copy to clipboard
-                    _ShareOption(
-                      iconData: Icons.copy,
-                      title: 'Copy to Clipboard',
-                      color: AppColors.terracotta,
-                      onTap: () {
-                        Navigator.pop(context);
-                        ShareService.instance.copyToClipboard(verse, context);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+                if (success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Saved to Gallery! ✨')),
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-/// Share Option Widget
-class _ShareOption extends StatelessWidget {
-  final IconData? iconData;
-  final String title;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ShareOption({
-    this.iconData,
-    required this.title,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildShareOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
+    final primaryColor = isDark ? AppColors.midnightPeriwinkle : AppColors.sageGreen;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
         child: Row(
           children: [
-            // Icon
             Container(
-              width: 48,
-              height: 48,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(iconData, color: color, size: 24),
+              child: Icon(icon, color: primaryColor),
             ),
             const SizedBox(width: 16),
-            // Title
-            Text(
-              title,
-              style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.loraBodyLargeForTheme(context).copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.loraCaptionForTheme(context),
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-            // Arrow
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: textColor.withValues(alpha: 0.5),
-            ),
+            Icon(Icons.chevron_right_rounded, color: primaryColor.withValues(alpha: 0.5)),
           ],
         ),
       ),

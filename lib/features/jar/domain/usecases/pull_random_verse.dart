@@ -16,10 +16,12 @@ class PullRandomVerseUseCase {
   Future<Either<ApiException, Verse>> call({
     String translationId = 'english', // Default translation
     List<int>? surahNumbers, // Optional list of surah numbers for curated mode
+    int? reciterId,
   }) async {
     final result = await _repository.getRandomVerse(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
     return result;
   }

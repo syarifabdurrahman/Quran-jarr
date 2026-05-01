@@ -12,11 +12,12 @@ abstract class VerseRepository {
   Future<Either<ApiException, Verse>> getRandomVerse({
     String translationId,
     List<int>? surahNumbers,
+    int? reciterId,
   });
 
   /// Get a verse by its key (e.g., "2:255")
   /// Returns `Right(Verse)` on success, `Left(ApiException)` on failure
-  Future<Either<ApiException, Verse>> getVerseByKey(String verseKey, {String translationId});
+  Future<Either<ApiException, Verse>> getVerseByKey(String verseKey, {String translationId, int? reciterId});
 
   /// Get today's verse (cached or new if 24h passed)
   /// Returns `Right(Verse)` on success, `Left(ApiException)` on failure
@@ -24,6 +25,7 @@ abstract class VerseRepository {
   Future<Either<ApiException, Verse>> getDailyVerse({
     String translationId,
     List<int>? surahNumbers,
+    int? reciterId,
   });
 
   /// Save a verse to archive

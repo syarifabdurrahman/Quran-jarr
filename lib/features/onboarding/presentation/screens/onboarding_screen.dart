@@ -826,149 +826,70 @@ class _VersesPerDayPage extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // Verse count selector
+              // Fixed Verse count selector
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Decrease button
-                  GestureDetector(
-                        onTap: () => onSelectionChanged(
-                          selectedVersesPerDay > 1
-                              ? selectedVersesPerDay - 1
-                              : 1,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: primaryColor.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.remove,
+                children: [1, 3, 5].map((count) {
+                  final isSelected = selectedVersesPerDay == count;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: GestureDetector(
+                      onTap: () => onSelectionChanged(count),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? primaryColor
+                              : primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
                             color: primaryColor,
-                            size: 28,
+                            width: 2,
                           ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: primaryColor.withValues(alpha: 0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
                         ),
-                      )
-                      .animate()
-                      .fade(delay: 500.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1, 1),
-                      ),
-                  const SizedBox(width: 24),
-                  // Number display
-                  GestureDetector(
-                        onTap: () => onSelectionChanged(
-                          selectedVersesPerDay >= 9999
-                              ? 1
-                              : selectedVersesPerDay + 1,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 100,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              selectedVersesPerDay >= 9999
-                                  ? '∞'
-                                  : selectedVersesPerDay.toString(),
-                              style: AppTextStyles.loraTitleForTheme(context).copyWith(
-                                color: isDark ? AppColors.darkCard : AppColors.cream,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 32,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                count.toString(),
+                                style: AppTextStyles.loraTitleForTheme(context).copyWith(
+                                  color: isSelected
+                                      ? (isDark ? AppColors.darkCard : AppColors.cream)
+                                      : primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 28,
+                                ),
                               ),
-                            ),
+                              Text(
+                                'Taps',
+                                style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                                  color: isSelected
+                                      ? (isDark ? AppColors.darkCard : AppColors.cream)
+                                      : primaryColor,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      )
-                      .animate()
-                      .fade(delay: 600.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1, 1),
                       ),
-                  const SizedBox(width: 24),
-                  // Increase button
-                  GestureDetector(
-                        onTap: () =>
-                            onSelectionChanged(selectedVersesPerDay + 1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.add,
-                            color: isDark ? AppColors.darkCard : AppColors.cream,
-                            size: 28,
-                          ),
-                        ),
-                      )
-                      .animate()
-                      .fade(delay: 700.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1, 1),
-                      ),
-                  const SizedBox(width: 12),
-                  // Infinity button
-                  GestureDetector(
-                        onTap: () => onSelectionChanged(
-                          selectedVersesPerDay >= 9999 ? 10 : 9999,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: selectedVersesPerDay >= 9999
-                                ? primaryColor
-                                : primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.all_inclusive,
-                            color: selectedVersesPerDay >= 9999
-                                ? (isDark ? AppColors.darkCard : AppColors.cream)
-                                : primaryColor,
-                            size: 28,
-                          ),
-                        ),
-                      )
-                      .animate()
-                      .fade(delay: 800.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1, 1),
-                      ),
-                ],
-              ),
+                    ),
+                  );
+                }).toList(),
+              ).animate().fade(delay: 600.ms).scale(begin: const Offset(0.9, 0.9)),
 
               const SizedBox(height: 48),
 

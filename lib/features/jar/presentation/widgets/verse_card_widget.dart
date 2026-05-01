@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
+import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/audio/presentation/widgets/audio_player_widget.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
+import 'package:quran_jarr/features/jar/presentation/widgets/spiritual_aura_card.dart';
 
 /// Verse Card Widget
 /// Displays a Quranic verse with Arabic text and translation
@@ -135,6 +137,7 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                           if (widget.onShare != null)
                             IconButton(
                               onPressed: widget.onShare,
+                              tooltip: 'Share Text',
                               icon: Icon(
                                 Icons.share_outlined,
                                 color: primaryColor,
@@ -145,6 +148,19 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                                 minHeight: 40,
                               ),
                             ),
+                          IconButton(
+                            onPressed: () => _handleAuraShare(context),
+                            tooltip: 'Share Spiritual Aura',
+                            icon: Icon(
+                              Icons.auto_awesome,
+                              color: isDark ? AppColors.midnightGold : AppColors.terracotta,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -260,6 +276,29 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _handleAuraShare(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final verse = widget.verse;
+    
+    // Show a loading indicator while capturing
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Generating Spiritual Aura...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    final auraCard = SpiritualAuraCard(
+      verse: verse,
+      isDark: isDark,
+    );
+
+    await ShareService.instance.shareWidgetAsImage(
+      auraCard,
+      fileName: 'spiritual_aura_${verse.verseKey.replaceAll(':', '_')}',
     );
   }
 

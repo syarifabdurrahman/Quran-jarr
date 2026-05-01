@@ -366,92 +366,63 @@ class _VersesPerDaySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isUnlimited = versesPerDay >= 9999;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.touch_app_outlined, size: 18, color: primaryColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Jar Taps Per Day',
-              style: AppTextStyles.loraBodyMediumForTheme(context),
-            ),
-          ),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              _TapButton(
-                icon: Icons.remove,
-                onTap: () {
-                  if (versesPerDay > 1) onValueChanged(versesPerDay - 1);
-                },
-                primaryColor: primaryColor,
+              Icon(Icons.touch_app_outlined, size: 18, color: primaryColor),
+              const SizedBox(width: 12),
+              Text(
+                'Jar Taps Per Day',
+                style: AppTextStyles.loraBodyMediumForTheme(context),
               ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => onValueChanged(isUnlimited ? 3 : 9999),
-                child: Container(
-                  width: 50,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      isUnlimited ? '∞' : versesPerDay.toString(),
-                      style: AppTextStyles.loraHeadingForTheme(context).copyWith(
-                        color: AppColors.cream,
-                        fontSize: 18,
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [1, 3, 5].map((count) {
+              final isSelected = versesPerDay == count;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: InkWell(
+                    onTap: () => onValueChanged(count),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? primaryColor
+                            : primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: primaryColor,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${count}x',
+                          style: AppTextStyles.loraBodyMediumForTheme(context).copyWith(
+                            color: isSelected
+                                ? (Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.darkCard
+                                    : AppColors.cream)
+                                : primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              _TapButton(
-                icon: Icons.add,
-                onTap: () {
-                  if (!isUnlimited) onValueChanged(versesPerDay + 1);
-                },
-                primaryColor: primaryColor,
-              ),
-            ],
+              );
+            }).toList(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TapButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color primaryColor;
-  const _TapButton({
-    required this.icon,
-    required this.onTap,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: primaryColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(icon, size: 16, color: primaryColor),
       ),
     );
   }

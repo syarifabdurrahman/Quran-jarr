@@ -99,7 +99,7 @@ class PreferencesService {
 
   /// Get verses per day (default 1)
   int getVersesPerDay() {
-    return _box.get('verses_per_day', defaultValue: 5) as int;
+    return _box.get('verses_per_day', defaultValue: 1) as int;
   }
 
   /// Set verses per day (minimum 1, no maximum limit)
@@ -200,8 +200,6 @@ class PreferencesService {
   /// Check if user can tap the jar today
   bool canTapJarToday() {
     final limit = getVersesPerDay();
-    // Unlimited taps (9999 or higher)
-    if (limit >= 9999) return true;
     final todayCount = getTodayJarTapCount();
     return todayCount < limit;
   }
@@ -209,8 +207,6 @@ class PreferencesService {
   /// Get remaining jar taps for today
   int getRemainingJarTaps() {
     final limit = getVersesPerDay();
-    // Unlimited taps (9999 or higher)
-    if (limit >= 9999) return 9999;
     final todayCount = getTodayJarTapCount();
     final remaining = limit - todayCount;
     return remaining < 0 ? 0 : remaining;
@@ -319,6 +315,18 @@ class PreferencesService {
     await _box.put('jar_type', type);
   }
 
+  // ==================== Audio Preferences ====================
+
+  /// Get the selected reciter ID
+  int getReciterId() {
+    return _box.get('selected_reciter_id', defaultValue: 2) as int;
+  }
+
+  /// Set the selected reciter ID
+  Future<void> setReciterId(int id) async {
+    await _box.put('selected_reciter_id', id);
+  }
+
   // ==================== Rate Us Preferences ====================
 
   /// Get last rate us shown date (ISO 8601 string)
@@ -329,6 +337,18 @@ class PreferencesService {
   /// Set last rate us shown date
   Future<void> setLastRateUsShown(String date) async {
     await _box.put('last_rate_us_shown', date);
+  }
+
+  // ==================== Dhikr Preferences ====================
+
+  /// Get dhikr count
+  int getDhikrCount() {
+    return _box.get('dhikr_count', defaultValue: 0) as int;
+  }
+
+  /// Set dhikr count
+  Future<void> setDhikrCount(int count) async {
+    await _box.put('dhikr_count', count);
   }
 
   // ==================== Clear Preferences ====================

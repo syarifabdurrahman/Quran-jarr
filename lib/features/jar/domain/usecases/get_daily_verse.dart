@@ -16,11 +16,13 @@ class GetDailyVerseUseCase {
   Future<Either<ApiException, Verse>> call({
     String translationId = 'english', // Default translation
     List<int>? surahNumbers, // Optional list of surah numbers for curated mode
+    int? reciterId,
   }) async {
     // Return cached verse if available, or get a new one
     return await _repository.getDailyVerse(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
   }
 }

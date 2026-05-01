@@ -1,11 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/features/audio/presentation/providers/audio_provider.dart';
 
 /// Audio Player Widget
-/// Shows play/pause controls and progress bar for verse audio
+/// Shows minimal glassmorphic play/pause controls and progress bar
 class AudioPlayerWidget extends ConsumerStatefulWidget {
   final String audioUrl;
   final String verseKey;
@@ -21,28 +23,12 @@ class AudioPlayerWidget extends ConsumerStatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
-  bool _isDownloaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkDownloadStatus();
-  }
-
-  Future<void> _checkDownloadStatus() async {
-    final downloaded = await ref.read(audioPlayerNotifierProvider.notifier)
-        .isAudioDownloaded(widget.verseKey);
-    if (mounted) {
-      setState(() => _isDownloaded = downloaded);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? AppColors.midnightPeriwinkle : AppColors.sageGreen;
-    final iconColor = isDark ? AppColors.darkTextSecondary : AppColors.deepUmber;
-
+    final accentColor = isDark ? AppColors.midnightGold : AppColors.terracotta;
+    
     final audioState = ref.watch(audioPlayerNotifierProvider);
     final audioNotifier = ref.read(audioPlayerNotifierProvider.notifier);
 
@@ -50,273 +36,165 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
         audioState.currentVerseKey == widget.verseKey;
     final isLoading = isCurrentAudio && audioState.isLoading;
     final isPlaying = isCurrentAudio && audioState.isPlaying;
-    final isDownloading = audioState.isDownloading &&
-        audioState.currentVerseKey == widget.verseKey;
-    final isThisDownloaded = _isDownloaded || audioState.isAudioDownloaded;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark 
-            ? AppColors.darkElevated 
-            : primaryColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                isThisDownloaded ? Icons.offline_pin : Icons.headphones,
-                color: primaryColor,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Verse Recitation',
-                    style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-              if (isThisDownloaded) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Saved',
-                    style: AppTextStyles.loraCaptionForTheme(context).copyWith(
-                      color: primaryColor,
-                    ),
-                  ),
-                ),
-              ],
-              const Spacer(),
-              // Download button
-              if (!isThisDownloaded && !isDownloading)
-                IconButton(
-                  onPressed: () => _downloadAudio(audioNotifier),
-                  icon: Icon(
-                    Icons.download_outlined,
-                    color: primaryColor,
-                    size: 18,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Download for offline',
-                ),
-              if (isDownloading)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: primaryColor,
-                    ),
-                  ),
-                ),
-              if (isCurrentAudio && audioState.errorMessage != null)
-                GestureDetector(
-                  onTap: audioNotifier.clearError,
-                  child: Icon(
-                    Icons.close,
-                    color: iconColor.withValues(alpha: 0.5),
-                    size: 20,
-                  ),
-                ),
-            ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? AppColors.glassNight 
+                : Colors.white.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark 
+                  ? AppColors.glassNightBorder 
+                  : AppColors.glassBorder.withValues(alpha: 0.1),
+              width: 1,
+            ),
           ),
-
-          if (isCurrentAudio && audioState.errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              audioState.errorMessage!,
-              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                color: Colors.red.shade700,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-
-          // Progress bar (only show when playing/paused this audio)
-          if (isCurrentAudio && audioState.duration != null) ...[
-            const SizedBox(height: 12),
-            Column(
-              children: [
-                // Progress bar
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                    activeTrackColor: primaryColor,
-                    inactiveTrackColor: primaryColor.withValues(alpha: 0.2),
-                    thumbColor: primaryColor,
-                    overlayColor: primaryColor.withValues(alpha: 0.2),
-                  ),
-                  child: Slider(
-                    value: audioState.position.inMilliseconds.clamp(
-                      0.0,
-                      audioState.duration!.inMilliseconds.toDouble(),
-                    ).toDouble(),
-                    max: audioState.duration!.inMilliseconds.toDouble(),
-                    onChanged: (value) {
-                      audioNotifier.seek(Duration(milliseconds: value.toInt()));
-                    },
-                  ),
-                ),
-                // Time labels
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(audioState.position),
-                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                          color: iconColor.withValues(alpha: 0.7),
-                          fontSize: 11,
-                        ),
-                      ),
-                      Text(
-                        _formatDuration(audioState.duration ?? Duration.zero),
-                        style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                          color: iconColor.withValues(alpha: 0.7),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // Controls
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Play/Pause button
-              GestureDetector(
-                onTap: () {
-                  if (isPlaying) {
-                    audioNotifier.pause();
-                  } else {
-                    audioNotifier.play(widget.audioUrl, verseKey: widget.verseKey);
-                  }
-                },
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: isLoading || isDownloading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              Row(
+                children: [
+                  // Play/Pause with Pulse Animation
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (isPlaying)
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor.withValues(alpha: 0.3),
                           ),
                         )
-                      : Icon(
-                          isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 24,
+                        .animate(onPlay: (controller) => controller.repeat())
+                        .scale(begin: const Offset(1, 1), end: const Offset(1.6, 1.6), duration: 1200.ms, curve: Curves.easeOut)
+                        .fadeOut(duration: 1200.ms),
+                      
+                      GestureDetector(
+                        onTap: () {
+                          if (isPlaying) {
+                            audioNotifier.pause();
+                          } else {
+                            audioNotifier.play(widget.audioUrl, verseKey: widget.verseKey);
+                          }
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isPlaying ? accentColor : primaryColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isPlaying ? accentColor : primaryColor).withValues(alpha: 0.4),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: isLoading
+                              ? const Padding(
+                                  padding: EdgeInsets.all(10.0),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Icon(
+                                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
                         ),
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Progress and Timer
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isCurrentAudio && audioState.duration != null) ...[
+                          SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                              activeTrackColor: accentColor,
+                              inactiveTrackColor: primaryColor.withValues(alpha: 0.2),
+                              thumbColor: accentColor,
+                              overlayColor: accentColor.withValues(alpha: 0.2),
+                            ),
+                            child: Slider(
+                              value: audioState.position.inMilliseconds.clamp(
+                                0.0,
+                                audioState.duration!.inMilliseconds.toDouble(),
+                              ).toDouble(),
+                              max: audioState.duration!.inMilliseconds.toDouble(),
+                              onChanged: (value) {
+                                audioNotifier.seek(Duration(milliseconds: value.toInt()));
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatDuration(audioState.position),
+                                  style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                                    fontSize: 10,
+                                    color: primaryColor.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                                Text(
+                                  _formatDuration(audioState.duration!),
+                                  style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                                    fontSize: 10,
+                                    color: primaryColor.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                           Text(
+                            'Tap to recite verse',
+                            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+                              color: primaryColor.withValues(alpha: 0.6),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  
+                  // Stop button
+                  if (isCurrentAudio)
+                    IconButton(
+                      onPressed: audioNotifier.stop,
+                      icon: Icon(Icons.stop_rounded, color: primaryColor.withValues(alpha: 0.6), size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
               ),
-
-              // Replay button
-              if (isCurrentAudio || _isDownloaded) ...[
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () => audioNotifier.seek(Duration.zero),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: iconColor.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.replay,
-                      color: iconColor.withValues(alpha: 0.7),
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-              // Stop button (only show when playing this audio)
-              if (isCurrentAudio) ...[
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: audioNotifier.stop,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: iconColor.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.stop,
-                      color: iconColor.withValues(alpha: 0.7),
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Future<void> _downloadAudio(AudioPlayerNotifier notifier) async {
-    await notifier.downloadAudio(widget.verseKey, widget.audioUrl);
-    if (mounted) {
-      setState(() => _isDownloaded = true);
-    }
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0);
   }
 
   String _formatDuration(Duration duration) {

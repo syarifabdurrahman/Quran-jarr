@@ -193,9 +193,11 @@ class JarNotifier extends StateNotifier<JarState> {
     }
 
     // Online mode - fetch from API
+    final reciterId = _ref.read(selectedReciterProvider);
     final result = await _getDailyVerseUseCase(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
 
     result.fold(
@@ -282,9 +284,11 @@ class JarNotifier extends StateNotifier<JarState> {
     }
 
     // Online mode - fetch from API
+    final reciterId = _ref.read(selectedReciterProvider);
     final result = await _pullRandomVerseUseCase(
       translationId: translationId,
       surahNumbers: surahNumbers,
+      reciterId: reciterId,
     );
 
     result.fold(
@@ -557,9 +561,11 @@ class JarNotifier extends StateNotifier<JarState> {
     if (notificationVerse == null || notificationVerse.verseKey != verseKey) {
       // Fetch from API
       final translationId = _ref.read(selectedTranslationProvider).id;
+      final reciterId = _ref.read(selectedReciterProvider);
       final result = await _ref.read(verseRepositoryProvider).getVerseByKey(
             verseKey,
             translationId: translationId,
+            reciterId: reciterId,
           );
 
       result.fold(

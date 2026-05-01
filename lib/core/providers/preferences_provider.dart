@@ -146,6 +146,12 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     await _prefs.grantExtraTap();
     _notify();
   }
+
+  /// Set selected reciter ID
+  Future<void> setReciterId(int id) async {
+    await _prefs.setReciterId(id);
+    _notify();
+  }
 }
 
 /// Preferences Provider
@@ -225,6 +231,11 @@ final reducedMotionProvider = Provider<bool>((ref) {
 /// Jar Type Provider (0 = classic, 1 = vintage, 2 = modern, 3 = ornate)
 final jarTypeProvider = Provider<int>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getJarType();
+});
+
+/// Selected Reciter Provider (defaults to 2)
+final selectedReciterProvider = Provider<int>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getReciterId();
 });
 
 /// Jar Shake Trigger Provider - triggers shake animation when verse is removed
