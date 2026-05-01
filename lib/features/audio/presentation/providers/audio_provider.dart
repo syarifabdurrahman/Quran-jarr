@@ -182,6 +182,16 @@ class AudioPlayerNotifier extends StateNotifier<AudioPlayerState> {
     }
   }
 
+  /// Restart audio from the beginning
+  Future<void> restart() async {
+    try {
+      await _player.seek(Duration.zero);
+      await _player.play();
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Failed to restart audio: $e');
+    }
+  }
+
   /// Clear error message
   void clearError() {
     state = state.copyWith(errorMessage: null);

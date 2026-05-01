@@ -180,14 +180,24 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     ),
                   ),
                   
-                  // Stop button
-                  if (isCurrentAudio)
+                  // Controls
+                  if (isCurrentAudio) ...[
+                    IconButton(
+                      onPressed: audioNotifier.restart,
+                      icon: Icon(Icons.replay_rounded, color: primaryColor.withValues(alpha: 0.6), size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Restart',
+                    ),
+                    const SizedBox(width: 8),
                     IconButton(
                       onPressed: audioNotifier.stop,
                       icon: Icon(Icons.stop_rounded, color: primaryColor.withValues(alpha: 0.6), size: 20),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
+                      tooltip: 'Stop',
                     ),
+                  ],
                 ],
               ),
             ],
