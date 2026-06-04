@@ -10,6 +10,7 @@ import 'package:quran_jarr/features/audio/presentation/widgets/audio_player_widg
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/spiritual_aura_card.dart';
+import 'package:quran_jarr/features/journal/presentation/widgets/journal_entry_dialog.dart';
 
 /// Verse Card Widget
 /// Displays a Quranic verse with Arabic text and translation
@@ -31,6 +32,24 @@ class VerseCardWidget extends ConsumerStatefulWidget {
 
 class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   bool _isLoadingTafsir = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoLoadTafsir());
+  }
+
+  void _autoLoadTafsir() {
+    final verse = widget.verse;
+    if (verse.tafsirByTranslation != null &&
+        verse.tafsirByTranslation!.containsKey(verse.translationId)) {
+      return;
+    }
+    final isConnected = ref.read(connectivityProvider);
+    if (isConnected) {
+      ref.read(jarNotifierProvider.notifier).loadTafsir();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +153,19 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                                 minHeight: 40,
                               ),
                             ),
+                          IconButton(
+                            onPressed: () => _handleJournalTap(context),
+                            tooltip: 'Journal',
+                            icon: Icon(
+                              Icons.auto_stories_outlined,
+                              color: primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
+                            ),
+                          ),
                           if (widget.onShare != null)
                             IconButton(
                               onPressed: widget.onShare,
@@ -279,6 +311,13 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
     );
   }
 
+  void _handleJournalTap(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => JournalEntryDialog(verse: widget.verse),
+    );
+  }
+
   Future<void> _handleAuraShare(BuildContext context) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final verse = widget.verse;
@@ -335,19 +374,14 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   }
 
   void _showTafsirSheet(BuildContext context) {
-    // Use the verse from widget directly (supports archive verses)
     final verse = widget.verse;
 
-    // Check if verse has tafsir for any translation
     if (verse.tafsirByTranslation == null ||
         verse.tafsirByTranslation!.isEmpty) {
-      // No tafsir available at all
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Tafsir not available. Please connect to internet and try again.',
-            ),
+            content: Text('Tafsir not available. Please connect to internet and try again.'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -355,11 +389,9 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
       return;
     }
 
-    // Get tafsir for current translation
     final tafsirText = verse.getTafsirForTranslation(verse.translationId);
 
     if (tafsirText == null || tafsirText.isEmpty) {
-      // Tafsir not available for current translation, but available for others
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -385,7 +417,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
         ? AppColors.darkTextPrimary
         : AppColors.deepUmber;
 
-    // Font size multipliers
     final englishFontMultiplier = ref.read(englishFontSizeProvider);
 
     showModalBottomSheet(
@@ -393,14 +424,13 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: MediaQuery.of(context).size.height * 0.65,
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -410,7 +440,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Header
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -418,9 +447,21 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                   Icon(Icons.menu_book, color: primaryColor),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Tafsir Ibn Kathir',
-                      style: AppTextStyles.loraTitleForTheme(context, englishFontMultiplier),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tafsir Ibn Kathir',
+                          style: AppTextStyles.loraTitleForTheme(context, englishFontMultiplier),
+                        ),
+                        Text(
+                          verse.surahReference,
+                          style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -430,7 +471,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                 ],
               ),
             ),
-            // Divider
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -438,13 +478,15 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                 color: glassBorder.withValues(alpha: 0.3),
               ),
             ),
-            // Tafsir content
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   tafsirText,
-                  style: AppTextStyles.loraBodyMediumForTheme(context, englishFontMultiplier,).copyWith(color: tafsirTextColor, height: 1.8),
+                  style: AppTextStyles.loraBodyMediumForTheme(context, englishFontMultiplier).copyWith(
+                    color: tafsirTextColor,
+                    height: 1.8,
+                  ),
                 ),
               ),
             ),

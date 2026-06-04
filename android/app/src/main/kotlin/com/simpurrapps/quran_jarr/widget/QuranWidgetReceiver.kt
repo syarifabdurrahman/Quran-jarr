@@ -1,5 +1,6 @@
 package com.simpurrapps.quran_jarr.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
@@ -7,10 +8,11 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
 import android.widget.RemoteViews
+import com.simpurrapps.quran_jarr.MainActivity
 import com.simpurrapps.quran_jarr.R
 
 /**
- * Simple Quran Widget Provider
+ * Quran Widget Provider
  */
 class QuranWidgetReceiver : AppWidgetProvider() {
 
@@ -35,25 +37,37 @@ class QuranWidgetReceiver : AppWidgetProvider() {
             try {
                 val prefs = context.getSharedPreferences("QuranJarrWidget", Context.MODE_PRIVATE)
 
-                // Get values with safe defaults and limit length
-                val arabicText = prefs.getString("arabic_text", null)?.take(500) ?: "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
-                val translation = prefs.getString("translation", null)?.take(500) ?: "In the name of Allah, the Most Gracious, the Most Merciful"
-                val surahName = prefs.getString("surah_name", null)?.take(100) ?: "Al-Fatiha"
+                val arabicText = prefs.getString("arabic_text", null)?.take(500)
+                    ?: "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+                val translation = prefs.getString("translation", null)?.take(500)
+                    ?: "In the name of Allah, the Most Gracious, the Most Merciful"
+                val surahName = prefs.getString("surah_name", null)?.take(100)
+                    ?: "Al-Fatiha"
                 val surahNum = prefs.getInt("surah_number", 1)
                 val ayahNum = prefs.getInt("ayah_number", 1)
 
                 val views = RemoteViews(context.packageName, R.layout.quran_widget_layout)
 
-                // Set text - colors are already defined in XML
                 views.setTextViewText(R.id.widget_surah_name, "$surahName ($surahNum:$ayahNum)")
                 views.setTextViewText(R.id.widget_arabic_text, arabicText)
                 views.setTextViewText(R.id.widget_translation, translation)
+
+                // Click to open app
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
                 Log.d("QuranWidget", "Widget $appWidgetId updated: $surahName ($surahNum:$ayahNum)")
             } catch (e: Exception) {
                 Log.e("QuranWidget", "Error updating widget: ${e.message}", e)
-                e.printStackTrace()
             }
         }
     }

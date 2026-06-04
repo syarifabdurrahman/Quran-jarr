@@ -40,13 +40,17 @@ class AdConfig {
     return '';
   }
 
-  // Native Ad Unit IDs (Using Google Test IDs for now)
-  static const String androidNativeAdUnitId = 'ca-app-pub-3940256099942544/2247696110';
-  static const String iosNativeAdUnitId = 'ca-app-pub-3940256099942544/3986624511';
+  // Native Ad Unit IDs
+  static const String androidNativeAdUnitId =
+      'ca-app-pub-8500075420783419/1186728810';
+  static const String iosNativeAdUnitId =
+      'ca-app-pub-3940256099942544/3986624511';
 
   // Rewarded Ad Unit IDs (Using Google Test IDs for now)
-  static const String androidRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
-  static const String iosRewardedAdUnitId = 'ca-app-pub-3940256099942544/1712485313';
+  static const String androidRewardedAdUnitId =
+      'ca-app-pub-3940256099942544/5224354917';
+  static const String iosRewardedAdUnitId =
+      'ca-app-pub-3940256099942544/1712485313';
 
   /// Minimum time between interstitial ad shows (in seconds)
   /// This prevents ads from showing too rapidly

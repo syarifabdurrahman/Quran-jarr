@@ -12,6 +12,7 @@ import 'package:quran_jarr/core/services/streak_service.dart';
 import 'package:quran_jarr/core/services/widget_service.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
 import 'package:quran_jarr/features/jar/data/datasources/local_storage_service.dart';
+import 'package:quran_jarr/features/journal/data/repositories/journal_storage_service.dart';
 import 'package:quran_jarr/features/navigation/presentation/screens/main_navigation_screen.dart';
 import 'package:quran_jarr/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:quran_jarr/core/network/dio_client.dart';
@@ -24,6 +25,7 @@ void main() async {
   await LocalStorageService.instance.initialize();
   await PreferencesService.instance.initialize();
   await StreakService.instance.initialize();
+  await JournalStorageService.instance.initialize();
 
   // Start the app immediately
   runApp(const ProviderScope(child: QuranJarrApp()));

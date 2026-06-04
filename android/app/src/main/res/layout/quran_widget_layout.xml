@@ -1,45 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:padding="16dp">
+    android:padding="20dp">
 
-    <!-- Header with Icon and Surah Name -->
+    <!-- Top Section: Surah Tag + Brand -->
     <LinearLayout
         android:id="@+id/header_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@drawable/widget_tag_background"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="4dp">
+        android:gravity="center_vertical">
 
-        <ImageView
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:src="@android:drawable/ic_menu_sort_by_size"
-            android:tint="@color/jar_gold_accent" />
-
-        <TextView
-            android:id="@+id/widget_surah_name"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="Al-Ghashiyah (88:4)"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/widget_tag_background"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp">
+
+            <TextView
+                android:id="@+id/widget_surah_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Al-Ghashiyah (88:4)"
+                android:textColor="@color/jar_gold_accent"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text=""
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quran Jarr"
             android:textColor="@color/jar_gold_accent"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:textSize="9sp"
+            android:letterSpacing="0.15"
+            android:alpha="0.5" />
     </LinearLayout>
 
-    <!-- Center Content - Arabic and Translation -->
+    <!-- Center Content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/header_layout"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:orientation="vertical"
         android:gravity="center">
 
@@ -49,10 +65,18 @@
             android:layout_height="wrap_content"
             android:text="تَصْلَىٰ نَارًا حَامِيَةً"
             android:textColor="@color/jar_text_dark"
-            android:textSize="22sp"
+            android:textSize="24sp"
+            android:fontFamily="serif"
             android:gravity="center"
-            android:layout_marginBottom="12dp"
-            android:lineSpacingExtra="4dp" />
+            android:layout_marginBottom="10dp"
+            android:lineSpacingExtra="6dp" />
+
+        <View
+            android:layout_width="32dp"
+            android:layout_height="1dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/jar_text_muted"
+            android:alpha="0.3" />
 
         <TextView
             android:id="@+id/widget_translation"
@@ -63,7 +87,8 @@
             android:textSize="13sp"
             android:gravity="center"
             android:maxLines="3"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:lineSpacingExtra="2dp" />
     </LinearLayout>
 
 </RelativeLayout>

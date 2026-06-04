@@ -20,6 +20,7 @@ import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
 import 'package:quran_jarr/core/utils/responsive_utils.dart';
 import 'package:quran_jarr/core/utils/timezone_helper.dart';
+import 'package:quran_jarr/core/widgets/animated_background.dart';
 import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
@@ -327,20 +328,8 @@ class _JarScreenState extends ConsumerState<JarScreen>
             _navigateToDhikr();
           }
         },
-        child: Container(
-          decoration: isDark
-              ? const BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment(0, -0.2), // Focused behind the jar
-                    radius: 1.2,
-                    colors: [
-                      Color(0xFF1E293B), // Midnight Blue Lighter
-                      Color(0xFF020617), // Midnight Blue Deep
-                    ],
-                    stops: [0.0, 1.0],
-                  ),
-                )
-              : null,
+        child: AnimatedBackground(
+          isDark: isDark,
           child: SafeArea(
             child: Column(
               children: [
