@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import '../config/translations.dart';
@@ -152,6 +153,12 @@ class PreferencesNotifier extends StateNotifier<_PreferencesState> {
     await _prefs.setReciterId(id);
     _notify();
   }
+
+  /// Set verse selection mode
+  Future<void> setVerseSelectionMode(VerseSelectionMode mode) async {
+    await _prefs.setVerseSelectionMode(mode);
+    _notify();
+  }
 }
 
 /// Preferences Provider
@@ -236,6 +243,11 @@ final jarTypeProvider = Provider<int>((ref) {
 /// Selected Reciter Provider (defaults to 2)
 final selectedReciterProvider = Provider<int>((ref) {
   return ref.watch(preferencesNotifierProvider).prefs.getReciterId();
+});
+
+/// Verse Selection Mode Provider
+final verseSelectionModeProvider = Provider<VerseSelectionMode>((ref) {
+  return ref.watch(preferencesNotifierProvider).prefs.getVerseSelectionMode();
 });
 
 /// Jar Shake Trigger Provider - triggers shake animation when verse is removed

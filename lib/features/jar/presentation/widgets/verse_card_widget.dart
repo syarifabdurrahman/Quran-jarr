@@ -10,7 +10,7 @@ import 'package:quran_jarr/features/audio/presentation/widgets/audio_player_widg
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/spiritual_aura_card.dart';
-import 'package:quran_jarr/features/journal/presentation/widgets/journal_entry_dialog.dart';
+import 'package:quran_jarr/features/journal/presentation/widgets/journal_entry_page.dart';
 
 /// Verse Card Widget
 /// Displays a Quranic verse with Arabic text and translation
@@ -31,7 +31,6 @@ class VerseCardWidget extends ConsumerStatefulWidget {
 }
 
 class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
-  bool _isLoadingTafsir = false;
 
   @override
   void initState() {
@@ -180,18 +179,59 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                                 minHeight: 40,
                               ),
                             ),
-                          IconButton(
-                            onPressed: () => _handleAuraShare(context),
-                            tooltip: 'Share Spiritual Aura',
+                          PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'aura') {
+                                _handleAuraShare(context);
+                              } else if (value == 'tafsir') {
+                                _handleTafsirPress(context);
+                              }
+                            },
                             icon: Icon(
-                              Icons.auto_awesome,
-                              color: isDark ? AppColors.midnightGold : AppColors.terracotta,
+                              Icons.more_horiz_rounded,
+                              color: primaryColor,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 40,
                               minHeight: 40,
                             ),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'aura',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome,
+                                      size: 20,
+                                      color: isDark ? AppColors.midnightGold : AppColors.terracotta,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('Spiritual Aura'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'tafsir',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      verse.hasTafsir
+                                          ? Icons.menu_book
+                                          : Icons.menu_book_outlined,
+                                      size: 20,
+                                      color: primaryColor,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      verse.hasTafsir
+                                          ? 'View Tafsir'
+                                          : 'Load Tafsir',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -242,66 +282,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
                       verseKey: verse.verseKey,
                     ),
                   ],
-                  // Tafsir button at bottom
-                  const SizedBox(height: 16),
-                  // Tafsir button
-                  InkWell(
-                    onTap: _isLoadingTafsir
-                        ? null
-                        : () => _handleTafsirPress(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: _isLoadingTafsir
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: primaryColor,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  verse.hasTafsir
-                                      ? Icons.menu_book
-                                      : Icons.menu_book_outlined,
-                                  size: 18,
-                                  color: primaryColor,
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    verse.hasTafsir
-                                        ? 'View Tafsir (Ibn Kathir)'
-                                        : 'Load Tafsir',
-                                    style:
-                                        AppTextStyles.loraBodyMediumForTheme(context, englishFontMultiplier,).copyWith(
-                                          color: primaryColor,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -312,9 +292,11 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
   }
 
   void _handleJournalTap(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => JournalEntryDialog(verse: widget.verse),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => JournalEntryPage(verse: widget.verse),
+      ),
     );
   }
 
@@ -351,7 +333,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
 
     if (!hasTafsirForCurrentTranslation) {
       // Only try to load from API if we don't have tafsir locally
-      setState(() => _isLoadingTafsir = true);
       
       // Verify connection before trying to load tafsir
       await ref.read(connectivityProvider.notifier).verifyConnection();
@@ -364,7 +345,6 @@ class _VerseCardWidgetState extends ConsumerState<VerseCardWidget> {
           // If loading fails, silently handle - will show message if no tafsir available
         }
       }
-      setState(() => _isLoadingTafsir = false);
     }
 
     // Show tafsir sheet (after loading or if already loaded)

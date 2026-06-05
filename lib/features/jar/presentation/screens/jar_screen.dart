@@ -3,29 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quran_jarr/core/config/ad_config.dart';
 import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/connectivity_provider.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/providers/streak_provider.dart';
 import 'package:quran_jarr/core/services/ad_service.dart';
-import 'package:quran_jarr/core/services/notification_service.dart';
-import 'package:quran_jarr/core/services/preferences_service.dart';
 import 'package:quran_jarr/core/config/translations.dart';
 import 'package:quran_jarr/features/rating/presentation/soft_rate_dialog.dart';
 import 'package:quran_jarr/core/services/share_service.dart';
 import 'package:quran_jarr/core/services/sound_effects_service.dart';
 import 'package:quran_jarr/core/theme/app_colors.dart';
 import 'package:quran_jarr/core/theme/app_text_styles.dart';
-import 'package:quran_jarr/core/utils/responsive_utils.dart';
 import 'package:quran_jarr/core/utils/timezone_helper.dart';
 import 'package:quran_jarr/core/widgets/animated_background.dart';
-import 'package:quran_jarr/features/about/presentation/screens/about_screen.dart';
 import 'package:quran_jarr/features/jar/domain/entities/verse.dart';
 import 'package:quran_jarr/features/jar/presentation/providers/jar_provider.dart';
 import 'package:quran_jarr/features/dhikr/presentation/screens/dhikr_screen.dart';
-import 'package:quran_jarr/features/archive/presentation/screens/archive_screen.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/jar_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_card_widget.dart';
 import 'package:quran_jarr/features/jar/presentation/widgets/verse_skeleton_loader.dart';
@@ -253,45 +247,6 @@ class _JarScreenState extends ConsumerState<JarScreen>
     );
   }
 
-  bool _isNavigatingToDhikr = false;
-  double _dragStartY = 0;
-  DateTime _dragStartTime = DateTime.now();
-
-  void _navigateToDhikr() {
-    if (_isNavigatingToDhikr || !mounted) return;
-
-    setState(() => _isNavigatingToDhikr = true);
-
-    Navigator.of(context)
-        .push(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const DhikrScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(0.0, 1.0);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutQuart;
-                  var tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: curve));
-                  return SlideTransition(
-                    position: animation.drive(tween),
-                    child: child,
-                  );
-                },
-            opaque: false,
-            barrierDismissible: true,
-          ),
-        )
-        .then((_) {
-          if (mounted) {
-            setState(() => _isNavigatingToDhikr = false);
-          }
-        });
-  }
-
   @override
   Widget build(BuildContext context) {
     final jarState = ref.watch(jarNotifierProvider);
@@ -304,31 +259,12 @@ class _JarScreenState extends ConsumerState<JarScreen>
     final primaryColor = isDark
         ? AppColors.midnightPeriwinkle
         : AppColors.sageGreen;
-    final terracottaColor = isDark
-        ? AppColors.midnightGold
-        : AppColors.terracotta;
     final bgColor = isDark ? null : AppColors.cream;
     final errorColor = AppColors.error;
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: Listener(
-        onPointerDown: (event) {
-          _dragStartY = event.position.dy;
-          _dragStartTime = DateTime.now();
-        },
-        onPointerUp: (event) {
-          if (!mounted) return;
-          final deltaY = _dragStartY - event.position.dy;
-          final duration = DateTime.now().difference(_dragStartTime).inMilliseconds;
-          
-          // Detect swipe up: require a more deliberate swipe (at least 180 pixels)
-          // to ensure it only triggers when the user swiping "mentok" (substantially).
-          if (deltaY > 180 && duration < 800) {
-            _navigateToDhikr();
-          }
-        },
-        child: AnimatedBackground(
+      body: AnimatedBackground(
           isDark: isDark,
           child: SafeArea(
             child: Column(
@@ -353,9 +289,8 @@ class _JarScreenState extends ConsumerState<JarScreen>
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          _DhikrButton(primaryColor: primaryColor),
                           _TranslationButton(primaryColor: primaryColor),
-                          const SizedBox(width: 8),
-                          _ArchiveButton(color: terracottaColor),
                         ],
                       ),
                     ],
@@ -572,49 +507,6 @@ class _JarScreenState extends ConsumerState<JarScreen>
 
                           const SizedBox(height: 40),
 
-                          // Swipe Up Indicator
-                          Center(
-                            child: Column(
-                              children: [
-                                Icon(
-                                      Icons.keyboard_arrow_up_rounded,
-                                      color: primaryColor.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    )
-                                    .animate(
-                                      onPlay: (controller) =>
-                                          controller.repeat(),
-                                    )
-                                    .moveY(
-                                      begin: 5,
-                                      end: -5,
-                                      duration: 1000.ms,
-                                      curve: Curves.easeInOut,
-                                    )
-                                    .fadeIn(duration: 1000.ms),
-                                Text(
-                                      'Swipe up for Dhikr',
-                                      style:
-                                          AppTextStyles.loraCaptionForTheme(
-                                            context,
-                                          ).copyWith(
-                                            color: primaryColor.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                            letterSpacing: 1,
-                                          ),
-                                    )
-                                    .animate(
-                                      onPlay: (controller) =>
-                                          controller.repeat(),
-                                    )
-                                    .fadeIn(duration: 1000.ms, delay: 500.ms)
-                                    .fadeOut(duration: 1000.ms, delay: 500.ms),
-                              ],
-                            ),
-                          ),
-
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -624,8 +516,7 @@ class _JarScreenState extends ConsumerState<JarScreen>
               ),
             ),
           ),
-        ),
-      );
+        );
   }
 }
 
@@ -680,6 +571,48 @@ class _TranslationButton extends ConsumerWidget {
   }
 }
 
+/// Dhikr Button
+class _DhikrButton extends StatelessWidget {
+  final Color primaryColor;
+
+  const _DhikrButton({required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const DhikrScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0.0, 1.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutQuart;
+                  var tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+            opaque: false,
+            barrierDismissible: true,
+          ),
+        );
+      },
+      icon: Icon(
+        Icons.mosque_rounded,
+        color: primaryColor,
+      ),
+      tooltip: 'Dhikr',
+    );
+  }
+}
+
 /// Status Bar
 class _StatusBar extends StatelessWidget {
   final int remainingTaps;
@@ -698,865 +631,6 @@ class _StatusBar extends StatelessWidget {
       remainingTaps: remainingTaps,
       dailyLimit: dailyLimit,
       primaryColor: primaryColor,
-    );
-  }
-}
-
-/// Archive Button
-class _ArchiveButton extends StatelessWidget {
-  final Color color;
-  const _ArchiveButton({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ArchiveScreen(),
-          ),
-        );
-      },
-      icon: Icon(Icons.inventory_2_outlined, color: color),
-      tooltip: 'Archive',
-    );
-  }
-}
-
-/// Settings Dialog
-/// Allows user to change verse selection mode and access other options
-class _SettingsDialog extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_SettingsDialog> createState() => _SettingsDialogState();
-}
-
-class _SettingsDialogState extends ConsumerState<_SettingsDialog> {
-  /// Show dialog explaining exact alarm permission is needed
-  Future<bool?> _showExactAlarmDialog(BuildContext context) async {
-    final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.midnightPeriwinkle
-        : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.darkCard : AppColors.cream;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.deepUmber;
-
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: bgColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            ResponsiveUtils.getBorderRadius(context),
-          ),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.alarm,
-              color: primaryColor,
-              size: ResponsiveUtils.getIconSize(context),
-            ),
-            SizedBox(width: ResponsiveUtils.getSpacing(context) * 0.75),
-            Expanded(
-              child: Text(
-                'Enable Alarms & Reminders',
-                style: AppTextStyles.loraHeadingForTheme(
-                  context,
-                ).copyWith(color: textColor),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'For daily notifications to work reliably, you need to enable "Alarms & reminders" permission.',
-              style: AppTextStyles.loraBodyMediumForTheme(
-                context,
-              ).copyWith(color: textColor),
-            ),
-            SizedBox(height: ResponsiveUtils.getSpacing(context) * 0.75),
-            Text(
-              'This is required on Android 12+ for exact timing of notifications.',
-              style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                color: isDark ? AppColors.darkTextSecondary : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel, style: TextStyle(color: primaryColor)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await NotificationService.instance.openNotificationSettings();
-              if (context.mounted) {
-                Navigator.of(context).pop(true);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: Text(
-              l10n.settings,
-              style: TextStyle(
-                color: isDark ? AppColors.darkSurface : AppColors.cream,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final currentMode = ref.watch(
-      preferencesServiceProvider.select(
-        (prefs) => prefs.getVerseSelectionMode(),
-      ),
-    );
-    final isNotificationEnabled = ref.watch(dailyNotificationEnabledProvider);
-    final notificationTime = ref.watch(notificationTimeProvider);
-    final versesPerDay = ref.watch(versesPerDayProvider);
-    final soundEffectsEnabled = SoundEffectsService.instance.isEnabled;
-    final arabicFontSize = ref.watch(arabicFontSizeProvider);
-    final englishFontSize = ref.watch(englishFontSizeProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.midnightPeriwinkle
-        : AppColors.sageGreen;
-    final bgColor = isDark ? AppColors.darkCard : AppColors.cream;
-
-    // Use responsive sizing
-    final dialogMaxWidth = ResponsiveUtils.getDialogMaxWidth(context);
-    final dialogMaxHeight = ResponsiveUtils.getDialogMaxHeight(context);
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Dialog(
-      backgroundColor: bgColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          ResponsiveUtils.getBorderRadius(context),
-        ),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: screenHeight * dialogMaxHeight,
-          maxWidth: dialogMaxWidth,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: ResponsiveUtils.getPadding(context),
-              child: Row(
-                children: [
-                  Text(
-                    l10n.settings,
-                    style: AppTextStyles.loraHeadingForTheme(context),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close, color: primaryColor),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            // Scrollable Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Jar Taps Per Day Section
-                    Text(
-                      l10n.jarTapsPerDay,
-                      style: AppTextStyles.loraBodySmallForTheme(context)
-                          .copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    _VersesPerDaySelector(
-                      versesPerDay: versesPerDay,
-                      onValueChanged: (value) async {
-                        await ref
-                            .read(preferencesNotifierProvider.notifier)
-                            .setVersesPerDay(value);
-                      },
-                      primaryColor: primaryColor,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Sound Effects Toggle
-                    _SettingsToggle(
-                      icon: Icons.volume_up_outlined,
-                      title: l10n.soundEffects,
-                      value: soundEffectsEnabled,
-                      onChanged: (value) {
-                        setState(() {
-                          SoundEffectsService.instance.setEnabled(value);
-                        });
-                      },
-                      primaryColor: primaryColor,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Notification Settings Section
-                    Text(
-                      l10n.dailyNotification,
-                      style: AppTextStyles.loraBodySmallForTheme(context)
-                          .copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Daily Notification Toggle
-                    _SettingsToggle(
-                      icon: Icons.notifications_outlined,
-                      title: 'Daily Notification',
-                      value: isNotificationEnabled,
-                      onChanged: (value) async {
-                        if (value) {
-                          // Check exact alarm permission before enabling
-                          final hasPermission = await NotificationService
-                              .instance
-                              .checkExactAlarmPermission();
-                          if (!hasPermission && context.mounted) {
-                            // Show dialog explaining permission is needed
-                            final shouldProceed = await _showExactAlarmDialog(
-                              context,
-                            );
-                            if (shouldProceed != true) {
-                              // User chose not to proceed
-                              return;
-                            }
-                          }
-                        }
-                        await ref
-                            .read(preferencesNotifierProvider.notifier)
-                            .setDailyNotificationEnabled(value);
-                      },
-                      primaryColor: primaryColor,
-                    ),
-
-                    // Notification Time Picker (only show when enabled)
-                    if (isNotificationEnabled) ...[
-                      const SizedBox(height: 8),
-                      _NotificationTimePicker(
-                        time: notificationTime,
-                        onTimeChanged: (time) async {
-                          await ref
-                              .read(preferencesNotifierProvider.notifier)
-                              .setNotificationTime(time);
-                        },
-                        primaryColor: primaryColor,
-                      ),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    // Font Size Section
-                    Text(
-                      l10n.fontSize,
-                      style: AppTextStyles.loraBodySmallForTheme(context)
-                          .copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    _FontSizeSlider(
-                      icon: Icons.text_fields,
-                      title: l10n.arabicText,
-                      value: arabicFontSize,
-                      min: 0.8,
-                      max: 1.5,
-                      onChanged: (value) {
-                        ref
-                            .read(preferencesNotifierProvider.notifier)
-                            .setArabicFontSize(value);
-                      },
-                      primaryColor: primaryColor,
-                    ),
-                    const SizedBox(height: 8),
-                    _FontSizeSlider(
-                      icon: Icons.translate,
-                      title: l10n.translationText,
-                      value: englishFontSize,
-                      min: 0.8,
-                      max: 1.5,
-                      onChanged: (value) {
-                        ref
-                            .read(preferencesNotifierProvider.notifier)
-                            .setEnglishFontSize(value);
-                      },
-                      primaryColor: primaryColor,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Verse Selection Mode Section
-                    Text(
-                      l10n.verseSelection,
-                      style: AppTextStyles.loraBodySmallForTheme(context)
-                          .copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    _ModeOption(
-                      title: l10n.curatedSurahs,
-                      description: l10n.curatedSurahsDesc,
-                      isSelected: currentMode == VerseSelectionMode.curated,
-                      onTap: () async {
-                        await PreferencesService.instance.setVerseSelectionMode(
-                          VerseSelectionMode.curated,
-                        );
-                        if (context.mounted) {
-                          Navigator.of(context).pop();
-                          await ref
-                              .read(jarNotifierProvider.notifier)
-                              .loadDailyVerse();
-                        }
-                      },
-                      primaryColor: primaryColor,
-                    ),
-                    const SizedBox(height: 8),
-                    _ModeOption(
-                      title: l10n.randomVerses,
-                      description: l10n.randomVersesDesc,
-                      isSelected: currentMode == VerseSelectionMode.random,
-                      onTap: () async {
-                        await PreferencesService.instance.setVerseSelectionMode(
-                          VerseSelectionMode.random,
-                        );
-                        if (context.mounted) {
-                          Navigator.of(context).pop();
-                          await ref
-                              .read(jarNotifierProvider.notifier)
-                              .loadDailyVerse();
-                        }
-                      },
-                      primaryColor: primaryColor,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // About Section
-                    _SettingsItem(
-                      icon: Icons.info_outline,
-                      title: l10n.aboutUs,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AboutScreen(),
-                          ),
-                        );
-                      },
-                      primaryColor: primaryColor,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Settings Item Widget
-/// Simple list item for settings that aren't mode selection
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color primaryColor;
-
-  const _SettingsItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: primaryColor),
-            const SizedBox(width: 16),
-            Text(title, style: AppTextStyles.loraBodyMediumForTheme(context)),
-            const Spacer(),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: primaryColor.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Mode Option Widget for Settings Dialog
-class _ModeOption extends StatelessWidget {
-  final String title;
-  final String description;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final Color primaryColor;
-
-  const _ModeOption({
-    required this.title,
-    required this.description,
-    required this.isSelected,
-    required this.onTap,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor.withValues(alpha: 0.15)
-              : Colors.transparent,
-          border: Border.all(
-            color: isSelected
-                ? primaryColor
-                : primaryColor.withValues(alpha: 0.3),
-            width: isSelected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: primaryColor,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.loraBodyMediumForTheme(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    description,
-                    style: AppTextStyles.loraBodySmallForTheme(context),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Settings Toggle Widget
-/// Used for toggle switches in settings
-class _SettingsToggle extends ConsumerWidget {
-  final IconData icon;
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final Color primaryColor;
-
-  const _SettingsToggle({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: primaryColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                title,
-                style: AppTextStyles.loraBodyMediumForTheme(context),
-                maxLines: 1,
-              ),
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeTrackColor: primaryColor.withValues(alpha: 0.5),
-            activeThumbColor: primaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Notification Time Picker Widget
-/// Allows user to pick the time for daily notification
-class _NotificationTimePicker extends StatelessWidget {
-  final TimeOfDay time;
-  final ValueChanged<TimeOfDay> onTimeChanged;
-  final Color primaryColor;
-
-  const _NotificationTimePicker({
-    required this.time,
-    required this.onTimeChanged,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return InkWell(
-      onTap: () async {
-        final picked = await showTimePicker(
-          context: context,
-          initialTime: time,
-        );
-        if (picked != null) {
-          onTimeChanged(picked);
-        }
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Icon(
-              Icons.access_time,
-              size: 18,
-              color: primaryColor.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.notificationTime,
-                  style: AppTextStyles.loraBodyMediumForTheme(
-                    context,
-                  ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
-                  maxLines: 1,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: FittedBox(
-                child: Text(
-                  _formatTime(time),
-                  style: AppTextStyles.loraBodySmallForTheme(
-                    context,
-                  ).copyWith(color: primaryColor, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatTime(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
-  }
-}
-
-/// Font Size Slider Widget
-/// Allows user to adjust font size for Arabic and English text
-class _FontSizeSlider extends ConsumerWidget {
-  final IconData icon;
-  final String title;
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-  final Color primaryColor;
-
-  const _FontSizeSlider({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Convert to percentage (80-150%)
-    final percentage = (value * 100).round();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: primaryColor.withValues(alpha: 0.7)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    title,
-                    style: AppTextStyles.loraBodyMediumForTheme(
-                      context,
-                    ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '$percentage%',
-                    style: AppTextStyles.loraBodySmallForTheme(context)
-                        .copyWith(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          SliderTheme(
-            data: SliderThemeData(
-              trackHeight: 4,
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 16),
-              activeTrackColor: primaryColor,
-              inactiveTrackColor: primaryColor.withValues(alpha: 0.3),
-              thumbColor: primaryColor,
-              overlayColor: primaryColor.withValues(alpha: 0.2),
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: ((max - min) / 0.1).round(),
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Verses Per Day Selector Widget
-/// Allows user to select how many jar taps allowed per day (unlimited)
-class _VersesPerDaySelector extends StatelessWidget {
-  final int versesPerDay;
-  final ValueChanged<int> onValueChanged;
-  final Color primaryColor;
-
-  const _VersesPerDaySelector({
-    required this.versesPerDay,
-    required this.onValueChanged,
-    required this.primaryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.format_list_numbered_outlined,
-                size: 18,
-                color: primaryColor.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    l10n.jarTapsPerDay,
-                    style: AppTextStyles.loraBodyMediumForTheme(
-                      context,
-                    ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              // Decrease button
-              GestureDetector(
-                onTap: () =>
-                    onValueChanged(versesPerDay > 1 ? versesPerDay - 1 : 1),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: primaryColor.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(Icons.remove, color: primaryColor, size: 18),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Number display
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => onValueChanged(
-                    versesPerDay >= 9999 ? 1 : versesPerDay + 1,
-                  ),
-                  child: Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: primaryColor.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: FittedBox(
-                      child: Text(
-                        versesPerDay >= 9999 ? '∞' : versesPerDay.toString(),
-                        style: AppTextStyles.loraBodyLargeForTheme(context)
-                            .copyWith(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Increase button
-              GestureDetector(
-                onTap: () => onValueChanged(versesPerDay + 1),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: primaryColor, width: 2),
-                  ),
-                  child: Icon(Icons.add, color: AppColors.cream, size: 18),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Infinity button
-              GestureDetector(
-                onTap: () => onValueChanged(versesPerDay >= 9999 ? 10 : 9999),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: versesPerDay >= 9999
-                        ? primaryColor
-                        : primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: versesPerDay >= 9999
-                          ? primaryColor
-                          : primaryColor.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.all_inclusive,
-                    color: versesPerDay >= 9999
-                        ? AppColors.cream
-                        : primaryColor,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
@@ -1619,7 +693,7 @@ class _RemainingTapsIndicator extends StatelessWidget {
 }
 
 /// Streak Display Widget
-/// Shows current streak, daily verse counter, and progress towards next milestone
+/// Shows compact current streak and daily verse count
 class _StreakDisplay extends ConsumerWidget {
   final Color primaryColor;
   final bool isDark;
@@ -1631,122 +705,55 @@ class _StreakDisplay extends ConsumerWidget {
     final streakState = ref.watch(streakProvider);
     final streakNotifier = ref.watch(streakProvider.notifier);
     final streak = streakState.currentStreak;
-    final nextMilestone = streakNotifier.nextMilestone;
-    final progress = streakNotifier.progressToNextMilestone;
     final versesToday = streakState.versesReadToday;
     final dailyLimit = ref.watch(jarTapLimitProvider);
-    final dailyProgress = (versesToday / dailyLimit).clamp(0.0, 1.0);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.softSand,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: primaryColor.withValues(alpha: 0.2),
-          width: 1,
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Top row: Streak and Daily Counter
-          Row(
-            children: [
-              // Streak icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.local_fire_department_rounded,
-                    color: primaryColor,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Streak info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      streakNotifier.streakStatus,
-                      style: AppTextStyles.loraBodyMediumForTheme(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    // Daily verse counter
-                    Text(
-                      '$versesToday/$dailyLimit verses today',
-                      style: AppTextStyles.loraBodySmallForTheme(
-                        context,
-                      ).copyWith(color: primaryColor.withValues(alpha: 0.8)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: primaryColor,
+            size: 16,
           ),
-          const SizedBox(height: 12),
-          // Daily Progress Bar
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: dailyProgress,
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                      minHeight: 8,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${(dailyProgress * 100).round()}%',
-                  style: AppTextStyles.loraBodySmallForTheme(
-                    context,
-                  ).copyWith(color: primaryColor, fontWeight: FontWeight.w600),
-                ),
-              ],
+          const SizedBox(width: 6),
+          Text(
+            streak > 0 ? streakNotifier.streakStatus : 'No streak',
+            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.deepUmber,
             ),
-          // Streak Progress to Milestone
-          if (streak > 0) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        primaryColor.withValues(alpha: 0.6),
-                      ),
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '$streak/$nextMilestone',
-                  style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
-                    color: primaryColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 1,
+            height: 14,
+            color: primaryColor.withValues(alpha: 0.2),
+          ),
+          const SizedBox(width: 12),
+          Icon(
+            Icons.touch_app_outlined,
+            color: primaryColor.withValues(alpha: 0.7),
+            size: 14,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$versesToday/$dailyLimit',
+            style: AppTextStyles.loraBodySmallForTheme(context).copyWith(
+              color: primaryColor.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
             ),
-          ],
+          ),
         ],
       ),
     );

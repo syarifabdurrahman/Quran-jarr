@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_jarr/core/config/constants.dart';
 import 'package:quran_jarr/core/providers/preferences_provider.dart';
 import 'package:quran_jarr/core/services/notification_service.dart';
 import 'package:quran_jarr/core/services/preferences_service.dart';
@@ -140,6 +141,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onChanged: (value) {
                 SoundEffectsService.instance.setEnabled(value);
                 setState(() {});
+              },
+              primaryColor: primaryColor,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Verse Selection Mode Section
+            _SectionHeader(title: 'Verse Selection', color: primaryColor),
+            const SizedBox(height: 12),
+            _VerseSelectionSelector(
+              currentMode: ref.watch(verseSelectionModeProvider),
+              onModeChanged: (mode) {
+                ref
+                    .read(preferencesNotifierProvider.notifier)
+                    .setVerseSelectionMode(mode);
               },
               primaryColor: primaryColor,
             ),
@@ -661,6 +677,122 @@ class _JarOption extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Verse Selection Mode Selector
+class _VerseSelectionSelector extends StatelessWidget {
+  final VerseSelectionMode currentMode;
+  final ValueChanged<VerseSelectionMode> onModeChanged;
+  final Color primaryColor;
+  const _VerseSelectionSelector({
+    required this.currentMode,
+    required this.onModeChanged,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Expanded(
+          child: _ModeOption(
+            icon: Icons.auto_awesome,
+            label: 'Curated',
+            description: 'Thematically related',
+            isSelected: currentMode == VerseSelectionMode.curated,
+            onTap: () => onModeChanged(VerseSelectionMode.curated),
+            primaryColor: primaryColor,
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _ModeOption(
+            icon: Icons.shuffle,
+            label: 'Random',
+            description: 'Any surah',
+            isSelected: currentMode == VerseSelectionMode.random,
+            onTap: () => onModeChanged(VerseSelectionMode.random),
+            primaryColor: primaryColor,
+            isDark: isDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final bool isDark;
+  const _ModeOption({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.isSelected,
+    required this.onTap,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? primaryColor.withValues(alpha: 0.15)
+              : (isDark ? AppColors.darkElevated : AppColors.softSand),
+          border: Border.all(
+            color: isSelected
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? primaryColor
+                  : primaryColor.withValues(alpha: 0.7),
+              size: 28,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                color: isSelected ? primaryColor : null,
+                fontWeight: isSelected ? FontWeight.w600 : null,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              description,
+              style: AppTextStyles.loraCaptionForTheme(context).copyWith(
+                color: isSelected
+                    ? primaryColor.withValues(alpha: 0.7)
+                    : primaryColor.withValues(alpha: 0.5),
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
       ),
     );
